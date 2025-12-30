@@ -25,7 +25,7 @@
 ---
 
 ## branch 전략
-main branch와 하위 각 팀원별 branch 이용
+main branch와 하위 각 팀원별 branch를 이용합니다.
 
 - main branch: 배포 직전 단계의 브랜치. develop branch에서 개발이 끝나면 사용
 - develop branch : main branch의 하위 브랜치로써, 개발 프로세스를 진행하는 브랜치
@@ -49,7 +49,7 @@ main branch와 하위 각 팀원별 branch 이용
 ---
 
 ## commit 컨벤션
-각 태그를 이용하여 어떤 내용이 변경되었는지를 나타내는 규칙
+각 태그를 이용하여 어떤 내용이 변경되었는지를 나타냅니다.
 
 - [Feat]: 새로운 기능 추가
 - [Fix]: 버그 수정

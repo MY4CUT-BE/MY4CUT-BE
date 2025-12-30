@@ -1,3 +1,10 @@
 # MY4CUT-BE
-[MY4CUT-BE
-](https://private-user-images.githubusercontent.com/182237035/530868941-a32e07e3-cdca-4004-ba55-049a2d04f5cd.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NjcwOTA0NjEsIm5iZiI6MTc2NzA5MDE2MSwicGF0aCI6Ii8xODIyMzcwMzUvNTMwODY4OTQxLWEzMmUwN2UzLWNkY2EtNDAwNC1iYTU1LTA0OWEyZDA0ZjVjZC5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjUxMjMwJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI1MTIzMFQxMDIyNDFaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1iZWNhYjVlYTFmNDgyMjRkNzU5YTk1NDYxNTlkNjE0OWJiZTg2ZmQwMDQ4OGNlNThlMGMwMDkzYTBlOWJhY2UxJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.2uyKL1enoDCeGgte7pqvN78Cqcbhb7c10RpNE1PLsdY)<img width="773" height="430" alt="image" src="https://github.com/user-attachments/assets/776b35f6-36f4-4db4-9b16-c2890f83ef0b" />
+<img width="773" height="430" alt="my4cut" src="https://github.com/user-attachments/assets/2e4b9d2b-fa14-4985-a17b-b9cf89934adf" />
+
+---
+
+## Back-end 팀원
+- 구현모
+- 설원준
+- 이나영
+- 이승준

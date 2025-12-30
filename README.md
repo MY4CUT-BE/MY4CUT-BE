@@ -8,3 +8,55 @@
 - 설원준
 - 이나영
 - 이승준
+
+---
+
+## 사용할 기술 스택
+
+---
+
+## 사용할 라이브러리
+- Spring Web : Android 앱과의 통신을 위한 REST API 구현에 사용
+- Spring Data JPA : 데이터베이스 CRUD 처리를 위한 ORM 라이브러리
+- Spring Validation : 요청 데이터의 유효성 검증을 위해 사용
+- Lombok : 반복되는 코드 작성을 줄이기 위해 사용
+- Swagger : API 문서화를 위해 사용
+
+---
+
+## branch 전략
+main branch와 하위 각 팀원별 branch 이용
+
+- main branch: 배포 직전 단계의 브랜치. develop branch에서 개발이 끝나면 사용
+- develop branch : main branch의 하위 브랜치로써, 개발 프로세스를 진행하는 브랜치
+- 개인 branch : develop branch의 하위 브랜치로, 팀원 개개인이 담당한 기능을 개발하는 브랜치
+
+---
+
+## issue 전략
+태그를 사용하여 두 가지 유형의 이슈를 관리합니다.
+- [Request]: 개선이 필요한 사항에 대한 요청 이슈
+- [Error]: 오류가 있는 경우에 대한 이슈
+  
+---
+
+## Pull request 전략
+태그를 사용하여 개발 완료 및 기능 추가에 대한 PR을 관리합니다.
+- [Develop]: 개발 완료에 대한 PR
+- [Add]: 개선사항에 따른 기능 추가 PR
+- [Fix]: 오류 수정 PR
+
+---
+
+## commit 컨벤션
+각 태그를 이용하여 어떤 내용이 변경되었는지를 나타내는 규칙
+
+- [Feat]: 새로운 기능 추가
+- [Fix]: 버그 수정
+- [Refactor]: 코드 리팩토링
+- [Test]: 테스트 코드
+- [Chore]: 설정 및 기타 작업
+
+---
+
+## 코드 컨벤션

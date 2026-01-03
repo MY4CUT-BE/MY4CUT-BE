@@ -42,9 +42,9 @@ main branch와 하위 각 팀원별 branch를 이용합니다.
 
 ## Pull request 전략
 태그를 사용하여 개발 완료 및 기능 추가에 대한 PR을 관리합니다.
-- [Develop]: 개발 완료에 대한 PR
-- [Add]: 개선사항에 따른 기능 추가 PR
-- [Fix]: 오류 수정 PR
+- [Add] 기능 추가
+- [Fix] 버그 수정
+- [Refactor] 코드 개선 (기능 변화 없음)
 
 ---
 

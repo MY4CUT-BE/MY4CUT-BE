@@ -2,7 +2,8 @@ package com.my4cut.domain.auth;
 
 import com.my4cut.domain.auth.dto.LoginRequest;
 import com.my4cut.domain.auth.dto.LoginResponse;
-import org.springframework.http.ResponseEntity;
+import com.my4cut.global.response.ApiResponse;
+import com.my4cut.global.response.SuccessCode;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,15 +17,21 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(
+    public ApiResponse<LoginResponse> login(
             @RequestBody LoginRequest request
     ) {
         String token = authService.login(request);
-        return ResponseEntity.ok(new LoginResponse(token));
+        return ApiResponse.onSuccess(
+                SuccessCode.OK,
+                new LoginResponse(token)
+        );
     }
 
     @GetMapping("/health")
-    public String health() {
-        return "OK";
+    public ApiResponse<String> health() {
+        return ApiResponse.onSuccess(
+                SuccessCode.OK,
+                "OK"
+        );
     }
 }

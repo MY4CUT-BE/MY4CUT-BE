@@ -19,7 +19,7 @@ public class UserRepository {
         STORE.put(
                 "test@my4cut.com",
                 new User(1L, "test@my4cut.com",
-                        "$2a$10$7q6pF7G9z3QyX1jG4v2pQe6Zp0v0sKJkzYf6Y3l6m1U9yR8xZ2YpW")
+                        "$2a$10$sLWmGhA.zKMYPG4ijalTq.mv2PWgfMj7DaZudOKMtQsQwKCKB87la")
         );
         // 위 비밀번호는 BCrypt로 인코딩된 "1234"
     }

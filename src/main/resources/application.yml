@@ -1,4 +1,9 @@
 spring:
+  jpa:
+    hibernate:
+      ddl-auto: create
+    defer-datasource-initialization: true
+
   application:
     name: my4cut
 
@@ -7,3 +12,9 @@ spring:
 
 server:
   port: 8080
+
+jwt:
+  token:
+    secretKey: ${JWT_SECRET_KEY}
+    expiration:
+      access: 14400000

@@ -3,10 +3,7 @@ package com.my4cut.domain.workspace.entity;
 import com.my4cut.domain.common.BaseEntity;
 import com.my4cut.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "workspaces")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Workspace extends BaseEntity {
 

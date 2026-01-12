@@ -34,7 +34,7 @@ public class ApiResponse<T> {
      * @param <T> 데이터 타입
      * @return ApiResponse 객체
      */
-    public static <T> ApiResponse<T> onSuccess(SuccessCode successCode) {
+    public static <T> ApiResponse<T> onSuccess(BaseCode successCode) {
         return new ApiResponse<>(successCode, null);
     }
 
@@ -46,7 +46,7 @@ public class ApiResponse<T> {
      * @param <T> 데이터 타입
      * @return ApiResponse 객체
      */
-    public static <T> ApiResponse<T> onSuccess(SuccessCode successCode, T data) {
+    public static <T> ApiResponse<T> onSuccess(BaseCode successCode, T data) {
         return new ApiResponse<>(successCode, data);
     }
 
@@ -57,7 +57,7 @@ public class ApiResponse<T> {
      * @param <T> 데이터 타입
      * @return ApiResponse 객체
      */
-    public static <T> ApiResponse<T> onFailure(ErrorCode errorCode) {
+    public static <T> ApiResponse<T> onFailure(BaseCode errorCode) {
         return new ApiResponse<>(errorCode, null);
     }
 
@@ -69,7 +69,7 @@ public class ApiResponse<T> {
      * @param <T> 데이터 타입
      * @return ApiResponse 객체
      */
-    public static <T> ApiResponse<T> onFailure(ErrorCode errorCode, T data) {
+    public static <T> ApiResponse<T> onFailure(BaseCode errorCode, T data) {
         return new ApiResponse<>(errorCode, data);
     }
 }

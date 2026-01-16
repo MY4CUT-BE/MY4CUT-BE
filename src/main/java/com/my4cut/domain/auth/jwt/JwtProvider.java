@@ -1,5 +1,6 @@
 package com.my4cut.domain.auth.jwt;
 
+import com.my4cut.domain.user.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -9,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Date;
 
 @Component
@@ -18,30 +18,40 @@ public class JwtProvider {
     @Value("${JWT_SECRET_KEY}")
     private String secretKey;
 
-    private final long EXPIRE_TIME = 1000 * 60 * 60;
+    private static final long ACCESS_TOKEN_EXPIRE = 1000L * 60 * 30; // 30분
+    private static final long REFRESH_TOKEN_EXPIRE = 1000L * 60 * 60 * 24 * 14; // 14일
 
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
-    // 토큰 생성
-    public String createToken(Long userId) {
+    // ✅ AccessToken
+    public String createAccessToken(User user) {
         return Jwts.builder()
-                .subject(String.valueOf(userId))
+                .subject(String.valueOf(user.getId()))
+                .claim("loginType", user.getLoginType().name())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRE_TIME))
+                .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRE))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 토큰 검증
-    public Long validateAndGetUserId(String token) {
-        Claims claims = Jwts.parser()
+    // ✅ RefreshToken
+    public String createRefreshToken(User user) {
+        return Jwts.builder()
+                .subject(String.valueOf(user.getId()))
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRE))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    // ✅ AccessToken 검증
+    public Claims validateAccessToken(String token) {
+        return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-
-        return Long.valueOf(claims.getSubject());
     }
 }

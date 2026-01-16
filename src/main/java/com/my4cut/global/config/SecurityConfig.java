@@ -27,8 +27,12 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/login").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers(
+                                "/auth/login",
+                                "/auth/signup",
+                                "/auth/refresh"
+                        ).permitAll()
+                        .requestMatchers("/users/**").authenticated()
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,

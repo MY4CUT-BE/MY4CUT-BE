@@ -3,10 +3,12 @@ package com.my4cut.domain.auth.controller;
 import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.auth.service.AuthService;
+import com.my4cut.domain.user.entity.User;
 import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -43,4 +45,13 @@ public class AuthController {
                 authService.refresh(refreshToken)
         );
     }
+
+    @DeleteMapping("/withdraw")
+    public ApiResponse<Void> withdraw(
+            @AuthenticationPrincipal Long userId
+    ) {
+        authService.withdraw(userId);
+        return ApiResponse.onSuccess(SuccessCode.OK, null);
+    }
+
 }

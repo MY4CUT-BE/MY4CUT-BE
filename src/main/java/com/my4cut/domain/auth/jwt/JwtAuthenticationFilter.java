@@ -1,5 +1,10 @@
 package com.my4cut.domain.auth.jwt;
 
+import com.my4cut.domain.user.entity.User;
+import com.my4cut.domain.user.enums.UserStatus;
+import com.my4cut.domain.user.repository.UserRepository;
+import com.my4cut.global.exception.BusinessException;
+import com.my4cut.global.response.ErrorCode;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -7,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -19,6 +25,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(
@@ -30,23 +37,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
             String token = authHeader.substring(7);
 
             try {
+                // 토큰 검증 + Claims 추출
                 Claims claims = jwtProvider.validateAccessToken(token);
                 Long userId = Long.valueOf(claims.getSubject());
 
+                // 사용자 조회
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+
+                // 탈퇴 유저 차단
+                if (user.getStatus() != UserStatus.ACTIVE) {
+                    throw new BusinessException(ErrorCode.UNAUTHORIZED);
+                }
+
+                // 인증 객체 생성
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
-                                userId,
+                                user.getId(),          // principal
                                 null,
-                                List.of()
+                                List.of(new SimpleGrantedAuthority("ROLE_USER"))
                         );
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authentication);
 
             } catch (Exception e) {
+                // 토큰이 있는데 인증 실패 → 바로 차단
                 SecurityContextHolder.clearContext();
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
             }
         }
 

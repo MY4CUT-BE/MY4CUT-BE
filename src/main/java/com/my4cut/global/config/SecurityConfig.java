@@ -27,12 +27,18 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+
+                        // 인증 없이 허용 (화이트리스트)
                         .requestMatchers(
                                 "/auth/login",
                                 "/auth/signup",
-                                "/auth/refresh"
+                                "/auth/refresh",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers("/users/**").authenticated()
+
+                        // 인증 필요(로그인 해야함)
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,

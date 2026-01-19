@@ -61,4 +61,9 @@ public class User extends BaseEntity {
         this.friendCode = friendCode;
         this.status = status;
     }
+
+    public void withdraw() {
+        this.status = UserStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+    }
 }

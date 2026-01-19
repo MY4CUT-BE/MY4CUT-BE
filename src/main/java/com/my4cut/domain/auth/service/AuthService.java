@@ -112,4 +112,23 @@ public class AuthService {
                 .refreshToken(newRefreshToken)
                 .build();
     }
+
+    @Transactional
+    public void withdraw(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+
+        if (user.getStatus() == UserStatus.DELETED) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // RefreshToken 삭제
+        refreshTokenRepository.deleteByUser(user);
+
+        // Soft delete
+        user.withdraw();
+    }
+
+
 }

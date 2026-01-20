@@ -27,7 +27,7 @@ public class WorkspaceService {
 
         private final WorkspaceRepository workspaceRepository;
         private final WorkspaceMemberRepository workspaceMemberRepository;
-        private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경 권장
+        private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경
 
         /**
          * 새로운 워크스페이스를 생성하고 생성자를 멤버로 등록합니다.

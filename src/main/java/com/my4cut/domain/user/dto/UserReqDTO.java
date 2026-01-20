@@ -24,4 +24,10 @@ public class UserReqDTO {
             @Size(max = 10, message = "닉네임은 최대 10자입니다.")
             String nickname
     ) {}
+
+    public record UpdateNicknameDTO(
+            @NotBlank
+            @Size(max = 10, message = "닉네임은 최대 10자입니다.")
+            String nickname
+    ) {}
 }

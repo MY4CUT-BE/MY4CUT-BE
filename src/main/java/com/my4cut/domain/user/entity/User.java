@@ -66,4 +66,8 @@ public class User extends BaseEntity {
         this.status = UserStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
     }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
 }

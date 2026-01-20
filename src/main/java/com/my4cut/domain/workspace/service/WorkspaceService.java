@@ -25,101 +25,100 @@ import java.time.LocalDateTime;
 @Transactional(readOnly = true)
 public class WorkspaceService {
 
-    private final WorkspaceRepository workspaceRepository;
-    private final WorkspaceMemberRepository workspaceMemberRepository;
-    private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경 권장
+        private final WorkspaceRepository workspaceRepository;
+        private final WorkspaceMemberRepository workspaceMemberRepository;
+        private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경 권장
 
-    /**
-     * 새로운 워크스페이스를 생성하고 생성자를 멤버로 등록합니다.
-     */
-    @Transactional
-    public WorkspaceInfoResponseDto createWorkspace(WorkspaceCreateRequestDto dto, Long ownerId) {
-        User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new RuntimeException("User not found")); // 공통 유저 예외 적용 필요
+        /**
+         * 새로운 워크스페이스를 생성하고 생성자를 멤버로 등록합니다.
+         */
+        @Transactional
+        public WorkspaceInfoResponseDto createWorkspace(WorkspaceCreateRequestDto dto, Long ownerId) {
+                User owner = userRepository.findById(ownerId)
+                                .orElseThrow(() -> new RuntimeException("User not found")); // 공통 유저 예외 적용 필요
 
-        Workspace workspace = Workspace.builder()
-                .name(dto.name())
-                .owner(owner)
-                .expiresAt(dto.expiresAt())
-                .build();
+                Workspace workspace = Workspace.builder()
+                                .name(dto.name())
+                                .owner(owner)
+                                .expiresAt(LocalDateTime.now().plusMonths(1))
+                                .build();
 
-        workspaceRepository.save(workspace);
+                workspaceRepository.save(workspace);
 
-        // 생성자를 첫 번째 멤버로 추가
-        WorkspaceMember member = WorkspaceMember.builder()
-                .workspace(workspace)
-                .user(owner)
-                .joinedAt(LocalDateTime.now())
-                .build();
-        workspaceMemberRepository.save(member);
+                // 생성자를 첫 번째 멤버로 추가
+                WorkspaceMember member = WorkspaceMember.builder()
+                                .workspace(workspace)
+                                .user(owner)
+                                .joinedAt(LocalDateTime.now())
+                                .build();
+                workspaceMemberRepository.save(member);
 
-        return convertToInfoDto(workspace);
-    }
-
-    /**
-     * 워크스페이스 정보를 수정합니다. (소유자만 가능)
-     */
-    @Transactional
-    public WorkspaceInfoResponseDto updateWorkspace(Long workspaceId, WorkspaceUpdateRequestDto dto, Long userId) {
-        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
-                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
-
-        if (!workspace.getOwner().getId().equals(userId)) {
-            throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
+                return convertToInfoDto(workspace);
         }
 
-        workspace.setName(dto.name());
-        return convertToInfoDto(workspace);
-    }
+        /**
+         * 워크스페이스 정보를 수정합니다. (소유자만 가능)
+         */
+        @Transactional
+        public WorkspaceInfoResponseDto updateWorkspace(Long workspaceId, WorkspaceUpdateRequestDto dto, Long userId) {
+                Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+                                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
-    /**
-     * 워크스페이스 단건 정보를 조회합니다.
-     */
-    public WorkspaceInfoResponseDto getWorkspaceInfo(Long workspaceId) {
-        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
-                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
-        return convertToInfoDto(workspace);
-    }
+                if (!workspace.getOwner().getId().equals(userId)) {
+                        throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
+                }
 
-    /**
-     * 워크스페이스를 삭제(Soft Delete)합니다. (소유자만 가능)
-     */
-    @Transactional
-    public void deleteWorkspace(Long workspaceId, Long userId) {
-        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
-                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
-
-        if (!workspace.getOwner().getId().equals(userId)) {
-            throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
+                workspace.setName(dto.name());
+                return convertToInfoDto(workspace);
         }
 
-        workspace.setDeletedAt(LocalDateTime.now());
-    }
+        /**
+         * 워크스페이스 단건 정보를 조회합니다.
+         */
+        public WorkspaceInfoResponseDto getWorkspaceInfo(Long workspaceId) {
+                Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+                                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+                return convertToInfoDto(workspace);
+        }
 
-    /**
-     * 사용자가 워크스페이스에서 나갑니다.
-     */
-    @Transactional
-    public void leaveWorkspace(Long workspaceId, Long userId) {
-        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
-                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+        /**
+         * 워크스페이스를 삭제(Soft Delete)합니다. (소유자만 가능)
+         */
+        @Transactional
+        public void deleteWorkspace(Long workspaceId, Long userId) {
+                Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+                                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                if (!workspace.getOwner().getId().equals(userId)) {
+                        throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
+                }
 
-        WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)
-                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.MEMBER_NOT_FOUND));
+                workspace.setDeletedAt(LocalDateTime.now());
+        }
 
-        workspaceMemberRepository.delete(member);
-    }
+        /**
+         * 사용자가 워크스페이스에서 나갑니다.
+         */
+        @Transactional
+        public void leaveWorkspace(Long workspaceId, Long userId) {
+                Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+                                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
-    private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
-        return new WorkspaceInfoResponseDto(
-                workspace.getId(),
-                workspace.getName(),
-                workspace.getOwner().getId(),
-                workspace.getExpiresAt(),
-                workspace.getCreatedAt()
-        );
-    }
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)
+                                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.MEMBER_NOT_FOUND));
+
+                workspaceMemberRepository.delete(member);
+        }
+
+        private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
+                return new WorkspaceInfoResponseDto(
+                                workspace.getId(),
+                                workspace.getName(),
+                                workspace.getOwner().getId(),
+                                workspace.getExpiresAt(),
+                                workspace.getCreatedAt());
+        }
 }

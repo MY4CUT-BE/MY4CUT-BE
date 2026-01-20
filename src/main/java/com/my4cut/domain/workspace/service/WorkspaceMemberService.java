@@ -77,7 +77,8 @@ public class WorkspaceMemberService {
         return new WorkspaceInfoResponseDto(
                 workspace.getId(),
                 workspace.getName(),
-                     workspace.getExpiresAt(),
+                workspace.getOwner().getId(),
+                workspace.getExpiresAt(),
                 workspace.getCreatedAt());
     }
 }

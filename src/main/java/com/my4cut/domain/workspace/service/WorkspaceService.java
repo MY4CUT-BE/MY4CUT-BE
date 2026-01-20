@@ -108,6 +108,11 @@ public class WorkspaceService {
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+                // 소유자는 워크스페이스를 나갈 수 없음 (삭제하거나 소유자 변경 필요)
+                if (workspace.getOwner().getId().equals(userId)) {
+                        throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER); // 적절한 에러 코드가 없다면 권한 없음 등 사용
+                }
+
                 WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.MEMBER_NOT_FOUND));
 

@@ -11,10 +11,11 @@ import com.my4cut.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Workspace", description = "워크스페이스 자체 관리 API")
 @RestController
@@ -33,7 +34,7 @@ public class WorkspaceController {
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_CREATED, result);
     }
 
-    @Operation(summary = "내 워크스페이스 목록 조회", description = "현재 사용자가 참여 중인 워크스페이스 목록을 조회합니다.")
+    @Operation(summary = "내 워크스페이스 목록 조회", description = "내가 참여 중인 워크스페이스 목록을 조회합니다.")
     @GetMapping("/me")
     public ApiResponse<List<WorkspaceInfoResponseDto>> getMyWorkspaces(
             @AuthenticationPrincipal User user) {
@@ -41,7 +42,7 @@ public class WorkspaceController {
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_GET_SUCCESS, result);
     }
 
-    @Operation(summary = "워크스페이스 상세 조회", description = "워크스페이스 정보를 조회합니다.")
+    @Operation(summary = "워크스페이스 상세 조회", description = "워크스페이스 상세 정보를 조회합니다.")
     @GetMapping("/{workspaceId}")
     public ApiResponse<WorkspaceInfoResponseDto> getWorkspaceInfo(
             @PathVariable Long workspaceId) {

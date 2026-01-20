@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Workspace", description = "워크스페이스 자체 관리 API")
 @RestController
 @RequestMapping("/api/v1/workspaces")
@@ -29,6 +31,14 @@ public class WorkspaceController {
             @AuthenticationPrincipal User user) {
         WorkspaceInfoResponseDto result = workspaceService.createWorkspace(dto, user.getId());
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_CREATED, result);
+    }
+
+    @Operation(summary = "내 워크스페이스 목록 조회", description = "현재 사용자가 참여 중인 워크스페이스 목록을 조회합니다.")
+    @GetMapping("/me")
+    public ApiResponse<List<WorkspaceInfoResponseDto>> getMyWorkspaces(
+            @AuthenticationPrincipal User user) {
+        List<WorkspaceInfoResponseDto> result = workspaceService.getMyWorkspaces(user.getId());
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_GET_SUCCESS, result);
     }
 
     @Operation(summary = "워크스페이스 상세 조회", description = "워크스페이스 정보를 조회합니다.")

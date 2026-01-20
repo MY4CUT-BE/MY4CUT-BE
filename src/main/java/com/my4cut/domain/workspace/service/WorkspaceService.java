@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 워크스페이스 관련 비즈니스 로직을 처리하는 서비스 클래스.
@@ -111,6 +112,15 @@ public class WorkspaceService {
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.MEMBER_NOT_FOUND));
 
                 workspaceMemberRepository.delete(member);
+        }
+
+        /**
+         * 사용자가 참여 중인 워크스페이스 목록을 조회합니다.
+         */
+        public List<WorkspaceInfoResponseDto> getMyWorkspaces(Long userId) {
+                return workspaceMemberRepository.findAllByUserId(userId).stream()
+                                .map(member -> convertToInfoDto(member.getWorkspace()))
+                                .toList();
         }
 
         private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {

@@ -15,7 +15,8 @@ public enum WorkspaceSuccessCode implements BaseCode {
     WORKSPACE_DELETED(HttpStatus.OK, "W2002", "워크스페이스가 삭제되었습니다."),
     MEMBER_DELETED(HttpStatus.OK, "W2003", "멤버가 성공적으로 삭제되었습니다."),
     WORKSPACE_LEAVE_SUCCESS(HttpStatus.OK, "W2004", "워크스페이스에서 성공적으로 나갔습니다."),
-    WORKSPACE_INVITE_SUCCESS(HttpStatus.OK, "W2005", "멤버가 성공적으로 초대되었습니다.");
+    WORKSPACE_INVITE_SUCCESS(HttpStatus.OK, "W2005", "멤버가 성공적으로 초대되었습니다."),
+    PHOTO_UPLOAD_SUCCESS(HttpStatus.CREATED, "W2012", "사진이 성공적으로 업로드되었습니다.");
 
     private final HttpStatus status;
     private final String code;

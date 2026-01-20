@@ -2,6 +2,7 @@ package com.my4cut.domain.workspace.controller;
 
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.workspace.dto.WorkspaceInvitationResponseDto;
+import com.my4cut.domain.workspace.dto.WorkspaceInviteRequestDto;
 import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
 import com.my4cut.domain.workspace.service.WorkspaceInvitationService;
 import com.my4cut.global.response.ApiResponse;
@@ -20,6 +21,15 @@ import java.util.List;
 public class WorkspaceInvitationController {
 
     private final WorkspaceInvitationService workspaceInvitationService;
+
+    @Operation(summary = "멤버 초대", description = "워크스페이스에 새로운 멤버를 초대합니다. (초대장 발송)")
+    @PostMapping
+    public ApiResponse<Void> inviteMembers(
+            @RequestBody WorkspaceInviteRequestDto dto,
+            @AuthenticationPrincipal User user) {
+        workspaceInvitationService.inviteMembers(dto, user.getId());
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_INVITE_SUCCESS);
+    }
 
     @Operation(summary = "내가 받은 초대 목록 조회", description = "내가 참여 요청을 받은 워크스페이스 초대 목록을 조회합니다.")
     @GetMapping("/me")
@@ -44,6 +54,6 @@ public class WorkspaceInvitationController {
             @PathVariable Long invitationId,
             @AuthenticationPrincipal User user) {
         workspaceInvitationService.rejectInvitation(invitationId, user.getId());
-        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_INVITE_SUCCESS); // 적절한 성공 코드 사용
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_INVITE_SUCCESS);
     }
 }

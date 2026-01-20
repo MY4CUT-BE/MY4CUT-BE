@@ -33,8 +33,8 @@ public class WorkspaceInvitationService {
      * 멤버를 초대합니다. (초대장 생성)
      */
     @Transactional
-    public void inviteMembers(Long workspaceId, WorkspaceInviteRequestDto dto, Long inviterId) {
-        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+    public void inviteMembers(WorkspaceInviteRequestDto dto, Long inviterId) {
+        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(dto.workspaceId())
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
         if (!workspace.getOwner().getId().equals(inviterId)) {

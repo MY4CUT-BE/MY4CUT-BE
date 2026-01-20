@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 public class WorkspaceMemberController {
 
     private final WorkspaceMemberService workspaceMemberService;
-    private final WorkspaceInvitationService workspaceInvitationService;
 
     @Operation(summary = "워크스페이스 나가기", description = "워크스페이스에서 나갑니다.")
     @DeleteMapping("/{workspaceId}/members/me")
@@ -27,17 +26,7 @@ public class WorkspaceMemberController {
             @PathVariable Long workspaceId,
             @AuthenticationPrincipal User user) {
         workspaceMemberService.leaveWorkspace(workspaceId, user.getId());
-        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_LEAVE_SUCCESS); // SuccessCode 정의 필요할 수 있음
-    }
-
-    @Operation(summary = "멤버 초대", description = "워크스페이스에 새로운 멤버를 초대합니다. (초대장 발송)")
-    @PostMapping("/{workspaceId}/invitations")
-    public ApiResponse<Void> inviteMembers(
-            @PathVariable Long workspaceId,
-            @RequestBody WorkspaceInviteRequestDto dto,
-            @AuthenticationPrincipal User user) {
-        workspaceInvitationService.inviteMembers(workspaceId, dto, user.getId());
-        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_INVITE_SUCCESS);
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_LEAVE_SUCCESS);
     }
 
     // TODO: GET /{workspaceId}/members/active 추가 예정

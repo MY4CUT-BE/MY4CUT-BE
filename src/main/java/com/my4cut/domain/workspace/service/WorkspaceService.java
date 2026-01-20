@@ -9,7 +9,6 @@ import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.entity.WorkspaceMember;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
-import com.my4cut.domain.workspace.repository.WorkspaceMemberRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +26,7 @@ import java.util.List;
 public class WorkspaceService {
 
         private final WorkspaceRepository workspaceRepository;
-        private final WorkspaceMemberRepository workspaceMemberRepository;
+        private final WorkspaceMemberService workspaceMemberService;
         private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경
 
         /**
@@ -47,12 +46,7 @@ public class WorkspaceService {
                 workspaceRepository.save(workspace);
 
                 // 생성자를 첫 번째 멤버로 추가
-                WorkspaceMember member = WorkspaceMember.builder()
-                                .workspace(workspace)
-                                .user(owner)
-                                .joinedAt(LocalDateTime.now())
-                                .build();
-                workspaceMemberRepository.save(member);
+                workspaceMemberService.addMember(workspace, owner);
 
                 return convertToInfoDto(workspace);
         }
@@ -98,34 +92,10 @@ public class WorkspaceService {
         }
 
         /**
-         * 사용자가 워크스페이스에서 나갑니다.
-         */
-        @Transactional
-        public void leaveWorkspace(Long workspaceId, Long userId) {
-                Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
-                                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
-
-                User user = userRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
-
-                // 소유자는 워크스페이스를 나갈 수 없음 (삭제하거나 소유자 변경 필요)
-                if (workspace.getOwner().getId().equals(userId)) {
-                        throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER); // 적절한 에러 코드가 없다면 권한 없음 등 사용
-                }
-
-                WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)
-                                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.MEMBER_NOT_FOUND));
-
-                workspaceMemberRepository.delete(member);
-        }
-
-        /**
          * 사용자가 참여 중인 워크스페이스 목록을 조회합니다.
          */
         public List<WorkspaceInfoResponseDto> getMyWorkspaces(Long userId) {
-                return workspaceMemberRepository.findAllByUserId(userId).stream()
-                                .map(member -> convertToInfoDto(member.getWorkspace()))
-                                .toList();
+                return workspaceMemberService.getMyWorkspaces(userId);
         }
 
         private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {

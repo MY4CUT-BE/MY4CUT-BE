@@ -1,15 +1,16 @@
 package com.my4cut.domain.user.controller;
 
+import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.user.service.UserService;
 import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.SuccessCode;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,6 +30,17 @@ public class UserController {
         return ApiResponse.onSuccess(
                 SuccessCode.OK,
                 userService.getMyInfo(userId)
+        );
+    }
+
+    @PatchMapping("/me/nickname")
+    public ApiResponse<UserResDTO.UpdateNicknameDTO> updateNickname(
+            @AuthenticationPrincipal Long userId,
+            @RequestBody @Valid UserReqDTO.UpdateNicknameDTO request
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessCode.OK,
+                userService.updateNickname(userId, request)
         );
     }
 }

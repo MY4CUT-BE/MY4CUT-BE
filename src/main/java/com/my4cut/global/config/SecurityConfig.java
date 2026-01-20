@@ -37,8 +37,14 @@ public class SecurityConfig {
                                 "/v3/api-docs/**"
                         ).permitAll()
 
-                        // 인증 필요(로그인 해야함)
-                        .anyRequest().authenticated()
+                        // 인증 필요
+                        .requestMatchers(
+                                "/auth/withdraw",
+                                "/users/**"
+                        ).authenticated()
+
+                        // 그 외 전부 차단
+                        .anyRequest().denyAll()
                 )
                 .addFilterBefore(
                         jwtAuthenticationFilter,

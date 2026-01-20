@@ -33,4 +33,8 @@ public class UserResDTO {
             );
         }
     }
+
+    public record UpdateNicknameDTO(
+            String updatedNickname
+    ) {}
 }

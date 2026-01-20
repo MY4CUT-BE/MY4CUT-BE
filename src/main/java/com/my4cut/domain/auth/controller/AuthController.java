@@ -5,6 +5,7 @@ import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.auth.service.AuthService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.global.response.ApiResponse;
+import com.my4cut.global.response.ErrorCode;
 import com.my4cut.global.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +36,15 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ApiResponse<UserResDTO.LoginDTO> refresh(
-            @RequestHeader("Authorization") String authHeader
+            @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
-        // Bearer 제거
+        if (authHeader == null || !authHeader.startsWith("Bearer ") || authHeader.length() <= 7) {
+            return ApiResponse.onFailure(
+                    ErrorCode.UNAUTHORIZED,
+                    null
+            );
+        }
+
         String refreshToken = authHeader.substring(7);
 
         return ApiResponse.onSuccess(
@@ -45,6 +52,7 @@ public class AuthController {
                 authService.refresh(refreshToken)
         );
     }
+
 
     @DeleteMapping("/withdraw")
     public ApiResponse<Void> withdraw(

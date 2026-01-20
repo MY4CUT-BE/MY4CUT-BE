@@ -33,6 +33,13 @@ public class Friend extends BaseEntity {
     @Column(name = "is_favorite", nullable = false)
     private Boolean isFavorite;
 
+    /**
+     * Create a Friend association between two users with an initial favorite setting.
+     *
+     * @param user the owner of the friendship (the user who added the friend)
+     * @param friendUser the user who is being added as a friend
+     * @param isFavorite `true` if the friendship is marked as favorite, `false` otherwise
+     */
     @Builder
     public Friend(User user, User friendUser, Boolean isFavorite) {
         this.user = user;

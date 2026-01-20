@@ -37,6 +37,14 @@ public class Notification extends BaseEntity {
     @Column(name = "is_read", nullable = false)
     private Boolean isRead;
 
+    /**
+     * Creates a Notification with the given owner, type, reference identifier, and read state.
+     *
+     * @param user the user who will receive or owns the notification
+     * @param type the notification category
+     * @param referenceId an optional identifier referencing a related entity (may be null)
+     * @param isRead whether the notification is already read
+     */
     @Builder
     public Notification(User user, NotificationType type, Long referenceId, Boolean isRead) {
         this.user = user;

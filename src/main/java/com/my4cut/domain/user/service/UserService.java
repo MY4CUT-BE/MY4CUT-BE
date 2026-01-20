@@ -17,6 +17,13 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    /**
+     * Fetches profile information for the specified user.
+     *
+     * @param userId the identifier of the user to retrieve
+     * @return a {@link UserResDTO.MeDTO} representing the user's profile
+     * @throws BusinessException if no user exists with the given ID (ErrorCode.NOT_FOUND)
+     */
     @Transactional(readOnly = true)
     public UserResDTO.MeDTO getMyInfo(Long userId) {
 
@@ -26,7 +33,14 @@ public class UserService {
         return UserResDTO.MeDTO.from(user);
     }
 
-    //닉네임 변경
+    /**
+     * Update the nickname of the specified user.
+     *
+     * @param userId the identifier of the user whose nickname will be updated
+     * @param request DTO containing the new nickname
+     * @return a DTO containing the user's updated nickname
+     * @throws BusinessException if the user does not exist or if the user's status is DELETED (ErrorCode.UNAUTHORIZED)
+     */
     @Transactional
     public UserResDTO.UpdateNicknameDTO updateNickname(
             Long userId,

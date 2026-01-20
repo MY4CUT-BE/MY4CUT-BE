@@ -18,6 +18,12 @@ public class AuthController {
 
     private final AuthService authService;
 
+    /**
+     * Register a new user account.
+     *
+     * @param dto the sign-up request containing user credentials and profile information
+     * @return an ApiResponse with SuccessCode.CREATED and a null body
+     */
     @PostMapping("/signup")
     public ApiResponse<Void> signup(
             @RequestBody @Valid UserReqDTO.SignUpDTO dto
@@ -26,6 +32,12 @@ public class AuthController {
         return ApiResponse.onSuccess(SuccessCode.CREATED, null);
     }
 
+    /**
+     * Authenticate a user and produce a login response.
+     *
+     * @param dto the login credentials (e.g., username/email and password)
+     * @return an ApiResponse whose payload is a UserResDTO.LoginDTO containing authentication tokens and user information
+     */
     @PostMapping("/login")
     public ApiResponse<UserResDTO.LoginDTO> login(
             @RequestBody @Valid UserReqDTO.LoginDTO dto
@@ -33,6 +45,12 @@ public class AuthController {
         return ApiResponse.onSuccess(SuccessCode.OK, authService.login(dto));
     }
 
+    /**
+     * Refreshes authentication using a bearer refresh token and returns new login tokens.
+     *
+     * @param authHeader the HTTP `Authorization` header containing a Bearer token in the form `Bearer <refreshToken>`
+     * @return an `ApiResponse` containing a `UserResDTO.LoginDTO` with refreshed authentication tokens
+     */
     @PostMapping("/refresh")
     public ApiResponse<UserResDTO.LoginDTO> refresh(
             @RequestHeader("Authorization") String authHeader
@@ -46,6 +64,12 @@ public class AuthController {
         );
     }
 
+    /**
+     * Delete the account of the authenticated user.
+     *
+     * @param userId ID of the authenticated user extracted from the security principal
+     * @return an ApiResponse with success code OK and no body
+     */
     @DeleteMapping("/withdraw")
     public ApiResponse<Void> withdraw(
             @AuthenticationPrincipal Long userId

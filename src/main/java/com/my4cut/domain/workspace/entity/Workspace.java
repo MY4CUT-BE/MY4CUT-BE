@@ -37,6 +37,13 @@ public class Workspace extends BaseEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    /**
+     * Create a Workspace with the specified name, owner, and optional expiration time.
+     *
+     * @param name      the workspace name; must not be null
+     * @param owner     the User who owns the workspace; must not be null
+     * @param expiresAt the expiration timestamp for the workspace, or `null` if it does not expire
+     */
     @Builder
     public Workspace(String name, User owner, LocalDateTime expiresAt) {
         this.name = name;

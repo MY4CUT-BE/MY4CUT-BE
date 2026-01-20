@@ -20,7 +20,12 @@ public class ApiResponse<T> {
     private String message;
     private T data;
 
-    // BaseCode 인터페이스를 사용하는 공통 생성자
+    /**
+     * Initialize the response using values from the given BaseCode and an optional payload.
+     *
+     * @param baseCode the BaseCode supplying the response `code` and `message`
+     * @param data     the response payload, or `null` if there is no data
+     */
     private ApiResponse(BaseCode baseCode, T data) {
         this.code = baseCode.getCode();
         this.message = baseCode.getMessage();
@@ -28,46 +33,46 @@ public class ApiResponse<T> {
     }
 
     /**
-     * 성공 응답을 생성합니다 (데이터 없음).
+     * Create a success ApiResponse without a payload.
      *
-     * @param successCode 성공 코드
-     * @param <T> 데이터 타입
-     * @return ApiResponse 객체
+     * @param successCode the BaseCode providing the response `code` and `message`
+     * @param <T> the response data type
+     * @return an ApiResponse populated with `code` and `message` from successCode and `data` set to null
      */
     public static <T> ApiResponse<T> onSuccess(BaseCode successCode) {
         return new ApiResponse<>(successCode, null);
     }
 
     /**
-     * 성공 응답을 생성합니다 (데이터 포함).
+     * Create a successful ApiResponse containing the given BaseCode and data.
      *
-     * @param successCode 성공 코드
-     * @param data 응답 데이터
-     * @param <T> 데이터 타입
-     * @return ApiResponse 객체
+     * @param successCode the BaseCode whose code and message populate the response
+     * @param data the response payload
+     * @param <T> the type of the response payload
+     * @return an ApiResponse populated with the provided code, message, and data
      */
     public static <T> ApiResponse<T> onSuccess(BaseCode successCode, T data) {
         return new ApiResponse<>(successCode, data);
     }
 
     /**
-     * 에러 응답을 생성합니다 (데이터 없음).
+     * Create an error ApiResponse without data.
      *
-     * @param errorCode 에러 코드
-     * @param <T> 데이터 타입
-     * @return ApiResponse 객체
+     * @param errorCode the BaseCode representing the error code and message
+     * @param <T> the response data type
+     * @return an ApiResponse populated with the given error code and no data
      */
     public static <T> ApiResponse<T> onFailure(BaseCode errorCode) {
         return new ApiResponse<>(errorCode, null);
     }
 
     /**
-     * 에러 응답을 생성합니다 (데이터 포함).
+     * Create an error ApiResponse populated with the given BaseCode and data.
      *
-     * @param errorCode 에러 코드
-     * @param data 응답 데이터
-     * @param <T> 데이터 타입
-     * @return ApiResponse 객체
+     * @param errorCode the BaseCode that provides the error code and message
+     * @param data the response payload to include
+     * @param <T> the type of the response payload
+     * @return an ApiResponse containing the error code, message, and provided data
      */
     public static <T> ApiResponse<T> onFailure(BaseCode errorCode, T data) {
         return new ApiResponse<>(errorCode, data);

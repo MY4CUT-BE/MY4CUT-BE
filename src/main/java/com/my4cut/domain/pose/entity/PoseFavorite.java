@@ -30,6 +30,12 @@ public class PoseFavorite extends BaseEntity {
     @JoinColumn(name = "pose_id", nullable = false)
     private Pose pose;
 
+    /**
+     * Creates a PoseFavorite linking the given user to the given pose.
+     *
+     * @param user the user who favorites the pose; must not be null
+     * @param pose the pose being favorited; must not be null
+     */
     @Builder
     public PoseFavorite(User user, Pose pose) {
         this.user = user;

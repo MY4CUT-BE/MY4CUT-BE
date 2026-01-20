@@ -50,6 +50,17 @@ public class MediaFile extends BaseEntity {
     @Column(name = "is_final", nullable = false)
     private Boolean isFinal;
 
+    /**
+     * Create a MediaFile with the given uploader, workspace, media type, storage location, taken date, diary content, and finalization flag.
+     *
+     * @param uploader   the user who uploaded the media
+     * @param workspace  the workspace where the media is stored
+     * @param mediaType  the media's type
+     * @param fileUrl    the URL or storage path of the media file
+     * @param takenDate  the date the media was taken, or {@code null} if unknown
+     * @param diary      notes or diary content associated with the media, may be {@code null}
+     * @param isFinal    {@code true} if the media is finalized, {@code false} otherwise
+     */
     @Builder
     public MediaFile(User uploader, Workspace workspace, MediaType mediaType,
                      String fileUrl, LocalDate takenDate, String diary, Boolean isFinal) {

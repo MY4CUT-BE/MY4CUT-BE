@@ -33,6 +33,13 @@ public class MediaComment extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    /**
+     * Creates a new MediaComment that associates a user with a comment on a media file.
+     *
+     * @param mediaFile the media file being commented on; must not be null
+     * @param user the author of the comment; must not be null
+     * @param content the comment text to store (persisted as TEXT); must not be null
+     */
     @Builder
     public MediaComment(MediaFile mediaFile, User user, String content) {
         this.mediaFile = mediaFile;

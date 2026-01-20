@@ -22,6 +22,12 @@ public class UserResDTO {
             String profileImageUrl,
             String loginType
     ) {
+        /**
+         * Create a MeDTO populated from the given User entity.
+         *
+         * @param user the User entity to map from
+         * @return a MeDTO containing the user's id, email, nickname, friend code, profile image URL, and login type name
+         */
         public static MeDTO from(User user) {
             return new MeDTO(
                     user.getId(),

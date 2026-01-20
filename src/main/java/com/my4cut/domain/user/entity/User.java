@@ -50,6 +50,17 @@ public class User extends BaseEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    /**
+     * Create a User with the provided account and profile attributes.
+     *
+     * @param email            the user's email address (unique, non-null)
+     * @param password         the user's password; may be null for external login types
+     * @param nickname         the user's display name
+     * @param profileImageUrl  the URL of the user's profile image, or null if absent
+     * @param loginType        the authentication method for the user
+     * @param friendCode       the user's unique friend code
+     * @param status           the initial account status for the user
+     */
     @Builder
     public User(String email, String password, String nickname, String profileImageUrl,
                 LoginType loginType, String friendCode, UserStatus status) {
@@ -62,11 +73,21 @@ public class User extends BaseEntity {
         this.status = status;
     }
 
+    /**
+     * Marks the user as deleted and records the time of deletion.
+     *
+     * Sets the user's status to UserStatus.DELETED and sets {@code deletedAt} to the current time.
+     */
     public void withdraw() {
         this.status = UserStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
     }
 
+    /**
+     * Update the user's nickname.
+     *
+     * @param nickname the new nickname for the user
+     */
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }

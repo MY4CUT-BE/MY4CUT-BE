@@ -17,6 +17,12 @@ public class DataInitializer {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
+    /**
+     * Ensures a default test user exists by creating one when no users are present.
+     *
+     * If the user store is empty, inserts a test user with email "test@test.com",
+     * nickname "테스트유저", friend code "TEST1234", and an encoded password.
+     */
     @PostConstruct
     public void init() {
         // 이미 데이터가 있으면 아무 것도 안 함

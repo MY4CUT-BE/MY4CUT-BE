@@ -18,6 +18,17 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    /**
+     * Configure and build the application's SecurityFilterChain.
+     *
+     * Disables CSRF, sets session management to stateless, permits unauthenticated access to
+     * authentication and API documentation endpoints (/auth/login, /auth/signup, /auth/refresh,
+     * /swagger-ui/**, /v3/api-docs/**), requires authentication for all other requests, and
+     * registers the JWT authentication filter to run before UsernamePasswordAuthenticationFilter.
+     *
+     * @param http the HttpSecurity instance to configure
+     * @return the configured SecurityFilterChain
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -48,6 +59,11 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Creates a BCryptPasswordEncoder for hashing and verifying user passwords.
+     *
+     * @return the BCryptPasswordEncoder instance used for encoding and matching passwords
+     */
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

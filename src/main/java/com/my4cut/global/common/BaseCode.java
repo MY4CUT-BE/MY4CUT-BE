@@ -11,23 +11,23 @@ import org.springframework.http.HttpStatus;
 public interface BaseCode {
 
     /**
-     * HTTP 상태 코드를 반환합니다.
-     *
-     * @return HttpStatus 객체
-     */
+ * Get the HTTP status associated with this code.
+ *
+ * @return the HTTP status corresponding to this code
+ */
     HttpStatus getStatus();
 
     /**
-     * 응답 코드를 반환합니다.
-     *
-     * @return 응답 코드 (예: C2000, C4001)
-     */
+ * Response code identifier.
+ *
+ * @return the response code (for example, "C2000" or "C4001")
+ */
     String getCode();
 
     /**
-     * 응답 메시지를 반환합니다.
-     *
-     * @return 응답 메시지
-     */
+ * Response message associated with this code.
+ *
+ * @return the response message
+ */
     String getMessage();
 }

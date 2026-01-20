@@ -15,9 +15,11 @@ public class BusinessException extends RuntimeException {
     private final ErrorCode errorCode;
 
     /**
-     * BusinessException 생성자.
+     * Creates a BusinessException that represents the specified business error.
      *
-     * @param errorCode 발생한 에러 코드
+     * The exception's message is initialized from the provided ErrorCode's message.
+     *
+     * @param errorCode the ErrorCode representing the business error
      */
     public BusinessException(ErrorCode errorCode) {
         super(errorCode.getMessage());

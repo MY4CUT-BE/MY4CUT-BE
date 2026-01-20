@@ -19,6 +19,11 @@ public class UserController {
 
     private final UserService userService;
 
+    /**
+     * Retrieve the authenticated user's profile information.
+     *
+     * @return an ApiResponse containing the authenticated user's UserResDTO.MeDTO and a success code
+     */
     @GetMapping("/me")
     public ApiResponse<UserResDTO.MeDTO> getMyInfo() {
 
@@ -33,6 +38,13 @@ public class UserController {
         );
     }
 
+    /**
+     * Update the authenticated user's nickname.
+     *
+     * @param userId the authenticated user's ID (injected from the security principal)
+     * @param request DTO containing the new nickname value
+     * @return the updated nickname data as an UpdateNicknameDTO wrapped in a standard ApiResponse
+     */
     @PatchMapping("/me/nickname")
     public ApiResponse<UserResDTO.UpdateNicknameDTO> updateNickname(
             @AuthenticationPrincipal Long userId,

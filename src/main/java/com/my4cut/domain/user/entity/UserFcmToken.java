@@ -33,6 +33,13 @@ public class UserFcmToken extends BaseEntity {
     @Column(name = "device_type", nullable = false)
     private DeviceType deviceType;
 
+    /**
+     * Create a UserFcmToken entity for the specified user, FCM token, and device type.
+     *
+     * @param user the owning User entity
+     * @param fcmToken the Firebase Cloud Messaging registration token
+     * @param deviceType the device classification for this token
+     */
     @Builder
     public UserFcmToken(User user, String fcmToken, DeviceType deviceType) {
         this.user = user;

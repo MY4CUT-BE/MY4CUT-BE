@@ -30,6 +30,13 @@ public class Pose extends BaseEntity {
     @Column(name = "people_count", nullable = false)
     private Integer peopleCount;
 
+    /**
+     * Creates a Pose with the specified title, image URL, and people count.
+     *
+     * @param title      the pose title (non-null)
+     * @param imageUrl   the URL of the pose image (non-null)
+     * @param peopleCount the number of people represented by the pose (non-null)
+     */
     @Builder
     public Pose(String title, String imageUrl, Integer peopleCount) {
         this.title = title;

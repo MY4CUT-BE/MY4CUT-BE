@@ -34,6 +34,13 @@ public class WorkspaceMember {
     @Column(name = "joined_at", nullable = false)
     private LocalDateTime joinedAt;
 
+    /**
+     * Create a workspace membership linking a user to a workspace with the time they joined.
+     *
+     * @param workspace the workspace the user is a member of
+     * @param user the user who joined the workspace
+     * @param joinedAt the timestamp when the user joined the workspace
+     */
     @Builder
     public WorkspaceMember(Workspace workspace, User user, LocalDateTime joinedAt) {
         this.workspace = workspace;

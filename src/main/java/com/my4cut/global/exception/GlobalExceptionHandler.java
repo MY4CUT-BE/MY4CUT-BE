@@ -20,10 +20,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     /**
-     * BusinessException 처리 메소드.
+     * Produce an error ApiResponse based on the thrown BusinessException's ErrorCode.
      *
-     * @param e 발생한 BusinessException
-     * @return 에러 응답 객체 (ResponseEntity)
+     * @param e the thrown BusinessException whose ErrorCode determines the HTTP status and response body
+     * @return a ResponseEntity containing an ApiResponse failure built from the exception's ErrorCode with the corresponding HTTP status
      */
     @ExceptionHandler(BusinessException.class)
     protected ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException e) {
@@ -35,10 +35,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 그 외 모든 Exception 처리 메소드.
+     * Handle any uncaught exception and produce a standardized internal server error response.
      *
-     * @param e 발생한 Exception
-     * @return 에러 응답 객체 (ResponseEntity)
+     * Logs the exception message and stack trace, and returns an ApiResponse containing
+     * ErrorCode.INTERNAL_SERVER_ERROR with the corresponding HTTP status.
+     *
+     * @param e the exception that was thrown
+     * @return a ResponseEntity containing an ApiResponse<Void> representing an internal server error
      */
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ApiResponse<Void>> handleException(Exception e) {

@@ -8,9 +8,26 @@ import java.util.Optional;
 
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
-    Optional<RefreshToken> findByUser(User user);
+    /**
+ * Retrieves the refresh token associated with the given user.
+ *
+ * @param user the user whose refresh token is being queried
+ * @return an {@code Optional} containing the user's {@link RefreshToken} if present, otherwise {@code Optional.empty()}
+ */
+Optional<RefreshToken> findByUser(User user);
 
-    Optional<RefreshToken> findByToken(String token);
+    /**
+ * Finds a refresh token entity by its token string.
+ *
+ * @param token the refresh token string to look up
+ * @return an Optional containing the RefreshToken if found, otherwise Optional.empty()
+ */
+Optional<RefreshToken> findByToken(String token);
 
-    void deleteByUser(User user);
+    /**
+ * Deletes all RefreshToken entities associated with the specified user.
+ *
+ * @param user the user whose refresh token(s) should be removed
+ */
+void deleteByUser(User user);
 }

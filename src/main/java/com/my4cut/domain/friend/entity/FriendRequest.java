@@ -35,6 +35,13 @@ public class FriendRequest extends BaseEntity {
     @Column(nullable = false)
     private FriendRequestStatus status;
 
+    /**
+     * Create a FriendRequest with the specified sender, recipient, and status.
+     *
+     * @param fromUser the user who sends the friend request
+     * @param toUser   the user who receives the friend request
+     * @param status   the initial status of the friend request
+     */
     @Builder
     public FriendRequest(User fromUser, User toUser, FriendRequestStatus status) {
         this.fromUser = fromUser;

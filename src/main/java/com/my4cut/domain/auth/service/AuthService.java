@@ -27,7 +27,15 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    // 회원가입
+    /**
+     * Register a new user with the provided sign-up details.
+     *
+     * Creates and persists a new active user with EMAIL login type and a generated
+     * 6-character uppercase friend code.
+     *
+     * @param request sign-up data containing email, password, and nickname
+     * @throws BusinessException if a user with the given email already exists (ErrorCode.UNAUTHORIZED)
+     */
     @Transactional
     public void signup(UserReqDTO.SignUpDTO request) {
 
@@ -55,7 +63,13 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    // 로그인
+    /**
+     * Authenticate the user and issue new access and refresh tokens.
+     *
+     * @param request the login request containing the user's email and password
+     * @return a LoginDTO containing the user's ID, a new access token, and a refresh token
+     * @throws BusinessException if the user does not exist or the provided credentials are invalid
+     */
     @Transactional
     public UserResDTO.LoginDTO login(UserReqDTO.LoginDTO request) {
 
@@ -82,7 +96,13 @@ public class AuthService {
                 .build();
     }
 
-    // 토큰 재발급
+    /**
+     * Issue new access and refresh tokens for the user associated with the given refresh token and rotate the stored refresh token.
+     *
+     * @param refreshToken the refresh token presented for rotation
+     * @return a LoginDTO containing the user's id, a newly issued access token, and a newly issued refresh token
+     * @throws BusinessException if the provided refresh token is not found or if the associated user has status DELETED (ErrorCode.UNAUTHORIZED)
+     */
     @Transactional
     public UserResDTO.LoginDTO refresh(String refreshToken) {
 
@@ -113,6 +133,12 @@ public class AuthService {
                 .build();
     }
 
+    /**
+     * Soft-deletes the user identified by the given id and removes all associated refresh tokens.
+     *
+     * @param userId the identifier of the user to withdraw
+     * @throws BusinessException with {@code ErrorCode.UNAUTHORIZED} if the user does not exist or is already deleted
+     */
     @Transactional
     public void withdraw(Long userId) {
 

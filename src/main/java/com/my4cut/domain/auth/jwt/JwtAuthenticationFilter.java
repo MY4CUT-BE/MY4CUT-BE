@@ -27,6 +27,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
 
+    /**
+     * Authenticates the incoming HTTP request using a Bearer JWT from the Authorization header
+     * and, when valid, installs a UsernamePasswordAuthenticationToken in the SecurityContext.
+     *
+     * If a Bearer token is present but invalid, missing, expired, or the referenced user is not active,
+     * the security context is cleared, the response status is set to 401 (Unauthorized), and request
+     * processing is halted for this filter.
+     *
+     * @param request     the incoming servlet request
+     * @param response    the servlet response used to set an unauthorized status on failure
+     * @param filterChain the remaining filter chain to continue processing when authentication succeeds or no token is present
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,

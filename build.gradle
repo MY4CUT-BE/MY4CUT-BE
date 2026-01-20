@@ -36,6 +36,9 @@ dependencies {
     // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
 
+    // H2 (Local Development)
+    runtimeOnly 'com.h2database:h2'
+
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
     implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'

@@ -26,8 +26,7 @@ public class WorkspaceController {
     @PostMapping
     public ApiResponse<WorkspaceInfoResponseDto> createWorkspace(
             @RequestBody WorkspaceCreateRequestDto dto,
-            @AuthenticationPrincipal User user
-    ) {
+            @AuthenticationPrincipal User user) {
         WorkspaceInfoResponseDto result = workspaceService.createWorkspace(dto, user.getId());
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_CREATED, result);
     }
@@ -35,10 +34,9 @@ public class WorkspaceController {
     @Operation(summary = "워크스페이스 상세 조회", description = "워크스페이스 정보를 조회합니다.")
     @GetMapping("/{workspaceId}")
     public ApiResponse<WorkspaceInfoResponseDto> getWorkspaceInfo(
-            @PathVariable Long workspaceId
-    ) {
+            @PathVariable Long workspaceId) {
         WorkspaceInfoResponseDto result = workspaceService.getWorkspaceInfo(workspaceId);
-        return ApiResponse.onSuccess(WorkspaceSuccessCode.OK, result); // OK는 global에서 사용 가능
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_GET_SUCCESS, result);
     }
 
     @Operation(summary = "워크스페이스 수정", description = "워크스페이스 이름을 수정합니다.")
@@ -46,8 +44,7 @@ public class WorkspaceController {
     public ApiResponse<WorkspaceInfoResponseDto> updateWorkspace(
             @PathVariable Long workspaceId,
             @RequestBody WorkspaceUpdateRequestDto dto,
-            @AuthenticationPrincipal User user
-    ) {
+            @AuthenticationPrincipal User user) {
         WorkspaceInfoResponseDto result = workspaceService.updateWorkspace(workspaceId, dto, user.getId());
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_MODIFIED, result);
     }
@@ -56,8 +53,7 @@ public class WorkspaceController {
     @DeleteMapping("/{workspaceId}")
     public ApiResponse<Void> deleteWorkspace(
             @PathVariable Long workspaceId,
-            @AuthenticationPrincipal User user
-    ) {
+            @AuthenticationPrincipal User user) {
         workspaceService.deleteWorkspace(workspaceId, user.getId());
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_DELETED);
     }

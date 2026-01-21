@@ -3,7 +3,6 @@ package com.my4cut.domain.workspace.service;
 import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.enums.MediaType;
 import com.my4cut.domain.media.repository.MediaFileRepository;
-import com.my4cut.domain.media.service.MediaFileService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspacePhotoResponseDto;

@@ -12,6 +12,7 @@ import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -71,6 +72,25 @@ public class WorkspacePhotoService {
                 .map(file -> new WorkspacePhotoResponseDto(
                         file.getId(),
                         file.getFileUrl()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 워크스페이스의 사진 목록을 조회합니다.
+     */
+    public List<WorkspacePhotoResponseDto> getPhotos(Long workspaceId, String sort) {
+        workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+
+        Sort sorting = sort.equalsIgnoreCase("oldest")
+                ? Sort.by(Sort.Direction.ASC, "takenDate", "createdAt")
+                : Sort.by(Sort.Direction.DESC, "takenDate", "createdAt");
+
+        List<MediaFile> photos = mediaFileRepository.findAllByWorkspaceIdAndMediaType(workspaceId, MediaType.PHOTO,
+                sorting);
+
+        return photos.stream()
+                .map(photo -> new WorkspacePhotoResponseDto(photo.getId(), photo.getFileUrl()))
                 .collect(Collectors.toList());
     }
 }

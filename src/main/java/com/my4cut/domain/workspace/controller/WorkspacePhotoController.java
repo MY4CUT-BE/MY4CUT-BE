@@ -7,6 +7,8 @@ import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
 import com.my4cut.domain.workspace.service.WorkspacePhotoService;
 import com.my4cut.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,5 +33,15 @@ public class WorkspacePhotoController {
         List<WorkspacePhotoResponseDto> result = workspacePhotoService.uploadPhotos(workspaceId, requestDto.photos(),
                 user.getId());
         return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_UPLOAD_SUCCESS, result);
+    }
+
+    @Operation(summary = "사진 목록 조회", description = "워크스페이스의 사진 목록을 조회합니다.")
+    @GetMapping("/{workspaceId}/photos")
+    public ApiResponse<List<WorkspacePhotoResponseDto>> getPhotos(
+            @PathVariable Long workspaceId,
+            @Parameter(description = "정렬 순서", schema = @Schema(allowableValues = { "latest",
+                    "oldest" })) @RequestParam(name = "sort", defaultValue = "latest") String sort) {
+        List<WorkspacePhotoResponseDto> result = workspacePhotoService.getPhotos(workspaceId, sort);
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_LIST_GET_SUCCESS, result);
     }
 }

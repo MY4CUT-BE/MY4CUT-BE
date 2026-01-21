@@ -7,6 +7,7 @@ import com.my4cut.domain.media.service.MediaFileService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspacePhotoResponseDto;
+import com.my4cut.domain.workspace.dto.WorkspacePhotoUploadRequestDto;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
@@ -36,7 +37,9 @@ public class WorkspacePhotoService {
      * 워크스페이스에 사진을 업로드합니다.
      */
     @Transactional
-    public List<WorkspacePhotoResponseDto> uploadPhotos(Long workspaceId, MultipartFile[] files, Long userId) {
+    public List<WorkspacePhotoResponseDto> uploadPhotos(Long workspaceId,
+            List<WorkspacePhotoUploadRequestDto> photoRequests,
+            Long userId) {
         Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -45,7 +48,8 @@ public class WorkspacePhotoService {
 
         List<MediaFile> mediaFiles = new ArrayList<>();
 
-        for (MultipartFile file : files) {
+        for (WorkspacePhotoUploadRequestDto photoRequest : photoRequests) {
+            MultipartFile file = photoRequest.file();
             // TODO: 실제 S3 업로드 로직 구현
             // 현재는 더미 URL을 생성하여 저장합니다.
             String dummyUrl = "https://my4cut-bucket.s3.amazonaws.com/photos/" + file.getOriginalFilename();
@@ -55,7 +59,7 @@ public class WorkspacePhotoService {
                     .workspace(workspace)
                     .mediaType(MediaType.PHOTO)
                     .fileUrl(dummyUrl)
-                    .takenDate(null)
+                    .takenDate(photoRequest.takenDate())
                     .isFinal(false)
                     .build();
 
@@ -65,10 +69,9 @@ public class WorkspacePhotoService {
         List<MediaFile> savedFiles = mediaFileRepository.saveAll(mediaFiles);
 
         return savedFiles.stream()
-                .map(file -> WorkspacePhotoResponseDto.builder()
-                        .photoId(file.getId())
-                        .url(file.getFileUrl())
-                        .build())
+                .map(file -> new WorkspacePhotoResponseDto(
+                        file.getId(),
+                        file.getFileUrl()))
                 .collect(Collectors.toList());
     }
 }

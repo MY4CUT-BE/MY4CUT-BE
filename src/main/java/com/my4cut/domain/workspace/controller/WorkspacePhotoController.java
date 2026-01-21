@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,7 @@ public class WorkspacePhotoController {
     @PostMapping(value = "/{workspaceId}/photos", consumes = "multipart/form-data")
     public ApiResponse<List<WorkspacePhotoResponseDto>> uploadPhotos(
             @PathVariable Long workspaceId,
-            @ModelAttribute WorkspacePhotoUploadListRequestDto requestDto,
+            @Valid @ModelAttribute WorkspacePhotoUploadListRequestDto requestDto,
             @AuthenticationPrincipal User user) {
         List<WorkspacePhotoResponseDto> result = workspacePhotoService.uploadPhotos(workspaceId, requestDto.photos(),
                 user.getId());
@@ -39,9 +40,20 @@ public class WorkspacePhotoController {
     @GetMapping("/{workspaceId}/photos")
     public ApiResponse<List<WorkspacePhotoResponseDto>> getPhotos(
             @PathVariable Long workspaceId,
+            @AuthenticationPrincipal User user,
             @Parameter(description = "정렬 순서", schema = @Schema(allowableValues = { "latest",
                     "oldest" })) @RequestParam(name = "sort", defaultValue = "latest") String sort) {
-        List<WorkspacePhotoResponseDto> result = workspacePhotoService.getPhotos(workspaceId, sort);
+        List<WorkspacePhotoResponseDto> result = workspacePhotoService.getPhotos(workspaceId, sort, user.getId());
         return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_LIST_GET_SUCCESS, result);
+    }
+
+    @Operation(summary = "사진 삭제", description = "워크스페이스의 특정 사진을 삭제합니다.")
+    @DeleteMapping("/{workspaceId}/photos/{id}")
+    public ApiResponse<Void> deletePhoto(
+            @PathVariable Long workspaceId,
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        workspacePhotoService.deletePhoto(workspaceId, id, user.getId());
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_DELETE_SUCCESS, null);
     }
 }

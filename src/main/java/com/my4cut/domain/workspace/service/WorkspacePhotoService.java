@@ -10,6 +10,7 @@ import com.my4cut.domain.workspace.dto.WorkspacePhotoUploadRequestDto;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
+import com.my4cut.domain.workspace.repository.WorkspaceMemberRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 public class WorkspacePhotoService {
 
     private final WorkspaceRepository workspaceRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
     private final MediaFileRepository mediaFileRepository; // TODO: MediaFileService로 변경 필요
     private final UserRepository userRepository; // TODO: UserService로 변경 필요
 
@@ -43,6 +45,8 @@ public class WorkspacePhotoService {
         Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
+        validateMembership(workspaceId, userId);
+
         User uploader = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found")); // 공통 유저 예외 적용 필요
 
@@ -51,7 +55,7 @@ public class WorkspacePhotoService {
         for (WorkspacePhotoUploadRequestDto photoRequest : photoRequests) {
             MultipartFile file = photoRequest.file();
             // TODO: 실제 S3 업로드 로직 구현
-            // 현재는 더미 URL을 생성하여 저장합니다.
+            // 현재는 더미 URL을 생성하여 저장.
             String dummyUrl = "https://my4cut-bucket.s3.amazonaws.com/photos/" + file.getOriginalFilename();
 
             MediaFile mediaFile = MediaFile.builder()
@@ -76,11 +80,35 @@ public class WorkspacePhotoService {
     }
 
     /**
-     * 워크스페이스의 사진 목록을 조회합니다.
+     * 워크스페이스의 사진을 삭제합니다.
      */
-    public List<WorkspacePhotoResponseDto> getPhotos(Long workspaceId, String sort) {
+    @Transactional
+    public void deletePhoto(Long workspaceId, Long photoId, Long userId) {
         workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+
+        validateMembership(workspaceId, userId);
+
+        MediaFile photo = mediaFileRepository.findById(photoId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND));
+
+        // TODO: 실제 S3 업로드 로직 구현
+
+        if (!photo.getWorkspace().getId().equals(workspaceId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND); // 다른 워크스페이스의 사진인 경우에도 NOT_FOUND 처리
+        }
+
+        mediaFileRepository.delete(photo);
+    }
+
+    /**
+     * 워크스페이스의 사진 목록을 조회합니다.
+     */
+    public List<WorkspacePhotoResponseDto> getPhotos(Long workspaceId, String sort, Long userId) {
+        workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+
+        validateMembership(workspaceId, userId);
 
         Sort sorting = sort.equalsIgnoreCase("oldest")
                 ? Sort.by(Sort.Direction.ASC, "takenDate", "createdAt")
@@ -92,5 +120,16 @@ public class WorkspacePhotoService {
         return photos.stream()
                 .map(photo -> new WorkspacePhotoResponseDto(photo.getId(), photo.getFileUrl()))
                 .collect(Collectors.toList());
+    }
+
+    private void validateMembership(Long workspaceId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+
+        if (workspaceMemberRepository.findByWorkspaceAndUser(workspace, user).isEmpty()) {
+            throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER); // 권한 없음 예외 사용
+        }
     }
 }

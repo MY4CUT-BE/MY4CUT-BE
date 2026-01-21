@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: my4cut
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:3306/my4cutdb?useSSL=false&serverTimezone=Asia/Seoul
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate   # prod에서는 validate 또는 none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+jwt:
+  token:
+    secretKey: ${JWT_SECRET_KEY}

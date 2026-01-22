@@ -39,4 +39,12 @@ public class Friend extends BaseEntity {
         this.friendUser = friendUser;
         this.isFavorite = isFavorite;
     }
+
+    public void markFavorite() {
+        this.isFavorite = true;
+    }
+
+    public void unmarkFavorite() {
+        this.isFavorite = false;
+    }
 }

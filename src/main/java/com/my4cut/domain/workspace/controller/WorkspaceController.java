@@ -1,6 +1,5 @@
 package com.my4cut.domain.workspace.controller;
 
-import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
@@ -29,16 +28,16 @@ public class WorkspaceController {
     @PostMapping
     public ApiResponse<WorkspaceInfoResponseDto> createWorkspace(
             @RequestBody WorkspaceCreateRequestDto dto,
-            @AuthenticationPrincipal User user) {
-        WorkspaceInfoResponseDto result = workspaceService.createWorkspace(dto, user.getId());
+            @AuthenticationPrincipal Long userId) {
+        WorkspaceInfoResponseDto result = workspaceService.createWorkspace(dto, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_CREATED, result);
     }
 
     @Operation(summary = "내 워크스페이스 목록 조회", description = "내가 참여 중인 워크스페이스 목록을 조회합니다.")
     @GetMapping("/me")
     public ApiResponse<List<WorkspaceInfoResponseDto>> getMyWorkspaces(
-            @AuthenticationPrincipal User user) {
-        List<WorkspaceInfoResponseDto> result = workspaceService.getMyWorkspaces(user.getId());
+            @AuthenticationPrincipal Long userId) {
+        List<WorkspaceInfoResponseDto> result = workspaceService.getMyWorkspaces(userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_GET_SUCCESS, result);
     }
 
@@ -55,8 +54,8 @@ public class WorkspaceController {
     public ApiResponse<WorkspaceInfoResponseDto> updateWorkspace(
             @PathVariable Long workspaceId,
             @RequestBody WorkspaceUpdateRequestDto dto,
-            @AuthenticationPrincipal User user) {
-        WorkspaceInfoResponseDto result = workspaceService.updateWorkspace(workspaceId, dto, user.getId());
+            @AuthenticationPrincipal Long userId) {
+        WorkspaceInfoResponseDto result = workspaceService.updateWorkspace(workspaceId, dto, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_MODIFIED, result);
     }
 
@@ -64,8 +63,8 @@ public class WorkspaceController {
     @DeleteMapping("/{workspaceId}")
     public ApiResponse<Void> deleteWorkspace(
             @PathVariable Long workspaceId,
-            @AuthenticationPrincipal User user) {
-        workspaceService.deleteWorkspace(workspaceId, user.getId());
+            @AuthenticationPrincipal Long userId) {
+        workspaceService.deleteWorkspace(workspaceId, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_DELETED);
     }
 

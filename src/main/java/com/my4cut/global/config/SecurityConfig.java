@@ -41,7 +41,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/withdraw",
                                 "/users/**",
-                                "/friends/**"  // ← 이거 추가!
+                                "/friends/**",
+                                "/api/v1/**"
                         ).authenticated()
 
                         // 그 외 전부 차단

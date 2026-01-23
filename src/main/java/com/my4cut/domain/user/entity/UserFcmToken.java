@@ -39,4 +39,8 @@ public class UserFcmToken extends BaseEntity {
         this.fcmToken = fcmToken;
         this.deviceType = deviceType;
     }
+
+    public void updateToken(String newToken) { //
+        this.fcmToken = newToken;
+    }
 }

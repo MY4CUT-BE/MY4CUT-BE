@@ -60,3 +60,23 @@ main branch와 하위 각 팀원별 branch를 이용합니다.
 ---
 
 ## 코드 컨벤션
+가독성, 일관성, 협업 효율성을 위해 아래의 컨벤션을 따릅니다.
+
+### 클래스
+- **PascalCase** (파스칼 케이스)
+    - 첫글자와 이어지는 단어의 첫글자를 대문자로 표기하는 방법
+    - 예) `GoodPerson`, `MyKakaoCake`, `IAmDeveloper`
+      
+### 메서드, 변수
+- **camelCase** (카멜 케이스)
+    - 첫단어는 소문자로 표기하지만, 이어지는 단어의 첫글자는 대문자로 표기하는 방법
+    - 예) `goodPerson`, `myKakaoCake`, `iAmDeveloper`
+
+### 상수
+- **UPPER_CASE** (어퍼 케이스)
+    - 모든 단어를 대문자로 표기하고, 단어를 언더바(_) 로 연결하는 방법
+    - 예) `GOOD_PERSON`, `MY_KAKAO_CAKE`, `I_AM_DEVELOPER`
+
+### Boolean
+- `is`, `has`로 시작
+    - 예) `isDeleted`, `hasPermission`

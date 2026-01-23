@@ -44,7 +44,8 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
             cd ~/deploy
             docker compose pull api
-            docker compose up -d
+            docker compose up -d api
             docker image prune -f

@@ -6,7 +6,7 @@ spring:
     name: my4cut
 
   datasource:
-    url: jdbc:mysql://${DB_HOST}:3306/my4cutdb?useSSL=false&serverTimezone=Asia/Seoul
+    url: ${DB_URL}?useSSL=false&serverTimezone=Asia/Seoul
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver

@@ -1,6 +1,5 @@
 package com.my4cut.domain.workspace.controller;
 
-import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.workspace.dto.WorkspaceInviteRequestDto;
 import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
 import com.my4cut.domain.workspace.service.WorkspaceInvitationService;
@@ -24,8 +23,8 @@ public class WorkspaceMemberController {
     @DeleteMapping("/{workspaceId}/members/me")
     public ApiResponse<Void> leaveWorkspace(
             @PathVariable Long workspaceId,
-            @AuthenticationPrincipal User user) {
-        workspaceMemberService.leaveWorkspace(workspaceId, user.getId());
+            @AuthenticationPrincipal Long userId) {
+        workspaceMemberService.leaveWorkspace(workspaceId, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_LEAVE_SUCCESS);
     }
 

@@ -41,7 +41,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/withdraw",
                                 "/users/**",
-                                "/friends/**",
+                                "/friends/**",  // 친구 관련 개발 작업 중 추가 (seol1jun)
+                                "/notifications/**", //fcm토큰 관련 작업 중 추가 (seol1jun)
                                 "/api/v1/**"
                         ).authenticated()
 

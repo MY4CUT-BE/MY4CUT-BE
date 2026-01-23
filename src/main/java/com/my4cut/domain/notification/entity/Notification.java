@@ -44,4 +44,9 @@ public class Notification extends BaseEntity {
         this.referenceId = referenceId;
         this.isRead = isRead;
     }
+
+    // 읽음 처리 메서드 추가
+    public void markAsRead() {
+        this.isRead = true;
+    }
 }

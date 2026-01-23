@@ -42,7 +42,8 @@ public class SecurityConfig {
                                 "/auth/withdraw",
                                 "/users/**",
                                 "/friends/**",  // 친구 관련 개발 작업 중 추가 (seol1jun)
-                                "/notifications/**" //fcm토큰 관련 작업 중 추가 (seol1jun)
+                                "/notifications/**", //fcm토큰 관련 작업 중 추가 (seol1jun)
+                                "/api/v1/**"
                         ).authenticated()
 
                         // 그 외 전부 차단

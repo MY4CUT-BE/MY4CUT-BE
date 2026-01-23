@@ -31,7 +31,7 @@ public class MediaFile extends BaseEntity {
     private User uploader;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "workspace_id", nullable = false)
+    @JoinColumn(name = "workspace_id")
     private Workspace workspace;
 
     @Enumerated(EnumType.STRING)

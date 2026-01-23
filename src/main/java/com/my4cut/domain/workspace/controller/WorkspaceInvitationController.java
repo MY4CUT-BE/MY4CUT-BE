@@ -1,6 +1,5 @@
 package com.my4cut.domain.workspace.controller;
 
-import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.workspace.dto.WorkspaceInvitationResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInviteRequestDto;
 import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
@@ -26,16 +25,16 @@ public class WorkspaceInvitationController {
     @PostMapping
     public ApiResponse<Void> inviteMembers(
             @RequestBody WorkspaceInviteRequestDto dto,
-            @AuthenticationPrincipal User user) {
-        workspaceInvitationService.inviteMembers(dto, user.getId());
+            @AuthenticationPrincipal Long userId) {
+        workspaceInvitationService.inviteMembers(dto, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_INVITE_SUCCESS);
     }
 
     @Operation(summary = "내가 받은 초대 목록 조회", description = "내가 참여 요청을 받은 워크스페이스 초대 목록을 조회합니다.")
     @GetMapping("/me")
     public ApiResponse<List<WorkspaceInvitationResponseDto>> getMyInvitations(
-            @AuthenticationPrincipal User user) {
-        List<WorkspaceInvitationResponseDto> result = workspaceInvitationService.getMyInvitations(user.getId());
+            @AuthenticationPrincipal Long userId) {
+        List<WorkspaceInvitationResponseDto> result = workspaceInvitationService.getMyInvitations(userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_GET_SUCCESS, result);
     }
 
@@ -43,8 +42,8 @@ public class WorkspaceInvitationController {
     @PostMapping("/{invitationId}/accept")
     public ApiResponse<Void> acceptInvitation(
             @PathVariable Long invitationId,
-            @AuthenticationPrincipal User user) {
-        workspaceInvitationService.acceptInvitation(invitationId, user.getId());
+            @AuthenticationPrincipal Long userId) {
+        workspaceInvitationService.acceptInvitation(invitationId, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_INVITE_SUCCESS);
     }
 
@@ -52,8 +51,8 @@ public class WorkspaceInvitationController {
     @PostMapping("/{invitationId}/reject")
     public ApiResponse<Void> rejectInvitation(
             @PathVariable Long invitationId,
-            @AuthenticationPrincipal User user) {
-        workspaceInvitationService.rejectInvitation(invitationId, user.getId());
+            @AuthenticationPrincipal Long userId) {
+        workspaceInvitationService.rejectInvitation(invitationId, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_INVITE_SUCCESS);
     }
 }

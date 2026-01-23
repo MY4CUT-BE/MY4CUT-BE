@@ -5,8 +5,9 @@ import com.my4cut.domain.media.enums.MediaType;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
-import com.my4cut.domain.workspace.dto.WorkspacePhotoResponseDto;
-import com.my4cut.domain.workspace.dto.WorkspacePhotoUploadRequestDto;
+import com.my4cut.domain.media.entity.MediaComment;
+import com.my4cut.domain.media.repository.MediaCommentRepository;
+import com.my4cut.domain.workspace.dto.*;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
@@ -33,6 +34,7 @@ public class WorkspacePhotoService {
     private final WorkspaceRepository workspaceRepository;
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final MediaFileRepository mediaFileRepository; // TODO: MediaFileService로 변경 필요
+    private final MediaCommentRepository mediaCommentRepository;
     private final UserRepository userRepository; // TODO: UserService로 변경 필요
 
     /**
@@ -131,5 +133,88 @@ public class WorkspacePhotoService {
         if (workspaceMemberRepository.findByWorkspaceAndUser(workspace, user).isEmpty()) {
             throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER); // 권한 없음 예외 사용
         }
+    }
+
+    /**
+     * 사진의 댓글 목록을 조회합니다.
+     */
+    public List<WorkspacePhotoCommentResponseDto> getComments(Long workspaceId, Long photoId, Long userId) {
+        workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+
+        validateMembership(workspaceId, userId);
+
+        validatePhotoInWorkspace(workspaceId, photoId);
+
+        List<MediaComment> comments = mediaCommentRepository.findAllByMediaFileIdOrderByCreatedAtDesc(photoId);
+
+        return comments.stream()
+                .map(comment -> new WorkspacePhotoCommentResponseDto(
+                        comment.getId(),
+                        comment.getUser().getId(),
+                        comment.getUser().getNickname(),
+                        comment.getContent(),
+                        comment.getCreatedAt()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 사진의 댓글을 삭제합니다.
+     */
+    @Transactional
+    public void deleteComment(Long workspaceId, Long photoId, Long commentId, Long userId) {
+        workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+
+        validateMembership(workspaceId, userId);
+
+        validatePhotoInWorkspace(workspaceId, photoId);
+
+        MediaComment comment = mediaCommentRepository.findById(commentId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.COMMENT_NOT_FOUND));
+
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.NOT_COMMENT_OWNER);
+        }
+
+        if (!comment.getMediaFile().getId().equals(photoId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.COMMENT_NOT_FOUND);
+        }
+
+        mediaCommentRepository.delete(comment);
+    }
+
+    /**
+     * 사진에 댓글을 등록합니다.
+     */
+    @Transactional
+    public void createComment(Long workspaceId, Long photoId, WorkspacePhotoCommentRequestDto dto, Long userId) {
+        workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+
+        validateMembership(workspaceId, userId);
+
+        MediaFile mediaFile = validatePhotoInWorkspace(workspaceId, photoId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        MediaComment comment = MediaComment.builder()
+                .mediaFile(mediaFile)
+                .user(user)
+                .content(dto.content())
+                .build();
+
+        mediaCommentRepository.save(comment);
+    }
+
+    private MediaFile validatePhotoInWorkspace(Long workspaceId, Long photoId) {
+        MediaFile photo = mediaFileRepository.findById(photoId)
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND));
+
+        if (!photo.getWorkspace().getId().equals(workspaceId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND);
+        }
+        return photo;
     }
 }

@@ -1,8 +1,7 @@
 package com.my4cut.domain.workspace.controller;
 
 import com.my4cut.domain.user.entity.User;
-import com.my4cut.domain.workspace.dto.WorkspacePhotoResponseDto;
-import com.my4cut.domain.workspace.dto.WorkspacePhotoUploadListRequestDto;
+import com.my4cut.domain.workspace.dto.*;
 import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
 import com.my4cut.domain.workspace.service.WorkspacePhotoService;
 import com.my4cut.global.response.ApiResponse;
@@ -55,5 +54,38 @@ public class WorkspacePhotoController {
             @AuthenticationPrincipal User user) {
         workspacePhotoService.deletePhoto(workspaceId, id, user.getId());
         return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_DELETE_SUCCESS, null);
+    }
+
+    @Operation(summary = "댓글 목록 조회", description = "워크스페이스 특정 사진의 댓글 목록을 조회합니다.")
+    @GetMapping("/{workspaceId}/photos/{photoId}/comments")
+    public ApiResponse<List<WorkspacePhotoCommentResponseDto>> getComments(
+            @PathVariable Long workspaceId,
+            @PathVariable Long photoId,
+            @AuthenticationPrincipal User user) {
+        List<WorkspacePhotoCommentResponseDto> result = workspacePhotoService.getComments(workspaceId, photoId,
+                user.getId());
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.COMMENT_LIST_GET_SUCCESS, result);
+    }
+
+    @Operation(summary = "댓글 등록", description = "워크스페이스 특정 사진에 댓글을 등록합니다.")
+    @PostMapping("/{workspaceId}/photos/{photoId}/comments")
+    public ApiResponse<Void> createComment(
+            @PathVariable Long workspaceId,
+            @PathVariable Long photoId,
+            @Valid @RequestBody WorkspacePhotoCommentRequestDto requestDto,
+            @AuthenticationPrincipal User user) {
+        workspacePhotoService.createComment(workspaceId, photoId, requestDto, user.getId());
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.COMMENT_CREATE_SUCCESS);
+    }
+
+    @Operation(summary = "댓글 삭제", description = "워크스페이스 특정 사진의 댓글을 삭제합니다.")
+    @DeleteMapping("/{workspaceId}/photos/{photoId}/comments/{commentId}")
+    public ApiResponse<Void> deleteComment(
+            @PathVariable Long workspaceId,
+            @PathVariable Long photoId,
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal User user) {
+        workspacePhotoService.deleteComment(workspaceId, photoId, commentId, user.getId());
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.COMMENT_DELETE_SUCCESS);
     }
 }

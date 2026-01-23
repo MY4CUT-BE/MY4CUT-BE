@@ -3,6 +3,8 @@ package com.my4cut.domain.friend.entity;
 import com.my4cut.domain.common.BaseEntity;
 import com.my4cut.domain.friend.enums.FriendRequestStatus;
 import com.my4cut.domain.user.entity.User;
+import com.my4cut.global.exception.BusinessException;
+import com.my4cut.global.response.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -40,5 +42,21 @@ public class FriendRequest extends BaseEntity {
         this.fromUser = fromUser;
         this.toUser = toUser;
         this.status = status;
+    }
+
+    public void accept() {
+        if (this.status != FriendRequestStatus.PENDING) {
+            // TODO: 친구 요청 상태 전이 전용 ErrorCode로 분리 필요
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+        this.status = FriendRequestStatus.ACCEPTED;
+    }
+
+    public void reject() {
+        if (this.status != FriendRequestStatus.PENDING) {
+            // TODO: 친구 요청 상태 전이 전용 ErrorCode로 분리 필요
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+        this.status = FriendRequestStatus.REJECTED;
     }
 }

@@ -40,7 +40,8 @@ public class SecurityConfig {
                         // 인증 필요
                         .requestMatchers(
                                 "/auth/withdraw",
-                                "/users/**"
+                                "/users/**",
+                                "/friends/**"  // ← 이거 추가!
                         ).authenticated()
 
                         // 그 외 전부 차단

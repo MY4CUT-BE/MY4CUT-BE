@@ -191,4 +191,33 @@ public class FriendService {
         friend.unmarkFavorite();
         return FriendResDto.FavoriteFriendResDto.of(false);
     }
+
+    //친구 목록 조회
+    @Transactional(readOnly = true)
+    public List<FriendResDto> getMyFriends(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        return friendRepository.findAllByUser(user).stream()
+                .map(friend -> FriendResDto.builder()
+                        .friendId(friend.getFriendUser().getId())
+                        .userId(user.getId())
+                        .nickname(friend.getFriendUser().getNickname())
+                        .isFavorite(friend.getIsFavorite())
+                        .build()
+                )
+                .toList();
+    }
+
+    //친구 삭제
+    @Transactional
+    public void deleteFriend(Long userId, Long friendId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        User friendUser = userRepository.findById(friendId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        friendRepository.deleteByUserAndFriendUser(user, friendUser);
+        friendRepository.deleteByUserAndFriendUser(friendUser, user);
+    }
 }

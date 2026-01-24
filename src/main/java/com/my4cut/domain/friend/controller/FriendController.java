@@ -99,5 +99,28 @@ public class FriendController {
                 friendService.unfavoriteFriend(userId, id)
         );
     }
+
+    // 내 친구 목록 조회
+    @GetMapping
+    public ApiResponse<List<FriendResDto>> getMyFriends(
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessCode.OK,
+                friendService.getMyFriends(userId)
+        );
+    }
+
+    //친구 삭제
+    // 친구 삭제
+    @DeleteMapping("/{friendId}")
+    public ApiResponse<Void> deleteFriend(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long friendId
+    ) {
+        friendService.deleteFriend(userId, friendId);
+        return ApiResponse.onSuccess(SuccessCode.OK);
+    }
+
 }
 

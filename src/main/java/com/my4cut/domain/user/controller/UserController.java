@@ -7,10 +7,12 @@ import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -19,6 +21,7 @@ public class UserController {
 
     private final UserService userService;
 
+    //마이페이지
     @GetMapping("/me")
     public ApiResponse<UserResDTO.MeDTO> getMyInfo() {
 
@@ -33,6 +36,7 @@ public class UserController {
         );
     }
 
+    //닉네임 변경
     @PatchMapping("/me/nickname")
     public ApiResponse<UserResDTO.UpdateNicknameDTO> updateNickname(
             @AuthenticationPrincipal Long userId,
@@ -41,6 +45,21 @@ public class UserController {
         return ApiResponse.onSuccess(
                 SuccessCode.OK,
                 userService.updateNickname(userId, request)
+        );
+    }
+
+    // 프로필 사진 변경
+    @PatchMapping(
+            value = "/me/image",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ApiResponse<UserResDTO.UpdateProfileImageDTO> updateProfileImage(
+            @AuthenticationPrincipal Long userId,
+            @RequestPart("file") MultipartFile profileImage
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessCode.OK,
+                userService.updateProfileImage(userId, profileImage)
         );
     }
 }

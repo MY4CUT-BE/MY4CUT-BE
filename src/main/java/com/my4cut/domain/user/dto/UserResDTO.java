@@ -34,7 +34,13 @@ public class UserResDTO {
         }
     }
 
+    // 닉네임 변경
     public record UpdateNicknameDTO(
             String updatedNickname
+    ) {}
+
+    // 프로필 이미지 변경
+    public record UpdateProfileImageDTO(
+            String profileImageUrl
     ) {}
 }

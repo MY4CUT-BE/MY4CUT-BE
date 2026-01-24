@@ -1,6 +1,5 @@
 package com.my4cut.domain.workspace.controller;
 
-import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.workspace.dto.*;
 import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
 import com.my4cut.domain.workspace.service.WorkspacePhotoService;
@@ -29,9 +28,9 @@ public class WorkspacePhotoController {
     public ApiResponse<List<WorkspacePhotoResponseDto>> uploadPhotos(
             @PathVariable Long workspaceId,
             @Valid @ModelAttribute WorkspacePhotoUploadListRequestDto requestDto,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal Long userId) {
         List<WorkspacePhotoResponseDto> result = workspacePhotoService.uploadPhotos(workspaceId, requestDto.photos(),
-                user.getId());
+                userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_UPLOAD_SUCCESS, result);
     }
 
@@ -39,10 +38,10 @@ public class WorkspacePhotoController {
     @GetMapping("/{workspaceId}/photos")
     public ApiResponse<List<WorkspacePhotoResponseDto>> getPhotos(
             @PathVariable Long workspaceId,
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal Long userId,
             @Parameter(description = "정렬 순서", schema = @Schema(allowableValues = { "latest",
                     "oldest" })) @RequestParam(name = "sort", defaultValue = "latest") String sort) {
-        List<WorkspacePhotoResponseDto> result = workspacePhotoService.getPhotos(workspaceId, sort, user.getId());
+        List<WorkspacePhotoResponseDto> result = workspacePhotoService.getPhotos(workspaceId, sort, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_LIST_GET_SUCCESS, result);
     }
 
@@ -51,8 +50,8 @@ public class WorkspacePhotoController {
     public ApiResponse<Void> deletePhoto(
             @PathVariable Long workspaceId,
             @PathVariable Long id,
-            @AuthenticationPrincipal User user) {
-        workspacePhotoService.deletePhoto(workspaceId, id, user.getId());
+            @AuthenticationPrincipal Long userId) {
+        workspacePhotoService.deletePhoto(workspaceId, id, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_DELETE_SUCCESS, null);
     }
 
@@ -61,9 +60,9 @@ public class WorkspacePhotoController {
     public ApiResponse<List<WorkspacePhotoCommentResponseDto>> getComments(
             @PathVariable Long workspaceId,
             @PathVariable Long photoId,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal Long userId) {
         List<WorkspacePhotoCommentResponseDto> result = workspacePhotoService.getComments(workspaceId, photoId,
-                user.getId());
+                userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.COMMENT_LIST_GET_SUCCESS, result);
     }
 
@@ -73,8 +72,8 @@ public class WorkspacePhotoController {
             @PathVariable Long workspaceId,
             @PathVariable Long photoId,
             @Valid @RequestBody WorkspacePhotoCommentRequestDto requestDto,
-            @AuthenticationPrincipal User user) {
-        workspacePhotoService.createComment(workspaceId, photoId, requestDto, user.getId());
+            @AuthenticationPrincipal Long userId) {
+        workspacePhotoService.createComment(workspaceId, photoId, requestDto, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.COMMENT_CREATE_SUCCESS);
     }
 
@@ -84,8 +83,8 @@ public class WorkspacePhotoController {
             @PathVariable Long workspaceId,
             @PathVariable Long photoId,
             @PathVariable Long commentId,
-            @AuthenticationPrincipal User user) {
-        workspacePhotoService.deleteComment(workspaceId, photoId, commentId, user.getId());
+            @AuthenticationPrincipal Long userId) {
+        workspacePhotoService.deleteComment(workspaceId, photoId, commentId, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.COMMENT_DELETE_SUCCESS);
     }
 }

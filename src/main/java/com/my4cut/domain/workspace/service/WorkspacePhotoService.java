@@ -77,7 +77,12 @@ public class WorkspacePhotoService {
         return savedFiles.stream()
                 .map(file -> new WorkspacePhotoResponseDto(
                         file.getId(),
-                        file.getFileUrl()))
+                        file.getFileUrl(),
+                        file.getMediaType(),
+                        file.getTakenDate(),
+                        file.getIsFinal(),
+                        file.getCreatedAt(),
+                        file.getUploader().getNickname()))
                 .collect(Collectors.toList());
     }
 
@@ -120,7 +125,14 @@ public class WorkspacePhotoService {
                 sorting);
 
         return photos.stream()
-                .map(photo -> new WorkspacePhotoResponseDto(photo.getId(), photo.getFileUrl()))
+                .map(photo -> new WorkspacePhotoResponseDto(
+                        photo.getId(),
+                        photo.getFileUrl(),
+                        photo.getMediaType(),
+                        photo.getTakenDate(),
+                        photo.getIsFinal(),
+                        photo.getCreatedAt(),
+                        photo.getUploader().getNickname()))
                 .collect(Collectors.toList());
     }
 

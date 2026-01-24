@@ -1,5 +1,6 @@
 package com.my4cut.global.image;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 @Service
+@Profile("local")
 public class LocalImageStorageService implements ImageStorageService {
 
     private static final String UPLOAD_DIR =

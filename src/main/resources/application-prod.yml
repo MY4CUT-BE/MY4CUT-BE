@@ -22,3 +22,9 @@ spring:
 jwt:
   token:
     secretKey: ${JWT_SECRET_KEY}
+
+cloud:
+  aws:
+    region: ap-northeast-2
+    s3:
+      bucket: my4cut-image-bucket

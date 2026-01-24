@@ -56,7 +56,10 @@ public class User extends BaseEntity {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
-        this.profileImageUrl = profileImageUrl;
+        this.profileImageUrl =
+                profileImageUrl != null
+                        ? profileImageUrl
+                        : com.my4cut.global.image.ImageConstants.DEFAULT_PROFILE_IMAGE_URL;
         this.loginType = loginType;
         this.friendCode = friendCode;
         this.status = status;
@@ -69,5 +72,9 @@ public class User extends BaseEntity {
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

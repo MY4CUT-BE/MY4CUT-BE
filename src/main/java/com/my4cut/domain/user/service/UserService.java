@@ -6,17 +6,19 @@ import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.enums.UserStatus;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.global.exception.BusinessException;
+import com.my4cut.global.image.ImageStorageService;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
-
+    private final ImageStorageService imageStorageService;
     @Transactional(readOnly = true)
     public UserResDTO.MeDTO getMyInfo(Long userId) {
 
@@ -42,5 +44,25 @@ public class UserService {
         user.updateNickname(request.nickname());
 
         return new UserResDTO.UpdateNicknameDTO(user.getNickname());
+    }
+
+    @Transactional
+    public UserResDTO.UpdateProfileImageDTO updateProfileImage(
+            Long userId,
+            MultipartFile profileImage
+    ) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        // 1. 기존 이미지 삭제
+        imageStorageService.delete(user.getProfileImageUrl());
+
+        // 2. 새 이미지 업로드
+        String imageUrl = imageStorageService.upload(profileImage);
+
+        // 3. DB 반영
+        user.updateProfileImage(imageUrl);
+
+        return new UserResDTO.UpdateProfileImageDTO(imageUrl);
     }
 }

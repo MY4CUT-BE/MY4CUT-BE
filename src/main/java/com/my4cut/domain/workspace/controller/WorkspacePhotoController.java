@@ -17,7 +17,7 @@ import java.util.List;
 
 @Tag(name = "Workspace Photo", description = "워크스페이스 사진 관리 API")
 @RestController
-@RequestMapping("/api/v1/workspaces")
+@RequestMapping("/workspaces")
 @RequiredArgsConstructor
 public class WorkspacePhotoController {
 

@@ -25,9 +25,17 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    /**
+     * EMAIL 로그인 시 사용
+     * KAKAO 로그인 사용자는 null 가능
+     */
+    @Column(unique = true)
     private String email;
 
+    /**
+     * EMAIL 로그인 시 사용
+     * 소셜 로그인은 null
+     */
     private String password;
 
     @Column(nullable = false)
@@ -40,6 +48,13 @@ public class User extends BaseEntity {
     @Column(name = "login_type", nullable = false)
     private LoginType loginType;
 
+    /**
+     * KAKAO 로그인 고유 식별자
+     * EMAIL 로그인은 null
+     */
+    @Column(name = "oauth_id", unique = true)
+    private String oauthId;
+
     @Column(name = "friend_code", nullable = false, unique = true)
     private String friendCode;
 
@@ -51,8 +66,16 @@ public class User extends BaseEntity {
     private LocalDateTime deletedAt;
 
     @Builder
-    public User(String email, String password, String nickname, String profileImageUrl,
-                LoginType loginType, String friendCode, UserStatus status) {
+    public User(
+            String email,
+            String password,
+            String nickname,
+            String profileImageUrl,
+            LoginType loginType,
+            String oauthId,
+            String friendCode,
+            UserStatus status
+    ) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
@@ -61,6 +84,7 @@ public class User extends BaseEntity {
                         ? profileImageUrl
                         : com.my4cut.global.image.ImageConstants.DEFAULT_PROFILE_IMAGE_URL;
         this.loginType = loginType;
+        this.oauthId = oauthId;
         this.friendCode = friendCode;
         this.status = status;
     }

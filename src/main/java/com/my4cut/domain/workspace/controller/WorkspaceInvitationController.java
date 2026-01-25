@@ -15,7 +15,7 @@ import java.util.List;
 
 @Tag(name = "Workspace Invitation", description = "워크스페이스 초대 관리 API")
 @RestController
-@RequestMapping("/api/v1/workspaces/invitations")
+@RequestMapping("/workspaces/invitations")
 @RequiredArgsConstructor
 public class WorkspaceInvitationController {
 

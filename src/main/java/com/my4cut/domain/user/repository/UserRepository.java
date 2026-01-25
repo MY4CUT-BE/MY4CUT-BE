@@ -1,6 +1,7 @@
 package com.my4cut.domain.user.repository;
 
 import com.my4cut.domain.user.entity.User;
+import com.my4cut.domain.user.enums.LoginType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -13,4 +14,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     //friendCode로 User 조회가 필요해 메서드 추가
     Optional<User> findByFriendCode(String friendCode);
+
+    Optional<User> findByLoginTypeAndOauthId(LoginType loginType, String oauthId);
+
 }

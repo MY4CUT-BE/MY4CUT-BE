@@ -1,5 +1,6 @@
 package com.my4cut.domain.auth.controller;
 
+import com.my4cut.domain.auth.dto.AuthReqDTO;
 import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.auth.service.AuthService;
@@ -53,7 +54,6 @@ public class AuthController {
         );
     }
 
-
     @DeleteMapping("/withdraw")
     public ApiResponse<Void> withdraw(
             @AuthenticationPrincipal Long userId
@@ -61,5 +61,17 @@ public class AuthController {
         authService.withdraw(userId);
         return ApiResponse.onSuccess(SuccessCode.OK, null);
     }
+
+    @PostMapping("/kakao")
+    public ApiResponse<UserResDTO.LoginDTO> kakaoLogin(
+            @RequestBody AuthReqDTO.KakaoLoginReqDto dto
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessCode.OK,
+                authService.kakaoLogin(dto.accessToken())
+        );
+    }
+
+
 
 }

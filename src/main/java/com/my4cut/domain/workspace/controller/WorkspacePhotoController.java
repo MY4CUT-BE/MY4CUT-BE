@@ -23,13 +23,13 @@ public class WorkspacePhotoController {
 
     private final WorkspacePhotoService workspacePhotoService;
 
-    @Operation(summary = "사진 업로드", description = "워크스페이스에 여러 장의 사진과 메타데이터(날짜 등)를 업로드합니다.")
-    @PostMapping(value = "/{workspaceId}/photos", consumes = "multipart/form-data")
+    @Operation(summary = "사진 업로드", description = "워크스페이스에 여러 장의 사진(mediaId)을 등록합니다.")
+    @PostMapping(value = "/{workspaceId}/photos")
     public ApiResponse<List<WorkspacePhotoResponseDto>> uploadPhotos(
             @PathVariable Long workspaceId,
-            @Valid @ModelAttribute WorkspacePhotoUploadListRequestDto requestDto,
+            @RequestBody WorkspacePhotoUploadRequestDto requestDto,
             @AuthenticationPrincipal Long userId) {
-        List<WorkspacePhotoResponseDto> result = workspacePhotoService.uploadPhotos(workspaceId, requestDto.photos(),
+        List<WorkspacePhotoResponseDto> result = workspacePhotoService.uploadPhotos(workspaceId, requestDto,
                 userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_UPLOAD_SUCCESS, result);
     }

@@ -6,7 +6,5 @@ package com.my4cut.domain.user.enums;
  */
 public enum LoginType {
     KAKAO,
-    NAVER,
-    APPLE,
     EMAIL
 }

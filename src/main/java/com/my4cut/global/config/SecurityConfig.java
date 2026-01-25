@@ -43,6 +43,8 @@ public class SecurityConfig {
                                 "/users/**",
                                 "/friends/**",  // 친구 관련 개발 작업 중 추가 (seol1jun)
                                 "/notifications/**", //fcm토큰 관련 작업 중 추가 (seol1jun)
+                                "/poses/**",    // 포즈 API
+                                "/media/**",    // 미디어 API
                                 "/api/v1/**"
                         ).authenticated()
 

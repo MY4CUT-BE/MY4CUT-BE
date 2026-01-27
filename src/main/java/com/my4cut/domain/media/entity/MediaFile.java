@@ -61,4 +61,8 @@ public class MediaFile extends BaseEntity {
         this.diary = diary;
         this.isFinal = isFinal;
     }
+
+    public void assignToWorkspace(Workspace workspace) {
+        this.workspace = workspace;
+    }
 }

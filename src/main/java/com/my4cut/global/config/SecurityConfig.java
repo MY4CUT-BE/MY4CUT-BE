@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 "/notifications/**", //fcm토큰 관련 작업 중 추가 (seol1jun)
                                 "/poses/**",    // 포즈 API
                                 "/media/**",    // 미디어 API
+                                "/day4cut/**",  // 하루네컷 API
                                 "/api/v1/**"
                         ).authenticated()
 

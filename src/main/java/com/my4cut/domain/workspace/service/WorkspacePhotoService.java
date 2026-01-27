@@ -13,6 +13,7 @@ import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
 import com.my4cut.domain.workspace.repository.WorkspaceMemberRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
+import com.my4cut.global.image.ImageStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class WorkspacePhotoService {
     private final MediaFileRepository mediaFileRepository; // TODO: MediaFileService로 변경 필요
     private final MediaCommentRepository mediaCommentRepository;
     private final UserRepository userRepository; // TODO: UserService로 변경 필요
+    private final ImageStorageService imageStorageService;
 
     /**
      * 워크스페이스에 사진을 업로드합니다.
@@ -44,7 +46,7 @@ public class WorkspacePhotoService {
             WorkspacePhotoUploadRequestDto requestDto,
             Long userId) {
 
-        validateMembership(workspaceId, userId);
+        Workspace workspace = validateMembership(workspaceId, userId);
  
         List<MediaFile> updatedMediaFiles = new ArrayList<>();
  
@@ -66,6 +68,7 @@ public class WorkspacePhotoService {
             }
  
             // 워크스페이스 연결
+            mediaFile.assignToWorkspace(workspace);
             updatedMediaFiles.add(mediaFile);
         }
  
@@ -94,12 +97,19 @@ public class WorkspacePhotoService {
         MediaFile photo = mediaFileRepository.findById(photoId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND));
 
-        // TODO: 실제 S3 업로드 로직 구현
-
         if (!photo.getWorkspace().getId().equals(workspaceId)) {
             throw new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND); // 다른 워크스페이스의 사진인 경우에도 NOT_FOUND 처리
         }
 
+        // 업로더 본인인지 확인
+        if (!photo.getUploader().getId().equals(userId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.NOT_PHOTO_OWNER);
+        }
+
+        // S3 이미지 제거
+        imageStorageService.delete(photo.getFileUrl());
+
+        // DB 레코드 삭제
         mediaFileRepository.delete(photo);
     }
 
@@ -131,7 +141,7 @@ public class WorkspacePhotoService {
                 .collect(Collectors.toList());
     }
 
-    private void validateMembership(Long workspaceId, Long userId) {
+    private Workspace validateMembership(Long workspaceId, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         Workspace workspace = workspaceRepository.findById(workspaceId)
@@ -140,6 +150,8 @@ public class WorkspacePhotoService {
         if (workspaceMemberRepository.findByWorkspaceAndUser(workspace, user).isEmpty()) {
             throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER); // 권한 없음 예외 사용
         }
+
+        return workspace;
     }
 
     /**

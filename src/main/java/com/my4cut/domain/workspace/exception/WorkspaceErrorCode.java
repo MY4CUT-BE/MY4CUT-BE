@@ -15,6 +15,7 @@ public enum WorkspaceErrorCode implements BaseCode {
     PHOTO_NOT_FOUND(HttpStatus.NOT_FOUND, "W4043", "존재하지 않는 사진입니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "W4044", "존재하지 않는 댓글입니다."),
     NOT_COMMENT_OWNER(HttpStatus.FORBIDDEN, "W4032", "해당 댓글을 삭제할 권한이 없습니다."),
+    NOT_PHOTO_OWNER(HttpStatus.FORBIDDEN, "W4033", "해당 사진을 삭제할 권한이 없습니다."),
     MEDIA_ALREADY_ASSIGNED(HttpStatus.BAD_REQUEST, "W4001", "이미 워크스페이스가 배정되어 있는 미디어입니다.");
 
     private final HttpStatus status;

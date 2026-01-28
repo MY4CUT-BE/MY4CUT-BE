@@ -66,4 +66,15 @@ public class Day4CutResDto {
             return new DeleteResDto(true);
         }
     }
+
+    /**
+     * 캘린더 조회 응답 DTO
+     */
+    public record CalendarResDto(
+            List<Integer> dates
+    ) {
+        public static CalendarResDto of(List<Integer> dates) {
+            return new CalendarResDto(dates);
+        }
+    }
 }

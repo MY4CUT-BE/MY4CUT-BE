@@ -89,6 +89,19 @@ public class Day4CutController {
         );
     }
 
+    // 하루네컷이 존재하는 날짜 목록 조회
+    @GetMapping("/calendar")
+    public ApiResponse<Day4CutResDto.CalendarResDto> getCalendar(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessCode.OK,
+                day4CutService.getCalendar(userId, year, month)
+        );
+    }
+
     @ExceptionHandler(Day4CutException.class)
     public ApiResponse<Void> handleDay4CutException(Day4CutException e) {
         return ApiResponse.onFailure(e.getErrorCode());

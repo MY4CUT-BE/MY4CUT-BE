@@ -30,7 +30,9 @@ public class SecurityConfig {
 
                         // 인증 없이 허용 (화이트리스트)
                         .requestMatchers(
-                                "/auth/**",
+                                "/auth/login",
+                                "/auth/signup",
+                                "/auth/refresh",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
@@ -43,6 +45,7 @@ public class SecurityConfig {
                                 "/notifications/**", //fcm토큰 관련 작업 중 추가 (seol1jun)
                                 "/poses/**",    // 포즈 API
                                 "/media/**",    // 미디어 API
+                                "/day4cut/**",  // 하루네컷 API
                                 "/api/v1/**",
                                 "/images/**"
 

@@ -171,4 +171,23 @@ public class Day4CutService {
             day4Cut.addImage(image);
         }
     }
+
+    /**
+     * 하루네컷이 존재하는 날짜 목록 조회
+     */
+    @Transactional(readOnly = true)
+    public Day4CutResDto.CalendarResDto getCalendar(
+            Long userId,
+            int year,
+            int month
+    ) {
+        // 유저 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        // 해당 년/월에 하루네컷이 존재하는 날짜(일) 조회
+        List<Integer> dates = day4CutRepository.findDaysByUserAndYearMonth(user, year, month);
+
+        return Day4CutResDto.CalendarResDto.of(dates);
+    }
 }

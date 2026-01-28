@@ -41,8 +41,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/withdraw",
                                 "/users/**",
-                                "/friends/**",  // 친구 관련 개발 작업 중 추가 (seol1jun)
-                                "/notifications/**", //fcm토큰 관련 작업 중 추가 (seol1jun)
+                                "/friends/**",  // 친구 API
+                                "/notifications/**", //FCM 토큰 API
                                 "/poses/**",    // 포즈 API
                                 "/media/**",    // 미디어 API
                                 "/day4cut/**",  // 하루네컷 API

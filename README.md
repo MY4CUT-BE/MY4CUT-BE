@@ -11,7 +11,7 @@
 
 ---
 
-## 사용할 기술 스택
+## 사용 기술 스택
 - **Framework**: Spring Boot 3.5.9
 - **Language**: Java 17
 - **Database**: MySQL 8.0
@@ -87,3 +87,54 @@ main branch와 하위 각 팀원별 branch를 이용합니다.
 ### Boolean
 - `is`, `has`로 시작
     - 예) `isDeleted`, `hasPermission`
+ 
+---
+
+## 프로젝트 구조
+```
+src/main/java/com/my4cut/domain/
+├── common/
+│   └── BaseEntity.java              # 공통 필드(createdAt) 관리
+├── auth/
+│   └── entity/
+│       └── RefreshToken.java        # JWT Refresh Token
+├── user/
+│   ├── entity/
+│   │   ├── User.java                # 사용자 정보
+│   │   └── UserFcmToken.java        # FCM 푸시 알림 토큰
+│   └── enums/
+│       ├── LoginType.java           # 로그인 방식 (KAKAO, EMAIL)
+│       ├── UserStatus.java          # 계정 상태 (ACTIVE, INACTIVE, DELETED)
+│       └── DeviceType.java          # 기기 유형 (IOS, ANDROID)
+├── friend/
+│   ├── entity/
+│   │   ├── Friend.java              # 친구 관계
+│   │   └── FriendRequest.java       # 친구 요청
+│   └── enums/
+│       └── FriendRequestStatus.java # 요청 상태 (PENDING, ACCEPTED, REJECTED)
+├── pose/
+│   └── entity/
+│       ├── Pose.java                # 포즈 정보
+│       └── PoseFavorite.java        # 포즈 즐겨찾기
+├── workspace/
+│   └── entity/
+│       ├── Workspace.java           # 공유 워크스페이스
+│       └── WorkspaceMember.java     # 워크스페이스 멤버
+├── media/
+│   ├── entity/
+│   │   ├── MediaFile.java           # 미디어 파일 (사진/동영상)
+│   │   └── MediaComment.java        # 미디어 댓글
+│   └── enums/
+│       └── MediaType.java           # 미디어 유형 (PHOTO, VIDEO)
+├── day4cut/
+│   ├── entity/
+│   │   ├── Day4Cut.java             # 하루네컷
+│   │   └── Day4CutImage.java        # 하루네컷 이미지
+│   └── enums/
+│       └── EmojiType.java           # 이모지 타입 (HAPPY, SAD, ANGRY, CALM, TIRED)
+└── notification/
+    ├── entity/
+    │   └── Notification.java        # 알림
+    └── enums/
+        └── NotificationType.java    # 알림 유형
+```

@@ -1,5 +1,32 @@
 #!/bin/sh
 
+# ------------------------------------------------------------
+# Codex / CI safeguard: force Gradle JVM to Java 17 if possible
+# ------------------------------------------------------------
+if [ -z "$JAVA_HOME" ]; then
+  for jdk in \
+    /usr/lib/jvm/java-17 \
+    /usr/lib/jvm/java-17-openjdk-amd64 \
+    /usr/lib/jvm/temurin-17-jdk \
+    /usr/lib/jvm/jdk-17 \
+    /opt/java/openjdk
+  do
+    if [ -x "$jdk/bin/java" ]; then
+      export JAVA_HOME="$jdk"
+      export PATH="$JAVA_HOME/bin:$PATH"
+      break
+    fi
+  done
+fi
+
+# ---- FAIL FAST (중요) --------------------------------------
+# Java 17을 못 찾았으면 조용히 Java 25로 떨어지지 말고 즉시 중단
+if [ -z "$JAVA_HOME" ]; then
+  echo "ERROR: Java 17 not found."
+  echo "Gradle cannot run because Codex auto-setup may be using Java 25."
+  echo "Please ensure Java 17 is available in the runtime environment."
+  exit 1
+fi
 #
 # Copyright © 2015-2021 the original authors.
 #

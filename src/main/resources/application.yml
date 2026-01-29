@@ -32,3 +32,8 @@ server:
 jwt:
   token:
     secretKey: ${JWT_SECRET_KEY}
+
+cloud:
+  aws:
+    s3:
+      bucket: my4cut-image-bucket   # 실제 버킷명

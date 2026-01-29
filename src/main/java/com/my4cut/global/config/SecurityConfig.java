@@ -46,7 +46,9 @@ public class SecurityConfig {
                                 "/poses/**",    // 포즈 API
                                 "/media/**",    // 미디어 API
                                 "/day4cut/**",  // 하루네컷 API
-                                "/api/v1/**"
+                                "/api/v1/**",
+                                "/images/**"
+
                         ).authenticated()
 
                         // 그 외 전부 차단

@@ -7,12 +7,10 @@ import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.SuccessCode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -49,17 +47,14 @@ public class UserController {
     }
 
     // 프로필 사진 변경
-    @PatchMapping(
-            value = "/me/image",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
+    @PatchMapping("/me/image")
     public ApiResponse<UserResDTO.UpdateProfileImageDTO> updateProfileImage(
             @AuthenticationPrincipal Long userId,
-            @RequestPart("file") MultipartFile profileImage
+            @RequestBody @Valid UserReqDTO.UpdateProfileImageDTO request
     ) {
         return ApiResponse.onSuccess(
                 SuccessCode.OK,
-                userService.updateProfileImage(userId, profileImage)
+                userService.updateProfileImage(userId, request)
         );
     }
 }

@@ -107,7 +107,7 @@ public class WorkspacePhotoService {
         }
 
         // S3 이미지 제거
-        imageStorageService.delete(photo.getFileUrl());
+        imageStorageService.deleteIfExists(photo.getFileUrl());
 
         // DB 레코드 삭제
         mediaFileRepository.delete(photo);

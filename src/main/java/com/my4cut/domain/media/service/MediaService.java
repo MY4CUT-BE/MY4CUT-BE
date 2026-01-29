@@ -35,7 +35,6 @@ public class MediaService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         String fileUrl = imageStorageService.upload(file);
-
         MediaType mediaType = determineMediaType(file.getContentType());
 
         MediaFile mediaFile = MediaFile.builder()
@@ -46,7 +45,6 @@ public class MediaService {
                 .build();
 
         MediaFile savedMediaFile = mediaFileRepository.save(mediaFile);
-
         return MediaResDto.UploadResDto.of(savedMediaFile);
     }
 
@@ -73,7 +71,6 @@ public class MediaService {
         MediaFile mediaFile = mediaFileRepository.findById(mediaId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        // 본인의 미디어인지 확인
         if (!mediaFile.getUploader().getId().equals(userId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
@@ -81,7 +78,7 @@ public class MediaService {
         return MediaResDto.MediaDetailResDto.of(mediaFile);
     }
 
-    // 미디어 삭제
+    // ✅ 미디어 삭제 (수정된 부분)
     @Transactional
     public MediaResDto.DeleteResDto deleteMedia(Long userId, Long mediaId) {
         User user = userRepository.findById(userId)
@@ -90,17 +87,14 @@ public class MediaService {
         MediaFile mediaFile = mediaFileRepository.findById(mediaId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        // 본인의 미디어인지 확인
         if (!mediaFile.getUploader().getId().equals(userId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        // S3에서 파일 삭제
-        imageStorageService.delete(mediaFile.getFileUrl());
+        // 🔥 여기만 변경됨
+        imageStorageService.deleteIfExists(mediaFile.getFileUrl());
 
-        // DB에서 삭제
         mediaFileRepository.delete(mediaFile);
-
         return MediaResDto.DeleteResDto.of(true);
     }
 

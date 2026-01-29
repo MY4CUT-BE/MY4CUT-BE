@@ -45,6 +45,7 @@ public class UserService {
         return new UserResDTO.UpdateNicknameDTO(user.getNickname());
     }
 
+    //프로필 사진 변경
     @Transactional
     public UserResDTO.UpdateProfileImageDTO updateProfileImage(
             Long userId,
@@ -59,14 +60,14 @@ public class UserService {
 
         String newProfileImageUrl = request.profileImageUrl();
         String currentProfileImageUrl = user.getProfileImageUrl();
+
         if (currentProfileImageUrl != null
                 && !currentProfileImageUrl.isBlank()
                 && !currentProfileImageUrl.equals(newProfileImageUrl)) {
-            // 1. 기존 이미지 삭제
-            imageStorageService.delete(currentProfileImageUrl);
+
+            imageStorageService.deleteIfExists(currentProfileImageUrl);
         }
 
-        // 2. DB 반영
         user.updateProfileImage(newProfileImageUrl);
 
         return new UserResDTO.UpdateProfileImageDTO(newProfileImageUrl);

@@ -12,7 +12,14 @@
 ---
 
 ## 사용할 기술 스택
-
+- **Framework**: Spring Boot 3.5.9
+- **Language**: Java 17
+- **Database**: MySQL 8.0
+- **ORM**: Spring Data JPA
+- **Security**: Spring Security + JWT
+- **Social Login**: OAuth2 (Kakao)
+- **Build Tool**: Gradle
+- **Infra / Deployment**: AWS EC2, Docker, Docker Compose, GitHub Actions CI/CD
 ---
 
 ## 사용할 라이브러리

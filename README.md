@@ -11,11 +11,18 @@
 
 ---
 
-## 사용할 기술 스택
-
+## 사용 기술 스택
+- **Framework**: Spring Boot 3.5.9
+- **Language**: Java 17
+- **Database**: MySQL 8.0
+- **ORM**: Spring Data JPA
+- **Security**: Spring Security + JWT
+- **Social Login**: OAuth2 (Kakao)
+- **Build Tool**: Gradle
+- **Infra / Deployment**: AWS EC2, Docker, Docker Compose, GitHub Actions CI/CD
 ---
 
-## 사용할 라이브러리
+## 사용 라이브러리
 - Spring Web : Android 앱과의 통신을 위한 REST API 구현에 사용
 - Spring Data JPA : 데이터베이스 CRUD 처리를 위한 ORM 라이브러리
 - Spring Validation : 요청 데이터의 유효성 검증을 위해 사용
@@ -80,3 +87,65 @@ main branch와 하위 각 팀원별 branch를 이용합니다.
 ### Boolean
 - `is`, `has`로 시작
     - 예) `isDeleted`, `hasPermission`
+ 
+---
+
+## 프로젝트 구조
+```
+src/main/java/com/my4cut/domain/
+├── common/
+│   └── BaseEntity.java              # 공통 필드(createdAt) 관리
+├── auth/
+│   └── entity/
+│       └── RefreshToken.java        # JWT Refresh Token
+├── user/
+│   ├── entity/
+│   │   ├── User.java                # 사용자 정보
+│   │   └── UserFcmToken.java        # FCM 푸시 알림 토큰
+│   └── enums/
+│       ├── LoginType.java           # 로그인 방식 (KAKAO, EMAIL)
+│       ├── UserStatus.java          # 계정 상태 (ACTIVE, INACTIVE, DELETED)
+│       └── DeviceType.java          # 기기 유형 (IOS, ANDROID)
+├── friend/
+│   ├── entity/
+│   │   ├── Friend.java              # 친구 관계
+│   │   └── FriendRequest.java       # 친구 요청
+│   └── enums/
+│       └── FriendRequestStatus.java # 요청 상태 (PENDING, ACCEPTED, REJECTED)
+├── pose/
+│   └── entity/
+│       ├── Pose.java                # 포즈 정보
+│       └── PoseFavorite.java        # 포즈 즐겨찾기
+├── workspace/
+│   └── entity/
+│       ├── Workspace.java           # 공유 워크스페이스
+│       └── WorkspaceMember.java     # 워크스페이스 멤버
+├── media/
+│   ├── entity/
+│   │   ├── MediaFile.java           # 미디어 파일 (사진/동영상)
+│   │   └── MediaComment.java        # 미디어 댓글
+│   └── enums/
+│       └── MediaType.java           # 미디어 유형 (PHOTO, VIDEO)
+├── day4cut/
+│   ├── entity/
+│   │   ├── Day4Cut.java             # 하루네컷
+│   │   └── Day4CutImage.java        # 하루네컷 이미지
+│   └── enums/
+│       └── EmojiType.java           # 이모지 타입 (HAPPY, SAD, ANGRY, CALM, TIRED)
+└── notification/
+    ├── entity/
+    │   └── Notification.java        # 알림
+    └── enums/
+        └── NotificationType.java    # 알림 유형
+```
+
+---
+
+## Database (ERD)
+<img width="3112" height="1906" alt="image" src="https://github.com/user-attachments/assets/cc0570ce-1ac1-415b-ac1a-01f29ee02a37" />
+
+---
+
+## Infrastructure Architecture
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/edcfe03d-b660-4888-b91d-885683150906" />
+

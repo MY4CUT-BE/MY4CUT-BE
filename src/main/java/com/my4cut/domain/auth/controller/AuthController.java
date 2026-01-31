@@ -4,10 +4,12 @@ import com.my4cut.domain.auth.dto.AuthReqDTO;
 import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.auth.service.AuthService;
-import com.my4cut.domain.user.entity.User;
 import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.ErrorCode;
 import com.my4cut.global.response.SuccessCode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,8 +30,15 @@ public class AuthController {
         return ApiResponse.onSuccess(SuccessCode.CREATED, null);
     }
 
+    @Operation(summary = "로그인")
     @PostMapping("/login")
     public ApiResponse<UserResDTO.LoginDTO> login(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = UserReqDTO.LoginDTO.class)
+                    )
+            )
             @RequestBody @Valid UserReqDTO.LoginDTO dto
     ) {
         return ApiResponse.onSuccess(SuccessCode.OK, authService.login(dto));

@@ -11,7 +11,6 @@ import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -46,23 +45,31 @@ public class UserService {
         return new UserResDTO.UpdateNicknameDTO(user.getNickname());
     }
 
+    //프로필 사진 변경
     @Transactional
     public UserResDTO.UpdateProfileImageDTO updateProfileImage(
             Long userId,
-            MultipartFile profileImage
+            UserReqDTO.UpdateProfileImageDTO request
     ) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        // 1. 기존 이미지 삭제
-        imageStorageService.delete(user.getProfileImageUrl());
+        if (user.getStatus() == UserStatus.DELETED) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
 
-        // 2. 새 이미지 업로드
-        String imageUrl = imageStorageService.upload(profileImage);
+        String newProfileImageUrl = request.profileImageUrl();
+        String currentProfileImageUrl = user.getProfileImageUrl();
 
-        // 3. DB 반영
-        user.updateProfileImage(imageUrl);
+        if (currentProfileImageUrl != null
+                && !currentProfileImageUrl.isBlank()
+                && !currentProfileImageUrl.equals(newProfileImageUrl)) {
 
-        return new UserResDTO.UpdateProfileImageDTO(imageUrl);
+            imageStorageService.deleteIfExists(currentProfileImageUrl);
+        }
+
+        user.updateProfileImage(newProfileImageUrl);
+
+        return new UserResDTO.UpdateProfileImageDTO(newProfileImageUrl);
     }
 }

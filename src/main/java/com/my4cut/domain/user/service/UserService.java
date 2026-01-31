@@ -1,5 +1,6 @@
 package com.my4cut.domain.user.service;
 
+import com.my4cut.domain.day4cut.repository.Day4CutRepository;
 import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.user.entity.User;
@@ -12,19 +13,25 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
+    private final Day4CutRepository day4CutRepository;
     @Transactional(readOnly = true)
     public UserResDTO.MeDTO getMyInfo(Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        return UserResDTO.MeDTO.from(user);
+        LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate endOfMonth = startOfMonth.plusMonths(1).minusDays(1);
+        long thisMonthDay4CutCount = day4CutRepository.countByUserAndDateBetween(user, startOfMonth, endOfMonth);
+
+        return UserResDTO.MeDTO.from(user, thisMonthDay4CutCount);
     }
 
     //닉네임 변경

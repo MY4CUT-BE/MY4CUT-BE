@@ -21,6 +21,8 @@ public interface Day4CutRepository extends JpaRepository<Day4Cut, Long> {
 
     boolean existsByUserAndDate(User user, LocalDate date);
 
+    long countByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
+
     /**
      * 네컷이 있는 캘린더를 가져오기 위한 쿼리문
      * 특정 연도와 월에 하루네컷이 존재하는 날짜 조회
@@ -42,4 +44,5 @@ public interface Day4CutRepository extends JpaRepository<Day4Cut, Long> {
             @Param("year") int year,
             @Param("month") int month
     );
+
 }

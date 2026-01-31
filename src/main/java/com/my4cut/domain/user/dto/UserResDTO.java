@@ -20,16 +20,19 @@ public class UserResDTO {
             String nickname,
             String friendCode,
             String profileImageUrl,
-            String loginType
+            String loginType,
+
+            long thisMonthDay4CutCount
     ) {
-        public static MeDTO from(User user) {
+        public static MeDTO from(User user, long thisMonthDay4CutCount) {
             return new MeDTO(
                     user.getId(),
                     user.getEmail(),
                     user.getNickname(),
                     user.getFriendCode(),
                     user.getProfileImageUrl(),
-                    user.getLoginType().name()
+                    user.getLoginType().name(),
+                    thisMonthDay4CutCount
             );
         }
     }

@@ -1,6 +1,3 @@
 runtimes:
   java:
     version: "17"
-
-build:
-  enabled: false

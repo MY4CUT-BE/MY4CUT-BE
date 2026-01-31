@@ -1,5 +1,6 @@
 package com.my4cut.global.image;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,6 +12,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 @Service
+@Slf4j
 @Profile("local")
 public class LocalImageStorageService implements ImageStorageService {
 
@@ -33,18 +35,25 @@ public class LocalImageStorageService implements ImageStorageService {
     }
 
     @Override
-    public void delete(String imageUrl) {
-        if (imageUrl == null || imageUrl.isBlank()) return;
+    public void deleteIfExists(String imagePathOrUrl) {
+        if (imagePathOrUrl == null || imagePathOrUrl.isBlank()) {
+            return;
+        }
 
-        // "/images/profile/xxx.jpg" → "uploads/profile/xxx.jpg"
-        String relativePath = imageUrl.replace("/images/", "");
-        Path path = Paths.get("uploads").resolve(relativePath);
+        // URL이면 로컬 삭제 대상 아님
+        if (isUrl(imagePathOrUrl)) {
+            return;
+        }
 
         try {
+            Path path = Paths.get(imagePathOrUrl);
             Files.deleteIfExists(path);
-        } catch (IOException e) {
-            // 삭제 실패는 로그만 (서비스 중단 X)
-            System.err.println("기존 이미지 삭제 실패: " + path);
+        } catch (Exception e) {
+            log.warn("Failed to delete local image: {}", imagePathOrUrl, e);
         }
+    }
+
+    private boolean isUrl(String value) {
+        return value.startsWith("http://") || value.startsWith("https://");
     }
 }

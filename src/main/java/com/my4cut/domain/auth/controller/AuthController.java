@@ -4,7 +4,6 @@ import com.my4cut.domain.auth.dto.AuthReqDTO;
 import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.auth.service.AuthService;
-import com.my4cut.domain.user.entity.User;
 import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.ErrorCode;
 import com.my4cut.global.response.SuccessCode;

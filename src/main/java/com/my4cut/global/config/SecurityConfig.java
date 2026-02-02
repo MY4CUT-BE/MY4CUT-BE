@@ -31,6 +31,7 @@ public class SecurityConfig {
                         // 인증 없이 허용 (화이트리스트)
                         .requestMatchers(
                                 "/auth/login",
+                                "/auth/kakao",
                                 "/auth/signup",
                                 "/auth/refresh",
                                 "/swagger-ui/**",

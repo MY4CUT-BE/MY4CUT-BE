@@ -49,7 +49,7 @@ public class PresignedUrlController {
     }
 
     @Operation(
-            summary = "이미지 조회용 Presigned URL 발급",
+            summary = "이미지 조회용 Presigned URL 발급(수정중!, 아마 사용 안할거 같습니다) ",
             description = """
                     이미 S3에 업로드된 이미지의 조회(GET)를 위한 Presigned URL을 발급합니다.
                     fileKey를 기반으로 임시 접근 URL을 생성합니다.

@@ -1,9 +1,17 @@
 package com.my4cut.global.image;
 
+import com.my4cut.domain.media.entity.MediaFile;
+import com.my4cut.domain.media.enums.MediaType;
+import com.my4cut.domain.media.repository.MediaFileRepository;
+import com.my4cut.domain.user.entity.User;
+import com.my4cut.domain.user.repository.UserRepository;
+import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.image.dto.PresignedUrlReqDto;
 import com.my4cut.global.image.dto.PresignedUrlResDto;
 import com.my4cut.global.image.dto.PresignedViewUrlReqDto;
 import com.my4cut.global.image.dto.PresignedViewUrlResDto;
+import com.my4cut.global.response.ErrorCode;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,9 +21,6 @@ import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignReques
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
-import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.time.Duration;
 import java.util.UUID;
@@ -26,6 +31,8 @@ import java.util.regex.Pattern;
 public class PresignedUrlService {
 
     private final S3Presigner s3Presigner;
+    private final MediaFileRepository mediaFileRepository;
+    private final UserRepository userRepository;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -34,14 +41,15 @@ public class PresignedUrlService {
     private static final Pattern SAFE_FILENAME =
             Pattern.compile("^[A-Za-z0-9._-]+$");
 
-    public PresignedUrlResDto generate(PresignedUrlReqDto dto) {
-
+    @Transactional
+    public PresignedUrlResDto generate(Long userId, PresignedUrlReqDto dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
         String key = createKey(dto.type(), dto.fileName());
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
-                .contentType(dto.contentType())
                 .build();
 
         PutObjectPresignRequest presignRequest =
@@ -54,13 +62,22 @@ public class PresignedUrlService {
                 .url()
                 .toString();
 
-        String fileUrl = "https://" + bucket + ".s3.amazonaws.com/" + key;
+        MediaType mediaType = determineMediaType(dto.contentType());
+        MediaFile mediaFile = MediaFile.builder()
+                .uploader(user)
+                .mediaType(mediaType)
+                // URL 대신 fileKey만 저장해 CDN 도입 시에도 DB 마이그레이션이 필요 없도록 한다.
+                .fileUrl(key)
+                .isFinal(false)
+                .build();
 
-        return new PresignedUrlResDto(uploadUrl, fileUrl);
+        MediaFile savedMediaFile = mediaFileRepository.save(mediaFile);
+
+        return new PresignedUrlResDto(savedMediaFile.getId(), uploadUrl, key);
     }
 
     public PresignedViewUrlResDto generateViewUrl(PresignedViewUrlReqDto dto) {
-        String key = extractKey(dto.fileUrl());
+        String key = dto.fileKey();
 
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucket)
@@ -77,7 +94,7 @@ public class PresignedUrlService {
                 .url()
                 .toString();
 
-        return new PresignedViewUrlResDto(viewUrl, dto.fileUrl());
+        return new PresignedViewUrlResDto(viewUrl, key);
     }
 
     private String createKey(PresignedUrlReqDto.ImageType type, String fileName) {
@@ -114,31 +131,11 @@ public class PresignedUrlService {
         return normalized;
     }
 
-    /**
-     * S3 fileUrl → key 추출
-     * - substring 방식 제거
-     * - query parameter 무시
-     * - URL 인코딩 대응
-     */
-    private String extractKey(String fileUrl) {
-        try {
-            URI uri = URI.create(fileUrl);
-
-            String host = uri.getHost();
-            if (host == null || !host.endsWith(".amazonaws.com")) {
-                throw new IllegalArgumentException("Unsupported S3 host.");
-            }
-
-            String path = uri.getPath(); // /profile/xxx.jpg
-            if (path == null || path.length() <= 1) {
-                throw new IllegalArgumentException("Invalid S3 object path.");
-            }
-
-            String key = path.substring(1); // remove leading '/'
-            return URLDecoder.decode(key, StandardCharsets.UTF_8);
-
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid S3 file URL.", e);
+    private MediaType determineMediaType(String contentType) {
+        if (contentType != null && contentType.startsWith("video/")) {
+            return MediaType.VIDEO;
         }
+        return MediaType.PHOTO;
     }
+
 }

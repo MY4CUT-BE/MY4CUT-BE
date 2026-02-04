@@ -47,6 +47,8 @@ public class SecurityConfig {
                                 "/poses/**",    // 포즈 API
                                 "/media/**",    // 미디어 API
                                 "/day4cut/**",  // 하루네컷 API
+                                "/workspaces/**", // 워크스페이스 API
+                                "/albums/**",    // 앨범 API
                                 "/api/v1/**",
                                 "/images/**"
 

@@ -48,6 +48,8 @@ application-prod.yml
 *.log
 logs/
 .claude
+.env
+.gemini
 
 
 

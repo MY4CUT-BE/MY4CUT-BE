@@ -70,7 +70,7 @@ public class UserController {
             summary = "프로필 이미지 변경",
             description = """
                     사용자의 프로필 이미지를 변경합니다.
-                    Presigned URL을 통해 업로드된 이미지의 fileUrl을 서버에 전달합니다.
+                    Presigned URL로 업로드된 이미지의 fileKey를 서버에 전달합니다.
                     """
     )
     @PatchMapping("/me/image")

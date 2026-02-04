@@ -159,5 +159,21 @@ public class FriendController {
         friendService.deleteFriend(userId, friendId);
         return ApiResponse.onSuccess(SuccessCode.OK);
     }
+
+    // 사용자 코드로 유저 검색
+    @Operation(
+            summary = "사용자 코드로 사용자 검색",
+            description = "사용자 코드를 입력하면 사용자 프로필을 조회합니다."
+    )
+    @GetMapping("/search")
+    public ApiResponse<FriendResDto.SearchUserResDto> searchUser(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam String code
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessCode.OK,
+                friendService.searchUserByFriendCode(userId, code)
+        );
+    }
 }
 

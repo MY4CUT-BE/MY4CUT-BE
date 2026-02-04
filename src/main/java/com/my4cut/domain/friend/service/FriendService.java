@@ -220,4 +220,47 @@ public class FriendService {
         friendRepository.deleteByUserAndFriendUser(user, friendUser);
         friendRepository.deleteByUserAndFriendUser(friendUser, user);
     }
+
+    //사용자 코드로 유저를 검색
+    @Transactional(readOnly = true)
+    public FriendResDto.SearchUserResDto searchUserByFriendCode(
+            Long userId,
+            String friendCode
+    ) {
+
+        User me = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        User target = userRepository.findByFriendCode(friendCode)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        // 자기 자신 검색 방지
+        if (me.getId().equals(target.getId())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+
+        boolean alreadyFriend =
+                friendRepository.existsByUserAndFriendUser(me, target);
+
+        boolean outgoingRequest =
+                friendRequestRepository.existsByFromUserAndToUserAndStatus(
+                        me,
+                        target,
+                        FriendRequestStatus.PENDING
+                );
+
+        boolean incomingRequest =
+                friendRequestRepository.existsByFromUserAndToUserAndStatus(
+                        target,
+                        me,
+                        FriendRequestStatus.PENDING
+                );
+
+        return FriendResDto.SearchUserResDto.of(
+                target,
+                alreadyFriend,
+                outgoingRequest,
+                incomingRequest
+        );
+    }
 }

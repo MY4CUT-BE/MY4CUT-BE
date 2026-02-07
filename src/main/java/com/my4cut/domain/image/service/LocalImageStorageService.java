@@ -30,7 +30,7 @@ public class LocalImageStorageService implements ImageStorageService {
             Files.createDirectories(path.getParent());
             file.transferTo(path.toFile());
         } catch (IOException e) {
-            throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED);
+            throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED, e);
         }
 
         return "/images/profile/" + filename;

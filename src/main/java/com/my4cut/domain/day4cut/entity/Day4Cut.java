@@ -19,7 +19,9 @@ import java.util.List;
  * 사용자가 작성한 날짜, 내용, 이모티콘 정보를 관리한다.
  */
 @Entity
-@Table(name = "day4cut")
+@Table(name = "day4cut", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "date"})
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Day4Cut extends BaseEntity {

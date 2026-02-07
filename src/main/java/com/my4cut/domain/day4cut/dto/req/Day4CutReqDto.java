@@ -24,7 +24,7 @@ public class Day4CutReqDto {
      * 하루네컷 수정 요청 DTO
      */
     public record UpdateReqDto(
-            Long id,
+            LocalDate date,
             String content,
             EmojiType emojiType,
             List<ImageReqDto> images

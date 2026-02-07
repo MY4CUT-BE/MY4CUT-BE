@@ -83,12 +83,12 @@ public class Day4CutController {
     @DeleteMapping
     public ApiResponse<Day4CutResDto.DeleteResDto> deleteDay4Cut(
             @AuthenticationPrincipal Long userId,
-            @Parameter(description = "삭제할 하루네컷 ID", required = true)
-            @RequestParam Long id
+            @Parameter(description = "삭제할 날짜 (YYYY-MM-DD)", required = true, example = "2026-02-07")
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date
     ) {
         return ApiResponse.onSuccess(
                 SuccessCode.OK,
-                day4CutService.deleteDay4Cut(userId, id)
+                day4CutService.deleteDay4Cut(userId, date)
         );
     }
 

@@ -1,10 +1,10 @@
 package com.my4cut.domain.image.controller;
 
 import com.my4cut.domain.image.service.PresignedUrlService;
-import com.my4cut.global.image.dto.PresignedUrlReqDto;
-import com.my4cut.global.image.dto.PresignedUrlResDto;
-import com.my4cut.global.image.dto.PresignedViewUrlReqDto;
-import com.my4cut.global.image.dto.PresignedViewUrlResDto;
+import com.my4cut.domain.image.dto.PresignedUrlReqDto;
+import com.my4cut.domain.image.dto.PresignedUrlResDto;
+import com.my4cut.domain.image.dto.PresignedViewUrlReqDto;
+import com.my4cut.domain.image.dto.PresignedViewUrlResDto;
 import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;

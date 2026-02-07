@@ -30,22 +30,16 @@ public interface Day4CutRepository extends JpaRepository<Day4Cut, Long> {
     long countByUserAndDateBetween(User user, LocalDate startDate, LocalDate endDate);
 
     /**
-     * 네컷이 있는 캘린더를 가져오기 위한 쿼리문
-     * 특정 연도와 월에 하루네컷이 존재하는 날짜 조회
-     * user : 조회할 사용자
-     * year : 조회할 연도 (예: 2026)
-     * month : 조회할 월 (예: 1~12)
+     * 특정 연도와 월에 해당하는 하루네컷을 이미지(썸네일)와 함께 조회
      */
-    @Query("SELECT DISTINCT DAY(d.date) FROM Day4Cut d " +
+    @Query("SELECT d FROM Day4Cut d " +
+            "LEFT JOIN FETCH d.images i " +
+            "LEFT JOIN FETCH i.mediaFile " +
             "WHERE d.user = :user " +
             "AND YEAR(d.date) = :year " +
             "AND MONTH(d.date) = :month " +
-            "ORDER BY DAY(d.date)")
-
-    /**
-     * 하루네컷이 존재하는 날짜 리스트 (예: [1, 5, 15, 23])
-     */
-    List<Integer> findDaysByUserAndYearMonth(
+            "ORDER BY d.date")
+    List<Day4Cut> findAllByUserAndYearMonth(
             @Param("user") User user,
             @Param("year") int year,
             @Param("month") int month

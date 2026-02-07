@@ -204,9 +204,13 @@ public class Day4CutService {
         // 유저 조회
         User user = findUserById(userId);
 
-        // 해당 년/월에 하루네컷이 존재하는 날짜(일) 조회
-        List<Integer> dates = day4CutRepository.findDaysByUserAndYearMonth(user, year, month);
+        // 해당 년/월에 하루네컷을 이미지와 함께 조회
+        List<Day4Cut> day4Cuts = day4CutRepository.findAllByUserAndYearMonth(user, year, month);
 
-        return Day4CutResDto.CalendarResDto.of(dates);
+        List<Day4CutResDto.CalendarResDto.CalendarDayDto> days = day4Cuts.stream()
+                .map(Day4CutResDto.CalendarResDto.CalendarDayDto::from)
+                .toList();
+
+        return new Day4CutResDto.CalendarResDto(days);
     }
 }

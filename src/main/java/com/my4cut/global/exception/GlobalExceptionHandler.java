@@ -4,6 +4,7 @@ import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -32,6 +33,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(errorCode.getStatus())
                 .body(ApiResponse.onFailure(errorCode));
+    }
+
+    /**
+     * JSON 파싱 오류 처리 메소드 (잘못된 enum 값, 타입 불일치 등).
+     *
+     * @param e 발생한 HttpMessageNotReadableException
+     * @return 에러 응답 객체 (ResponseEntity)
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    protected ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.error("HttpMessageNotReadableException: {}", e.getMessage());
+        return ResponseEntity
+                .status(ErrorCode.BAD_REQUEST.getStatus())
+                .body(ApiResponse.onFailure(ErrorCode.BAD_REQUEST));
     }
 
     /**

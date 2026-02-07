@@ -39,6 +39,11 @@ public class Day4CutService {
     public Day4CutResDto.CreateResDto createDay4Cut(Long userId, Day4CutReqDto.CreateReqDto reqDto) {
         User user = findUserById(userId);
 
+        // 중복 검증
+        if (day4CutRepository.existsByUserAndDate(user, reqDto.date())) {
+            throw new Day4CutException(Day4CutErrorCode.DAY4CUT_ALREADY_EXISTS);
+        }
+
         // 이미지 검증
         validateImages(reqDto.images());
 

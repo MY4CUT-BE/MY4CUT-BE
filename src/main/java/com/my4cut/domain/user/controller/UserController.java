@@ -30,12 +30,9 @@ public class UserController {
             description = "현재 로그인한 사용자의 마이페이지 정보를 조회합니다."
     )
     @GetMapping("/me")
-    public ApiResponse<UserResDTO.MeDTO> getMyInfo() {
-
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        Long userId = (Long) authentication.getPrincipal();
+    public ApiResponse<UserResDTO.MeDTO> getMyInfo(
+            @AuthenticationPrincipal Long userId
+    ) {
 
         return ApiResponse.onSuccess(
                 SuccessCode.OK,

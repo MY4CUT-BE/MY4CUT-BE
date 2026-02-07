@@ -1,5 +1,12 @@
 package com.my4cut.domain.auth.jwt;
 
+import com.my4cut.domain.user.entity.User;
+import com.my4cut.domain.user.enums.UserStatus;
+import com.my4cut.domain.user.repository.UserRepository;
+import com.my4cut.global.exception.BusinessException;
+import com.my4cut.global.response.ErrorCode;
+import com.my4cut.global.response.ApiResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,10 +26,9 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final UserRepository userRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * 인증이 필요 없는 경로는 필터 자체를 타지 않도록 제외
-     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
@@ -42,48 +48,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
-
-        // Authorization 헤더 자체가 없으면 → 인증 실패 (보호 API 기준)
-        if (authHeader == null || !authHeader.startsWith("Bearer ") || authHeader.length() <= 7) {
-            unauthorized(response, "인증 토큰이 없습니다.");
-            return;
-        }
-
-        String token = authHeader.substring(7);
-
         try {
+            String authHeader = request.getHeader("Authorization");
+
+            if (authHeader == null || !authHeader.startsWith("Bearer ") || authHeader.length() <= 7) {
+                throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            }
+
+            String token = authHeader.substring(7);
             Claims claims = jwtProvider.validateAccessToken(token);
+
             Long userId = Long.valueOf(claims.getSubject());
 
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+            if (user.getStatus() == UserStatus.DELETED) {
+                throw new BusinessException(ErrorCode.USER_DELETED);
+            }
+
+            if (user.getStatus() == UserStatus.INACTIVE) {
+                throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            }
+
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userId,
-                            null,
-                            List.of()
-                    );
+                    new UsernamePasswordAuthenticationToken(userId, null, List.of());
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
 
+        } catch (BusinessException e) {
+            SecurityContextHolder.clearContext();
+            writeErrorResponse(response, e.getErrorCode());
         } catch (Exception e) {
             SecurityContextHolder.clearContext();
-            unauthorized(response, "유효하지 않은 토큰입니다.");
+            writeErrorResponse(response, ErrorCode.UNAUTHORIZED);
         }
     }
 
-    /**
-     * 401 Unauthorized JSON 응답
-     */
-    private void unauthorized(HttpServletResponse response, String message) throws IOException {
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    private void writeErrorResponse(HttpServletResponse response, ErrorCode errorCode) throws IOException {
+        response.setStatus(errorCode.getStatus().value());
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("""
-            {
-              "code": "C401",
-              "message": "%s",
-              "data": null
-            }
-        """.formatted(message));
+
+        ApiResponse<Void> body = ApiResponse.onFailure(errorCode);
+        response.getWriter().write(objectMapper.writeValueAsString(body));
     }
 }

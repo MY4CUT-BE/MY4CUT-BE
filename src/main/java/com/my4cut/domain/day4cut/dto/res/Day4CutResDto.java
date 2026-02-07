@@ -33,7 +33,7 @@ public class Day4CutResDto {
     ) {
         public static DetailResDto from(Day4Cut day4Cut) {
             List<String> fileUrls = day4Cut.getImages().stream()
-                    .map(Day4CutImage::getImageUrl)
+                    .map(image -> image.getMediaFile().getFileUrl())
                     .toList();
 
             return new DetailResDto(

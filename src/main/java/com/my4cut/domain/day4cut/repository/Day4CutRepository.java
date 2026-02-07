@@ -17,6 +17,8 @@ public interface Day4CutRepository extends JpaRepository<Day4Cut, Long> {
 
     Optional<Day4Cut> findByIdAndUser(Long id, User user);
 
+    Optional<Day4Cut> findByUserAndDate(User user, LocalDate date);
+
     List<Day4Cut> findAllByUserOrderByDateDesc(User user);
 
     boolean existsByUserAndDate(User user, LocalDate date);

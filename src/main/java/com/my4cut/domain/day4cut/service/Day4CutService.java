@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -64,10 +65,10 @@ public class Day4CutService {
      * 하루네컷을 조회한다.
      */
     @Transactional(readOnly = true)
-    public Day4CutResDto.DetailResDto getDay4Cut(Long userId, Long day4CutId) {
+    public Day4CutResDto.DetailResDto getDay4Cut(Long userId, LocalDate date) {
         User user = findUserById(userId);
 
-        Day4Cut day4Cut = day4CutRepository.findByIdAndUser(day4CutId, user)
+        Day4Cut day4Cut = day4CutRepository.findByUserAndDate(user, date)
                 .orElseThrow(() -> new Day4CutException(Day4CutErrorCode.DAY4CUT_NOT_FOUND));
 
         return Day4CutResDto.DetailResDto.from(day4Cut);

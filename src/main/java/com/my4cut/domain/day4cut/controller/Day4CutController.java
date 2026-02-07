@@ -10,8 +10,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 /**
  * 하루네컷 관련 API를 제공하는 컨트롤러.
@@ -42,17 +45,17 @@ public class Day4CutController {
 
     @Operation(
             summary = "하루네컷 조회",
-            description = "특정 하루네컷의 상세 정보를 조회합니다. 본인이 작성한 하루네컷만 조회할 수 있습니다."
+            description = "특정 날짜의 하루네컷 상세 정보를 조회합니다. 본인이 작성한 하루네컷만 조회할 수 있습니다."
     )
     @GetMapping
     public ApiResponse<Day4CutResDto.DetailResDto> getDay4Cut(
             @AuthenticationPrincipal Long userId,
-            @Parameter(description = "조회할 하루네컷 ID", required = true)
-            @RequestParam Long id
+            @Parameter(description = "조회할 날짜 (YYYY-MM-DD)", required = true, example = "2026-02-07")
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date
     ) {
         return ApiResponse.onSuccess(
                 SuccessCode.OK,
-                day4CutService.getDay4Cut(userId, id)
+                day4CutService.getDay4Cut(userId, date)
         );
     }
 

@@ -1,5 +1,7 @@
 package com.my4cut.domain.image.service;
 
+import com.my4cut.global.exception.BusinessException;
+import com.my4cut.global.response.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -28,7 +30,7 @@ public class LocalImageStorageService implements ImageStorageService {
             Files.createDirectories(path.getParent());
             file.transferTo(path.toFile());
         } catch (IOException e) {
-            throw new RuntimeException("이미지 업로드 실패", e);
+            throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
 
         return "/images/profile/" + filename;
@@ -46,7 +48,12 @@ public class LocalImageStorageService implements ImageStorageService {
         }
 
         try {
-            Path path = Paths.get(imagePathOrUrl);
+            String filePath = imagePathOrUrl;
+            if (filePath.startsWith("/images/profile/")) {
+                String filename = filePath.substring("/images/profile/".length());
+                filePath = UPLOAD_DIR + "/" + filename;
+            }
+            Path path = Paths.get(filePath);
             Files.deleteIfExists(path);
         } catch (Exception e) {
             log.warn("Failed to delete local image: {}", imagePathOrUrl, e);

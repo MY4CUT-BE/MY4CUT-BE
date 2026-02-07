@@ -7,7 +7,7 @@ import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.enums.UserStatus;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.global.exception.BusinessException;
-import com.my4cut.global.image.ImageStorageService;
+import com.my4cut.domain.image.service.ImageStorageService;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ public class UserService {
     public UserResDTO.MeDTO getMyInfo(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
         LocalDate endOfMonth = startOfMonth.plusMonths(1).minusDays(1);
@@ -41,10 +41,10 @@ public class UserService {
             UserReqDTO.UpdateNicknameDTO request
     ) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getStatus() == UserStatus.DELETED) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.USER_DELETED);
         }
 
         user.updateNickname(request.nickname());
@@ -59,10 +59,10 @@ public class UserService {
             UserReqDTO.UpdateProfileImageDTO request
     ) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getStatus() == UserStatus.DELETED) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.USER_DELETED);
         }
 
         String newProfileImageUrl = request.profileImageUrl();

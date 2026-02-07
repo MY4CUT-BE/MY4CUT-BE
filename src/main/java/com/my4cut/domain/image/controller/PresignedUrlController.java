@@ -1,5 +1,6 @@
-package com.my4cut.global.image;
+package com.my4cut.domain.image.controller;
 
+import com.my4cut.domain.image.service.PresignedUrlService;
 import com.my4cut.global.image.dto.PresignedUrlReqDto;
 import com.my4cut.global.image.dto.PresignedUrlResDto;
 import com.my4cut.global.image.dto.PresignedViewUrlReqDto;

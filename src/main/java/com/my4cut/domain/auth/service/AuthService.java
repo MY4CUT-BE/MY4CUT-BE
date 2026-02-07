@@ -39,7 +39,7 @@ public class AuthService {
     public void signup(UserReqDTO.SignUpDTO request) {
 
         if (userRepository.existsByEmail(request.email())) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
         }
 
         String encodedPassword = passwordEncoder.encode(request.password());
@@ -67,10 +67,10 @@ public class AuthService {
     public UserResDTO.LoginDTO login(UserReqDTO.LoginDTO request) {
 
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+                .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
         String accessToken = jwtProvider.createAccessToken(user);
@@ -96,13 +96,13 @@ public class AuthService {
         // DB에 저장된 refreshToken 조회
         RefreshToken savedToken = refreshTokenRepository
                 .findByToken(refreshToken)
-                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+                .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_REFRESH_TOKEN));
 
         User user = savedToken.getUser();
 
         // 탈퇴 유저 방어
         if (user.getStatus() == UserStatus.DELETED) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.USER_DELETED);
         }
 
         // 새 토큰 발급
@@ -124,10 +124,10 @@ public class AuthService {
     public void withdraw(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         if (user.getStatus() == UserStatus.DELETED) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.USER_DELETED);
         }
 
         // RefreshToken 삭제
@@ -188,7 +188,7 @@ public class AuthService {
         AuthResDTO.KakaoUserResDto body = response.getBody();
 
         if (body == null || body.id() == null) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.AUTH_INVALID_KAKAO_RESPONSE);
         }
 
         return body;

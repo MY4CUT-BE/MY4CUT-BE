@@ -67,9 +67,4 @@ public class WorkspaceController {
         workspaceService.deleteWorkspace(workspaceId, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_DELETED);
     }
-
-    @ExceptionHandler(WorkspaceException.class)
-    public ApiResponse<Void> handleWorkspaceException(WorkspaceException e) {
-        return ApiResponse.onFailure(e.getErrorCode());
-    }
 }

@@ -42,11 +42,11 @@ public class WorkspaceInvitationService {
         }
 
         User inviter = userRepository.findById(inviterId)
-                .orElseThrow(() -> new RuntimeException("Inviter not found"));
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
 
         for (Long inviteeId : dto.userIds()) {
             User invitee = userRepository.findById(inviteeId)
-                    .orElseThrow(() -> new RuntimeException("Invitee not found: " + inviteeId));
+                    .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
 
             // 이미 멤버인지 확인
             if (workspaceMemberRepository.findByWorkspaceAndUser(workspace, invitee).isPresent()) {
@@ -86,10 +86,10 @@ public class WorkspaceInvitationService {
     @Transactional
     public void acceptInvitation(Long invitationId, Long userId) {
         WorkspaceInvitation invitation = workspaceInvitationRepository.findByIdAndInviteeId(invitationId, userId)
-                .orElseThrow(() -> new RuntimeException("Invitation not found"));
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.INVITATION_NOT_FOUND));
 
         if (invitation.getStatus() != InvitationStatus.PENDING) {
-            throw new RuntimeException("Invitation already processed");
+            throw new WorkspaceException(WorkspaceErrorCode.INVITATION_ALREADY_PROCESSED);
         }
 
         invitation.accept();
@@ -102,10 +102,10 @@ public class WorkspaceInvitationService {
     @Transactional
     public void rejectInvitation(Long invitationId, Long userId) {
         WorkspaceInvitation invitation = workspaceInvitationRepository.findByIdAndInviteeId(invitationId, userId)
-                .orElseThrow(() -> new RuntimeException("Invitation not found"));
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.INVITATION_NOT_FOUND));
 
         if (invitation.getStatus() != InvitationStatus.PENDING) {
-            throw new RuntimeException("Invitation already processed");
+            throw new WorkspaceException(WorkspaceErrorCode.INVITATION_ALREADY_PROCESSED);
         }
 
         invitation.reject();

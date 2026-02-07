@@ -3,6 +3,9 @@ package com.my4cut.domain.notification.service;
 import com.my4cut.domain.notification.dto.req.NotificationReqDto;
 import com.my4cut.domain.notification.dto.res.NotificationResDto;
 import com.my4cut.domain.notification.entity.Notification;
+import com.my4cut.domain.notification.enums.NotificationType;
+import com.my4cut.domain.notification.exception.NotificationErrorCode;
+import com.my4cut.domain.notification.exception.NotificationException;
 import com.my4cut.domain.notification.repository.NotificationRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.entity.UserFcmToken;
@@ -35,7 +38,7 @@ public class NotificationService {
             NotificationReqDto.RegisterTokenDto request
     ) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
 
         DeviceType deviceType = DeviceType.valueOf(request.device().toUpperCase());
 
@@ -59,6 +62,22 @@ public class NotificationService {
         return NotificationResDto.RegisterTokenResDto.of(savedToken.getId());
     }
 
+    // 친구요청을 보냈을 때 요청 받은 사용자에게 알림을 보냅니다.
+    @Transactional
+    public void sendFriendRequestNotification(
+            User toUser,
+            Long friendRequestId
+    ) {
+        Notification notification = Notification.builder()
+                .user(toUser)
+                .type(NotificationType.FRIEND_REQUEST)
+                .referenceId(friendRequestId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
     // 알림 목록 조회
     @Transactional(readOnly = true)
     public List<NotificationResDto.NotificationItemDto> getNotifications(
@@ -66,7 +85,7 @@ public class NotificationService {
             int page
     ) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
 
         Pageable pageable = PageRequest.of(page, 20); // 페이지당 20개
 
@@ -85,11 +104,11 @@ public class NotificationService {
             Long notificationId
     ) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new NotificationException(NotificationErrorCode.NOTIFICATION_NOT_FOUND));
 
         // 본인의 알림인지 확인
         if (!notification.getUser().getId().equals(userId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
+            throw new NotificationException(NotificationErrorCode.NOT_NOTIFICATION_OWNER);
         }
         // 읽음 처리
         notification.markAsRead();

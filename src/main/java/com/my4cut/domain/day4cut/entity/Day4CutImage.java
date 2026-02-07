@@ -1,6 +1,7 @@
 package com.my4cut.domain.day4cut.entity;
 
 import com.my4cut.domain.common.BaseEntity;
+import com.my4cut.domain.media.entity.MediaFile;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -25,15 +26,16 @@ public class Day4CutImage extends BaseEntity {
     @JoinColumn(name = "day4cut_id", nullable = false)
     private Day4Cut day4Cut;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "media_file_id", nullable = false)
+    private MediaFile mediaFile;
 
     @Column(name = "is_thumbnail", nullable = false)
     private Boolean isThumbnail;
 
     @Builder
-    public Day4CutImage(String imageUrl, Boolean isThumbnail) {
-        this.imageUrl = imageUrl;
+    public Day4CutImage(MediaFile mediaFile, Boolean isThumbnail) {
+        this.mediaFile = mediaFile;
         this.isThumbnail = isThumbnail;
     }
 

@@ -34,7 +34,7 @@ public class Day4CutReqDto {
      * 이미지 요청 DTO
      */
     public record ImageReqDto(
-            String url,
+            Long mediaFileId,
             Boolean isThumbnail
     ) {}
 }

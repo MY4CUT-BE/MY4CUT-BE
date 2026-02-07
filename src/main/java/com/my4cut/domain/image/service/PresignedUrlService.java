@@ -1,4 +1,4 @@
-package com.my4cut.global.image;
+package com.my4cut.domain.image.service;
 
 import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.enums.MediaType;
@@ -6,10 +6,10 @@ import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.global.exception.BusinessException;
-import com.my4cut.global.image.dto.PresignedUrlReqDto;
-import com.my4cut.global.image.dto.PresignedUrlResDto;
-import com.my4cut.global.image.dto.PresignedViewUrlReqDto;
-import com.my4cut.global.image.dto.PresignedViewUrlResDto;
+import com.my4cut.domain.image.dto.PresignedUrlReqDto;
+import com.my4cut.domain.image.dto.PresignedUrlResDto;
+import com.my4cut.domain.image.dto.PresignedViewUrlReqDto;
+import com.my4cut.domain.image.dto.PresignedViewUrlResDto;
 import com.my4cut.global.response.ErrorCode;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ public class PresignedUrlService {
     @Transactional
     public PresignedUrlResDto generate(Long userId, PresignedUrlReqDto dto) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.IMAGE_OWNER_NOT_FOUND));
         String key = createKey(dto.type(), dto.fileName());
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -114,7 +114,7 @@ public class PresignedUrlService {
      */
     private String sanitizeFileName(String fileName) {
         if (fileName == null || fileName.isBlank()) {
-            throw new IllegalArgumentException("fileName is blank.");
+            throw new BusinessException(ErrorCode.IMAGE_INVALID_FILE_NAME);
         }
 
         // 유니코드 정규화 (유사 문자 공격 방지)
@@ -125,7 +125,7 @@ public class PresignedUrlService {
                 .replace("\\", "");
 
         if (!SAFE_FILENAME.matcher(normalized).matches()) {
-            throw new IllegalArgumentException("Unsupported fileName format.");
+            throw new BusinessException(ErrorCode.IMAGE_INVALID_FILE_NAME);
         }
 
         return normalized;

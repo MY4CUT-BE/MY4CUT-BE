@@ -7,7 +7,10 @@ import com.my4cut.domain.day4cut.entity.Day4CutImage;
 import com.my4cut.domain.day4cut.exception.Day4CutErrorCode;
 import com.my4cut.domain.day4cut.exception.Day4CutException;
 import com.my4cut.domain.day4cut.repository.Day4CutRepository;
+import com.my4cut.domain.media.entity.MediaFile;
+import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
+import com.my4cut.domain.user.enums.UserStatus;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.response.ErrorCode;
@@ -26,6 +29,7 @@ public class Day4CutService {
 
     private final Day4CutRepository day4CutRepository;
     private final UserRepository userRepository;
+    private final MediaFileRepository mediaFileRepository;
 
     /**
      * 하루네컷을 생성한다.
@@ -49,7 +53,7 @@ public class Day4CutService {
                 .build();
 
         // 이미지 추가
-        addImages(day4Cut, reqDto.images());
+        addImages(day4Cut, reqDto.images(), user);
 
         day4CutRepository.save(day4Cut);
 
@@ -90,7 +94,7 @@ public class Day4CutService {
 
         // 기존 이미지 삭제 후 새 이미지 추가 (전체 교체)
         day4Cut.clearImages();
-        addImages(day4Cut, reqDto.images());
+        addImages(day4Cut, reqDto.images(), user);
 
         return Day4CutResDto.UpdateResDto.of();
     }
@@ -114,8 +118,14 @@ public class Day4CutService {
      * 사용자를 조회한다.
      */
     private User findUserById(Long userId) {
-        return userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        if (user.getStatus() == UserStatus.DELETED) {
+            throw new BusinessException(ErrorCode.USER_DELETED);
+        }
+
+        return user;
     }
 
     /**
@@ -156,15 +166,24 @@ public class Day4CutService {
     /**
      * 하루네컷에 이미지를 추가한다.
      */
-    private void addImages(Day4Cut day4Cut, List<Day4CutReqDto.ImageReqDto> images) {
+    private void addImages(Day4Cut day4Cut, List<Day4CutReqDto.ImageReqDto> images, User user) {
         for (int i = 0; i < images.size(); i++) {
             Day4CutReqDto.ImageReqDto imageDto = images.get(i);
+
+            // MediaFile 조회
+            MediaFile mediaFile = mediaFileRepository.findById(imageDto.mediaFileId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+            // 소유권 검증
+            if (!mediaFile.getUploader().getId().equals(user.getId())) {
+                throw new Day4CutException(Day4CutErrorCode.DAY4CUT_ACCESS_DENIED);
+            }
 
             // 이미지가 1장인 경우 자동 썸네일 설정
             boolean isThumbnail = images.size() == 1 || Boolean.TRUE.equals(imageDto.isThumbnail());
 
             Day4CutImage image = Day4CutImage.builder()
-                    .imageUrl(imageDto.url())
+                    .mediaFile(mediaFile)
                     .isThumbnail(isThumbnail)
                     .build();
 
@@ -182,8 +201,7 @@ public class Day4CutService {
             int month
     ) {
         // 유저 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        User user = findUserById(userId);
 
         // 해당 년/월에 하루네컷이 존재하는 날짜(일) 조회
         List<Integer> dates = day4CutRepository.findDaysByUserAndYearMonth(user, year, month);

@@ -69,7 +69,7 @@ public class AuthController {
     ) {
         if (authHeader == null || !authHeader.startsWith("Bearer ") || authHeader.length() <= 7) {
             return ApiResponse.onFailure(
-                    ErrorCode.UNAUTHORIZED,
+                    ErrorCode.AUTH_INVALID_REFRESH_TOKEN,
                     null
             );
         }

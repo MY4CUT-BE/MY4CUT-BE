@@ -1,4 +1,4 @@
-package com.my4cut.global.image.dto;
+package com.my4cut.domain.image.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

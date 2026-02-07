@@ -24,7 +24,21 @@ public enum ErrorCode implements BaseCode {
     TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "C4291", "너무 많은 요청을 보냈습니다."),
 
     // Common Error (5xx)
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C5001", "서버 내부 오류가 발생했습니다.");
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C5001", "서버 내부 오류가 발생했습니다."),
+
+    // User Domain Error
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U4041", "사용자를 찾을 수 없습니다."),
+    USER_DELETED(HttpStatus.UNAUTHORIZED, "U4011", "탈퇴한 사용자입니다."),
+
+    // Auth Domain Error
+    AUTH_DUPLICATE_EMAIL(HttpStatus.CONFLICT, "A4091", "이미 가입된 이메일입니다."),
+    AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "A4011", "이메일 또는 비밀번호가 올바르지 않습니다."),
+    AUTH_INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "A4012", "유효하지 않은 리프레시 토큰입니다."),
+    AUTH_INVALID_KAKAO_RESPONSE(HttpStatus.BAD_REQUEST, "A4001", "카카오 사용자 정보를 가져올 수 없습니다."),
+
+    // Image Domain Error
+    IMAGE_OWNER_NOT_FOUND(HttpStatus.NOT_FOUND, "I4041", "이미지 소유 사용자를 찾을 수 없습니다."),
+    IMAGE_INVALID_FILE_NAME(HttpStatus.BAD_REQUEST, "I4001", "지원하지 않는 파일 이름 형식입니다.");
 
     private final HttpStatus status;
     private final String code;

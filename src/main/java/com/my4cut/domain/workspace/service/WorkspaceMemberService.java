@@ -60,7 +60,7 @@ public class WorkspaceMemberService {
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
 
         if (workspace.getOwner().getId().equals(userId)) {
             throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);

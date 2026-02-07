@@ -35,7 +35,7 @@ public class WorkspaceService {
         @Transactional
         public WorkspaceInfoResponseDto createWorkspace(WorkspaceCreateRequestDto dto, Long ownerId) {
                 User owner = userRepository.findById(ownerId)
-                                .orElseThrow(() -> new RuntimeException("User not found")); // 공통 유저 예외 적용 필요
+                                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND)); // 공통 유저 예외 적용 필요
 
                 Workspace workspace = Workspace.builder()
                                 .name(dto.name())

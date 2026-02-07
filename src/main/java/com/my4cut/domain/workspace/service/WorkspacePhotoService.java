@@ -143,12 +143,12 @@ public class WorkspacePhotoService {
 
     private Workspace validateMembership(Long workspaceId, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
         if (workspaceMemberRepository.findByWorkspaceAndUser(workspace, user).isEmpty()) {
-            throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER); // 권한 없음 예외 사용
+            throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_MEMBER);
         }
 
         return workspace;
@@ -216,7 +216,7 @@ public class WorkspacePhotoService {
         MediaFile mediaFile = validatePhotoInWorkspace(workspaceId, photoId);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
 
         MediaComment comment = MediaComment.builder()
                 .mediaFile(mediaFile)

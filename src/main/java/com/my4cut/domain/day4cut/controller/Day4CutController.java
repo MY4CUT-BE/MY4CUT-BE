@@ -93,6 +93,10 @@ public class Day4CutController {
     }
 
     // 하루네컷이 존재하는 날짜 목록 조회
+    @Operation(
+            summary = "하루네컷 캘린더 조회",
+            description = "선택한 연도와 월을 기준으로 하루네컷이 존재하는 날짜 목록을 조회합니다."
+    )
     @GetMapping("/calendar")
     public ApiResponse<Day4CutResDto.CalendarResDto> getCalendar(
             @AuthenticationPrincipal Long userId,

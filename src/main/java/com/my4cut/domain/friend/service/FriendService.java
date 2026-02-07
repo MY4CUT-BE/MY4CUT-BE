@@ -36,6 +36,11 @@ public class FriendService {
         User toUser = userRepository.findByFriendCode(targetFriendCode)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
+        // 본인에게 친구 요청 방지
+        if (fromUser.getId().equals(toUser.getId())) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+
         // 이미 친구인지 확인
         if (friendRepository.existsByUserAndFriendUser(fromUser, toUser)) {
             throw new BusinessException(ErrorCode.BAD_REQUEST);

@@ -5,12 +5,12 @@ import com.my4cut.domain.friend.dto.res.FriendResDto;
 import com.my4cut.domain.friend.entity.Friend;
 import com.my4cut.domain.friend.entity.FriendRequest;
 import com.my4cut.domain.friend.enums.FriendRequestStatus;
+import com.my4cut.domain.friend.exception.FriendErrorCode;
+import com.my4cut.domain.friend.exception.FriendException;
 import com.my4cut.domain.friend.repository.FriendRepository;
 import com.my4cut.domain.friend.repository.FriendRequestRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
-import com.my4cut.global.exception.BusinessException;
-import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,26 +30,26 @@ public class FriendService {
     public FriendRequestResDto.SendRequestResDto sendFriendRequest(Long userId, String targetFriendCode) {
         //친구 요청을 보내는 사람 - userId로 확인.
         User fromUser = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
 
         //친구 요청을 받는 사람 - targetFriendCode(친구코드)로 확인
         User toUser = userRepository.findByFriendCode(targetFriendCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
 
         // 본인에게 친구 요청 방지
         if (fromUser.getId().equals(toUser.getId())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
+            throw new FriendException(FriendErrorCode.SELF_FRIEND_REQUEST);
         }
 
         // 이미 친구인지 확인
         if (friendRepository.existsByUserAndFriendUser(fromUser, toUser)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
+            throw new FriendException(FriendErrorCode.ALREADY_FRIEND);
         }
 
         // 이미 보낸 대기 중 요청이 있는지 확인
         if (friendRequestRepository.existsByFromUserAndToUserAndStatus(
                 fromUser, toUser, FriendRequestStatus.PENDING)) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
+            throw new FriendException(FriendErrorCode.DUPLICATE_FRIEND_REQUEST);
         }
 
         FriendRequest request = FriendRequest.builder()
@@ -68,7 +68,7 @@ public class FriendService {
     public List<FriendRequestResDto.ReceivedRequestResDto> getReceivedRequests(Long userId) {
         //userId로 user 조회
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
 
         return friendRequestRepository
                 .findAllByToUserAndStatus(user, FriendRequestStatus.PENDING)
@@ -82,16 +82,16 @@ public class FriendService {
     public void cancelSentRequest(Long userId, Long requestId) {
         // 요청 조회
         FriendRequest request = friendRequestRepository.findById(requestId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND));
 
         // 본인이 보낸 요청인지 확인
         if (!request.getFromUser().getId().equals(userId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
+            throw new FriendException(FriendErrorCode.NOT_REQUEST_SENDER);
         }
 
         // PENDING 상태인지 확인
         if (request.getStatus() != FriendRequestStatus.PENDING) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
+            throw new FriendException(FriendErrorCode.INVALID_REQUEST_STATUS);
         }
 
         friendRequestRepository.delete(request);
@@ -102,16 +102,16 @@ public class FriendService {
     public FriendRequestResDto.AcceptRequestResDto acceptFriendRequest(Long userId, Long requestId) {
         // 요청 조회
         FriendRequest request = friendRequestRepository.findById(requestId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND));
 
         // 본인에게 온 요청인지 확인
         if (!request.getToUser().getId().equals(userId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
+            throw new FriendException(FriendErrorCode.NOT_REQUEST_RECEIVER);
         }
 
         // PENDING 상태인지 확인
         if (request.getStatus() != FriendRequestStatus.PENDING) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
+            throw new FriendException(FriendErrorCode.INVALID_REQUEST_STATUS);
         }
 
         // 요청 상태 변경
@@ -144,37 +144,36 @@ public class FriendService {
     ) {
         // 요청 조회
         FriendRequest request = friendRequestRepository.findById(requestId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.FRIEND_REQUEST_NOT_FOUND));
 
         // 본인에게 온 요청인지 확인
         if (!request.getToUser().getId().equals(userId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
+            throw new FriendException(FriendErrorCode.NOT_REQUEST_RECEIVER);
         }
 
         // PENDING 상태인지 확인
         if (request.getStatus() != FriendRequestStatus.PENDING) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
+            throw new FriendException(FriendErrorCode.INVALID_REQUEST_STATUS);
         }
 
         // 상태 변경
         request.reject();
 
-        // 응답 DTO 반환
         return FriendRequestResDto.RejectRequestResDto.of(request);
     }
 
     // 친구 즐겨찾기
     @Transactional
     public FriendResDto.FavoriteFriendResDto favoriteFriend(Long userId, Long friendId) {
-        //유저없음
+        //친구 없음
         User fromUser = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        //친구유저없음
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
+        //친구 유저 없음
         User toUser = userRepository.findById(friendId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        //친구관계없음
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
+        //친구 관계 아님
         Friend friend = friendRepository.findByUserAndFriendUser(fromUser, toUser)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.FRIEND_RELATION_NOT_FOUND));
 
         friend.markFavorite();
         return FriendResDto.FavoriteFriendResDto.of(true);
@@ -183,15 +182,15 @@ public class FriendService {
     // 친구 즐겨찾기 해제
     @Transactional
     public FriendResDto.FavoriteFriendResDto unfavoriteFriend(Long userId, Long friendId) {
-        //유저없음
+        //유저 없음
         User fromUser = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        //친구유저없음
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
+        //친구 유저 없음
         User toUser = userRepository.findById(friendId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        //친구관계없음
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
+        //친구 관계 아님
         Friend friend = friendRepository.findByUserAndFriendUser(fromUser, toUser)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.FRIEND_RELATION_NOT_FOUND));
 
         friend.unmarkFavorite();
         return FriendResDto.FavoriteFriendResDto.of(false);
@@ -201,7 +200,7 @@ public class FriendService {
     @Transactional(readOnly = true)
     public List<FriendResDto> getMyFriends(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
 
         return friendRepository.findAllByUser(user).stream()
                 .map(friend -> FriendResDto.builder()
@@ -218,9 +217,9 @@ public class FriendService {
     @Transactional
     public void deleteFriend(Long userId, Long friendId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
         User friendUser = userRepository.findById(friendId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
 
         friendRepository.deleteByUserAndFriendUser(user, friendUser);
         friendRepository.deleteByUserAndFriendUser(friendUser, user);
@@ -234,14 +233,14 @@ public class FriendService {
     ) {
 
         User me = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
 
         User target = userRepository.findByFriendCode(friendCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new FriendException(FriendErrorCode.USER_NOT_FOUND));
 
         // 자기 자신 검색 방지
         if (me.getId().equals(target.getId())) {
-            throw new BusinessException(ErrorCode.BAD_REQUEST);
+            throw new FriendException(FriendErrorCode.SELF_FRIEND_REQUEST);
         }
 
         boolean alreadyFriend =

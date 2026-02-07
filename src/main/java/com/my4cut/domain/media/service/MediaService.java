@@ -7,7 +7,7 @@ import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.global.exception.BusinessException;
-import com.my4cut.global.image.ImageStorageService;
+import com.my4cut.domain.image.service.ImageStorageService;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

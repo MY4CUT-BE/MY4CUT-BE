@@ -5,6 +5,8 @@ import com.my4cut.domain.user.enums.UserStatus;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.response.ErrorCode;
+import com.my4cut.global.response.ApiResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,10 +27,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * 인증이 필요 없는 경로는 필터 자체를 타지 않도록 제외
-     */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
@@ -48,14 +48,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        String authHeader = request.getHeader("Authorization");
-
-        // Authorization 헤더 없음
-        if (authHeader == null || !authHeader.startsWith("Bearer ") || authHeader.length() <= 7) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
         try {
+            String authHeader = request.getHeader("Authorization");
+
+            if (authHeader == null || !authHeader.startsWith("Bearer ") || authHeader.length() <= 7) {
+                throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            }
+
             String token = authHeader.substring(7);
             Claims claims = jwtProvider.validateAccessToken(token);
 
@@ -64,32 +63,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-            // 탈퇴 유저
             if (user.getStatus() == UserStatus.DELETED) {
                 throw new BusinessException(ErrorCode.USER_DELETED);
             }
 
-            // 비활성 유저
             if (user.getStatus() == UserStatus.INACTIVE) {
                 throw new BusinessException(ErrorCode.UNAUTHORIZED);
             }
 
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(
-                            userId,
-                            null,
-                            List.of()
-                    );
+                    new UsernamePasswordAuthenticationToken(userId, null, List.of());
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
 
         } catch (BusinessException e) {
             SecurityContextHolder.clearContext();
-            throw e; // 👉 GlobalExceptionHandler로 위임
+            writeErrorResponse(response, e.getErrorCode());
         } catch (Exception e) {
             SecurityContextHolder.clearContext();
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            writeErrorResponse(response, ErrorCode.UNAUTHORIZED);
         }
+    }
+
+    private void writeErrorResponse(HttpServletResponse response, ErrorCode errorCode) throws IOException {
+        response.setStatus(errorCode.getStatus().value());
+        response.setContentType("application/json;charset=UTF-8");
+
+        ApiResponse<Void> body = ApiResponse.onFailure(errorCode);
+        response.getWriter().write(objectMapper.writeValueAsString(body));
     }
 }

@@ -27,6 +27,10 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        if (user.getStatus() == UserStatus.DELETED) {
+            throw new BusinessException(ErrorCode.USER_DELETED);
+        }
+
         LocalDate startOfMonth = LocalDate.now().withDayOfMonth(1);
         LocalDate endOfMonth = startOfMonth.plusMonths(1).minusDays(1);
         long thisMonthDay4CutCount = day4CutRepository.countByUserAndDateBetween(user, startOfMonth, endOfMonth);

@@ -17,6 +17,12 @@ public interface Day4CutRepository extends JpaRepository<Day4Cut, Long> {
 
     Optional<Day4Cut> findByIdAndUser(Long id, User user);
 
+    @Query("SELECT d FROM Day4Cut d " +
+            "LEFT JOIN FETCH d.images i " +
+            "LEFT JOIN FETCH i.mediaFile " +
+            "WHERE d.user = :user AND d.date = :date")
+    Optional<Day4Cut> findByUserAndDate(@Param("user") User user, @Param("date") LocalDate date);
+
     List<Day4Cut> findAllByUserOrderByDateDesc(User user);
 
     boolean existsByUserAndDate(User user, LocalDate date);

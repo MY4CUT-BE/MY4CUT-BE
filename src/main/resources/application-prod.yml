@@ -14,7 +14,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate   # prod에서는 validate 또는 none
+      ddl-auto: update   # prod에서는 validate 또는 none
     show-sql: false
     properties:
       hibernate:

@@ -81,7 +81,7 @@ public class Day4CutService {
     public Day4CutResDto.UpdateResDto updateDay4Cut(Long userId, Day4CutReqDto.UpdateReqDto reqDto) {
         User user = findUserById(userId);
 
-        Day4Cut day4Cut = day4CutRepository.findByIdAndUser(reqDto.id(), user)
+        Day4Cut day4Cut = day4CutRepository.findByUserAndDate(user, reqDto.date())
                 .orElseThrow(() -> new Day4CutException(Day4CutErrorCode.DAY4CUT_NOT_FOUND));
 
         // 이미지 검증
@@ -104,10 +104,10 @@ public class Day4CutService {
      * 하루네컷을 삭제한다.
      */
     @Transactional
-    public Day4CutResDto.DeleteResDto deleteDay4Cut(Long userId, Long day4CutId) {
+    public Day4CutResDto.DeleteResDto deleteDay4Cut(Long userId, LocalDate date) {
         User user = findUserById(userId);
 
-        Day4Cut day4Cut = day4CutRepository.findByIdAndUser(day4CutId, user)
+        Day4Cut day4Cut = day4CutRepository.findByUserAndDate(user, date)
                 .orElseThrow(() -> new Day4CutException(Day4CutErrorCode.DAY4CUT_NOT_FOUND));
 
         day4CutRepository.delete(day4Cut);

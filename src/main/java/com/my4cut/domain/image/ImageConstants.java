@@ -1,4 +1,4 @@
-package com.my4cut.global.image;
+package com.my4cut.domain.image;
 
 public final class ImageConstants {
 

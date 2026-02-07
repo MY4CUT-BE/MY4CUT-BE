@@ -82,7 +82,7 @@ public class User extends BaseEntity {
         this.profileImageUrl =
                 profileImageUrl != null
                         ? profileImageUrl
-                        : com.my4cut.global.image.ImageConstants.DEFAULT_PROFILE_IMAGE_URL;
+                        : com.my4cut.domain.image.ImageConstants.DEFAULT_PROFILE_IMAGE_URL;
         this.loginType = loginType;
         this.oauthId = oauthId;
         this.friendCode = friendCode;

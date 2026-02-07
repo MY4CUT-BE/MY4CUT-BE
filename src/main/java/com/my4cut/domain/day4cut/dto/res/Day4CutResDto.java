@@ -71,10 +71,24 @@ public class Day4CutResDto {
      * 캘린더 조회 응답 DTO
      */
     public record CalendarResDto(
-            List<Integer> dates
+            List<CalendarDayDto> dates
     ) {
-        public static CalendarResDto of(List<Integer> dates) {
-            return new CalendarResDto(dates);
+        public record CalendarDayDto(
+                int day,
+                String thumbnailUrl
+        ) {
+            public static CalendarDayDto from(Day4Cut day4Cut) {
+                String thumbnailUrl = day4Cut.getImages().stream()
+                        .filter(image -> Boolean.TRUE.equals(image.getIsThumbnail()))
+                        .findFirst()
+                        .map(image -> image.getMediaFile().getFileUrl())
+                        .orElse(null);
+
+                return new CalendarDayDto(
+                        day4Cut.getDate().getDayOfMonth(),
+                        thumbnailUrl
+                );
+            }
         }
     }
 }

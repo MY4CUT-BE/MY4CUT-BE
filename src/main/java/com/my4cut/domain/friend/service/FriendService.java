@@ -9,6 +9,7 @@ import com.my4cut.domain.friend.exception.FriendErrorCode;
 import com.my4cut.domain.friend.exception.FriendException;
 import com.my4cut.domain.friend.repository.FriendRepository;
 import com.my4cut.domain.friend.repository.FriendRequestRepository;
+import com.my4cut.domain.notification.service.NotificationService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class FriendService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
     private final FriendRequestRepository friendRequestRepository;
+    private final NotificationService notificationService;
 
     //친구 요청 보내기
     @Transactional
@@ -59,6 +61,12 @@ public class FriendService {
                 .build();
 
         FriendRequest savedRequest = friendRequestRepository.save(request);
+
+        //친구 요청을 보냈을 때 보낸 유저와 요청 받은 유저의 값을 보냅니다.
+        notificationService.sendFriendRequestNotification(
+                toUser,
+                savedRequest.getId()
+        );
 
         return FriendRequestResDto.SendRequestResDto.of(savedRequest);
     }

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,13 +40,29 @@ public class MediaController {
 
     @Operation(
             summary = "미디어 파일 다건 업로드",
-            description = "multipart/form-data로 미디어 파일 여러 개를 서버로 업로드합니다. 5MB × 10장로 기준잡았습니다."
+            description = "multipart/form-data로 미디어 파일 여러 개를 서버로 업로드합니다. 5MB × 10장 기준입니다."
     )
-    @PostMapping("/upload/bulk")
-    // multipart/form-data에서 files 파라미터로 다건 업로드를 처리한다.
+    @PostMapping(
+            value = "/upload/bulk",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
     public ApiResponse<List<MediaResDto.UploadResDto>> uploadMediaBulk(
             @AuthenticationPrincipal Long userId,
-            @Parameter(description = "업로드할 미디어 파일 목록") @RequestParam("files") List<MultipartFile> files
+
+            @RequestPart("files")
+            @Parameter(
+                    description = "업로드할 미디어 파일 목록",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            array = @io.swagger.v3.oas.annotations.media.ArraySchema(
+                                    schema = @io.swagger.v3.oas.annotations.media.Schema(
+                                            type = "string",
+                                            format = "binary"
+                                    )
+                            )
+                    )
+            )
+            List<MultipartFile> files
     ) {
         return ApiResponse.onSuccess(
                 SuccessCode.CREATED,

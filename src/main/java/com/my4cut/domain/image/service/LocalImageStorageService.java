@@ -30,7 +30,7 @@ public class LocalImageStorageService implements ImageStorageService {
         if (directory == null || directory.isBlank()) {
             throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
-        
+
         String originalFilename = file.getOriginalFilename();
         if (originalFilename != null) {
             originalFilename = Paths.get(originalFilename).getFileName().toString();
@@ -38,6 +38,7 @@ public class LocalImageStorageService implements ImageStorageService {
         if (originalFilename == null || originalFilename.isBlank()) {
             throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
+
         String filename = UUID.randomUUID() + "_" + originalFilename;
         Path path = Paths.get(UPLOAD_ROOT, directory, filename);
 

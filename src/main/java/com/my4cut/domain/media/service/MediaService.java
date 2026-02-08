@@ -131,9 +131,9 @@ public class MediaService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        imageStorageService.deleteIfExists(mediaFile.getFileUrl());
-
         mediaFileRepository.delete(mediaFile);
+        mediaFileRepository.flush(); // DB 삭제 먼저 확정
+        imageStorageService.deleteIfExists(mediaFile.getFileUrl());
         return MediaResDto.DeleteResDto.of(true);
     }
     private User getUser(Long userId) {

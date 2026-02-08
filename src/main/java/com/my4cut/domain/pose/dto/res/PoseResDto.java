@@ -11,14 +11,16 @@ public class PoseResDto {
     public static class PoseListResDto {
         private Long poseId;
         private String title;
-        private String imageUrl;
+        private String fileKey;
+        private String viewUrl;
         private Integer peopleCount;
 
-        public static PoseListResDto of(Pose pose) {
+        public static PoseListResDto of(Pose pose, String viewUrl) {
             return PoseListResDto.builder()
                     .poseId(pose.getId())
                     .title(pose.getTitle())
-                    .imageUrl(pose.getImageUrl())
+                    .fileKey(pose.getImageUrl())
+                    .viewUrl(viewUrl)
                     .peopleCount(pose.getPeopleCount())
                     .build();
         }
@@ -29,14 +31,16 @@ public class PoseResDto {
     public static class PoseDetailResDto {
         private Long poseId;
         private String title;
-        private String imageUrl;
+        private String fileKey;
+        private String viewUrl;
         private Integer peopleCount;
 
-        public static PoseDetailResDto of(Pose pose) {
+        public static PoseDetailResDto of(Pose pose, String viewUrl) {
             return PoseDetailResDto.builder()
                     .poseId(pose.getId())
                     .title(pose.getTitle())
-                    .imageUrl(pose.getImageUrl())
+                    .fileKey(pose.getImageUrl())
+                    .viewUrl(viewUrl)
                     .peopleCount(pose.getPeopleCount())
                     .build();
         }

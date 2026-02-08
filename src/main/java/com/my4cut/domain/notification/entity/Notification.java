@@ -31,6 +31,15 @@ public class Notification extends BaseEntity {
     @Column(nullable = false)
     private NotificationType type;
 
+    // 알림을 발생시킨 사용자 (친구 요청 보낸 사람, 댓글 단 사람)
+    @Column(name = "sender_id")
+    private Long senderId;
+
+    // 워크스페이스 관련 알림일 경우
+    @Column(name = "workspace_id")
+    private Long workspaceId;
+
+    // 친구요청 id, 댓글 id 등 행위의 주체
     @Column(name = "reference_id")
     private Long referenceId;
 
@@ -38,9 +47,18 @@ public class Notification extends BaseEntity {
     private Boolean isRead;
 
     @Builder
-    public Notification(User user, NotificationType type, Long referenceId, Boolean isRead) {
+    public Notification(
+            User user,
+            NotificationType type,
+            Long senderId,
+            Long workspaceId,
+            Long referenceId,
+            Boolean isRead
+    ) {
         this.user = user;
         this.type = type;
+        this.senderId = senderId;
+        this.workspaceId = workspaceId;
         this.referenceId = referenceId;
         this.isRead = isRead;
     }

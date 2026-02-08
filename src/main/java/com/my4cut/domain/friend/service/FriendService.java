@@ -65,6 +65,7 @@ public class FriendService {
         //친구 요청을 보냈을 때 보낸 유저와 요청 받은 유저의 값을 보냅니다.
         notificationService.sendFriendRequestNotification(
                 toUser,
+                fromUser,
                 savedRequest.getId()
         );
 

@@ -27,18 +27,14 @@ public class Day4CutResDto {
      */
     public record DetailResDto(
             Long id,
-            List<String> fileUrl,
+            List<String> viewUrls,
             String content,
             EmojiType emojiType
     ) {
-        public static DetailResDto from(Day4Cut day4Cut) {
-            List<String> fileUrls = day4Cut.getImages().stream()
-                    .map(image -> image.getMediaFile().getFileUrl())
-                    .toList();
-
+        public static DetailResDto of(Day4Cut day4Cut, List<String> viewUrls) {
             return new DetailResDto(
                     day4Cut.getId(),
-                    fileUrls,
+                    viewUrls,
                     day4Cut.getContent(),
                     day4Cut.getEmojiType()
             );
@@ -77,17 +73,8 @@ public class Day4CutResDto {
                 int day,
                 String thumbnailUrl
         ) {
-            public static CalendarDayDto from(Day4Cut day4Cut) {
-                String thumbnailUrl = day4Cut.getImages().stream()
-                        .filter(image -> Boolean.TRUE.equals(image.getIsThumbnail()))
-                        .findFirst()
-                        .map(image -> image.getMediaFile().getFileUrl())
-                        .orElse(null);
-
-                return new CalendarDayDto(
-                        day4Cut.getDate().getDayOfMonth(),
-                        thumbnailUrl
-                );
+            public static CalendarDayDto of(int day, String thumbnailUrl) {
+                return new CalendarDayDto(day, thumbnailUrl);
             }
         }
     }

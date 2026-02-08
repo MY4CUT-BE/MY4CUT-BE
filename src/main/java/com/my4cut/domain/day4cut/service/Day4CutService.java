@@ -7,6 +7,7 @@ import com.my4cut.domain.day4cut.entity.Day4CutImage;
 import com.my4cut.domain.day4cut.exception.Day4CutErrorCode;
 import com.my4cut.domain.day4cut.exception.Day4CutException;
 import com.my4cut.domain.day4cut.repository.Day4CutRepository;
+import com.my4cut.domain.image.service.ImageStorageService;
 import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
@@ -31,6 +32,8 @@ public class Day4CutService {
     private final Day4CutRepository day4CutRepository;
     private final UserRepository userRepository;
     private final MediaFileRepository mediaFileRepository;
+    private final ImageStorageService imageStorageService;
+
 
     /**
      * 하루네컷을 생성한다.
@@ -76,7 +79,12 @@ public class Day4CutService {
         Day4Cut day4Cut = day4CutRepository.findByUserAndDate(user, date)
                 .orElseThrow(() -> new Day4CutException(Day4CutErrorCode.DAY4CUT_NOT_FOUND));
 
-        return Day4CutResDto.DetailResDto.from(day4Cut);
+        List<String> viewUrls = day4Cut.getImages().stream()
+                .map(image -> imageStorageService
+                        .generatePresignedGetUrl(image.getMediaFile().getFileUrl()))
+                .toList();
+
+        return Day4CutResDto.DetailResDto.of(day4Cut, viewUrls);
     }
 
     /**
@@ -201,20 +209,31 @@ public class Day4CutService {
      * 하루네컷이 존재하는 날짜 목록 조회
      */
     @Transactional(readOnly = true)
-    public Day4CutResDto.CalendarResDto getCalendar(
-            Long userId,
-            int year,
-            int month
-    ) {
-        // 유저 조회
+    public Day4CutResDto.CalendarResDto getCalendar(Long userId, int year, int month) {
         User user = findUserById(userId);
 
-        // 해당 년/월에 하루네컷을 이미지와 함께 조회
-        List<Day4Cut> day4Cuts = day4CutRepository.findAllByUserAndYearMonth(user, year, month);
+        List<Day4Cut> day4Cuts =
+                day4CutRepository.findAllByUserAndYearMonth(user, year, month);
 
-        List<Day4CutResDto.CalendarResDto.CalendarDayDto> days = day4Cuts.stream()
-                .map(Day4CutResDto.CalendarResDto.CalendarDayDto::from)
-                .toList();
+        List<Day4CutResDto.CalendarResDto.CalendarDayDto> days =
+                day4Cuts.stream()
+                        .map(day4Cut -> {
+                            String thumbnailKey = day4Cut.getImages().stream()
+                                    .filter(img -> Boolean.TRUE.equals(img.getIsThumbnail()))
+                                    .findFirst()
+                                    .map(img -> img.getMediaFile().getFileUrl())
+                                    .orElse(null);
+
+                            String thumbnailUrl = thumbnailKey == null
+                                    ? null
+                                    : imageStorageService.generatePresignedGetUrl(thumbnailKey);
+
+                            return Day4CutResDto.CalendarResDto.CalendarDayDto.of(
+                                    day4Cut.getDate().getDayOfMonth(),
+                                    thumbnailUrl
+                            );
+                        })
+                        .toList();
 
         return new Day4CutResDto.CalendarResDto(days);
     }

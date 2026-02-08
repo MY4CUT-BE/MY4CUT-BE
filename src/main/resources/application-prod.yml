@@ -14,15 +14,21 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update   # prod에서는 validate 또는 none
+      ddl-auto: validate   # prod에서는 validate 또는 none
     show-sql: false
     properties:
       hibernate:
         format_sql: false
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 55MB
 jwt:
   token:
     secretKey: ${JWT_SECRET_KEY}
+
+
 
 cloud:
   aws:

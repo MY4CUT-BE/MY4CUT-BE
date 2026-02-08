@@ -24,7 +24,7 @@ public class MediaController {
 
     @Operation(
             summary = "미디어 파일 업로드",
-            description = "미디어 파일을 업로드합니다."
+            description = "미디어 파일 1개를 업로드합니다."
     )
     @PostMapping("/upload")
     public ApiResponse<MediaResDto.UploadResDto> uploadMedia(
@@ -34,6 +34,22 @@ public class MediaController {
         return ApiResponse.onSuccess(
                 SuccessCode.CREATED,
                 mediaService.uploadMedia(userId, file)
+        );
+    }
+
+    @Operation(
+            summary = "미디어 파일 다건 업로드",
+            description = "multipart/form-data로 미디어 파일 여러 개를 서버로 업로드합니다. 5MB × 10장로 기준잡았습니다."
+    )
+    @PostMapping("/upload/bulk")
+    // multipart/form-data에서 files 파라미터로 다건 업로드를 처리한다.
+    public ApiResponse<List<MediaResDto.UploadResDto>> uploadMediaBulk(
+            @AuthenticationPrincipal Long userId,
+            @Parameter(description = "업로드할 미디어 파일 목록") @RequestParam("files") List<MultipartFile> files
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessCode.CREATED,
+                mediaService.uploadMediaBulk(userId, files)
         );
     }
 

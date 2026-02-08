@@ -75,7 +75,7 @@ public class WorkspacePhotoService {
         return updatedMediaFiles.stream()
                 .map(file -> new WorkspacePhotoResponseDto(
                         file.getId(),
-                        file.getFileUrl(),
+                        imageStorageService.generatePresignedGetUrl(file.getFileUrl()),
                         file.getMediaType(),
                         file.getTakenDate(),
                         file.getIsFinal(),
@@ -132,7 +132,7 @@ public class WorkspacePhotoService {
         return photos.stream()
                 .map(photo -> new WorkspacePhotoResponseDto(
                         photo.getId(),
-                        photo.getFileUrl(),
+                        imageStorageService.generatePresignedGetUrl(photo.getFileUrl()),
                         photo.getMediaType(),
                         photo.getTakenDate(),
                         photo.getIsFinal(),

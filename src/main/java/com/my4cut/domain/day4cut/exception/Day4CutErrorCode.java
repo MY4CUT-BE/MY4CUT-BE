@@ -18,7 +18,8 @@ public enum Day4CutErrorCode implements BaseCode {
     DAY4CUT_INVALID_THUMBNAIL(HttpStatus.BAD_REQUEST, "D4001", "썸네일은 반드시 1개여야 합니다."),
     DAY4CUT_IMAGES_REQUIRED(HttpStatus.BAD_REQUEST, "D4002", "이미지는 최소 1장 이상이어야 합니다."),
     DAY4CUT_CONTENT_REQUIRED(HttpStatus.BAD_REQUEST, "D4003", "내용은 필수입니다."),
-    DAY4CUT_INVALID_EMOJI_TYPE(HttpStatus.BAD_REQUEST, "D4004", "유효하지 않은 이모티콘 타입입니다.");
+    DAY4CUT_INVALID_EMOJI_TYPE(HttpStatus.BAD_REQUEST, "D4004", "유효하지 않은 이모티콘 타입입니다."),
+    DAY4CUT_ALREADY_EXISTS(HttpStatus.CONFLICT, "D4091", "해당 날짜에 이미 하루네컷이 존재합니다.");
 
     private final HttpStatus status;
     private final String code;

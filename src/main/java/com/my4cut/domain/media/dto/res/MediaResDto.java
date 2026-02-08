@@ -12,12 +12,14 @@ public class MediaResDto {
     @Builder
     public static class UploadResDto {
         private Long fileId;
-        private String fileUrl;
+        private String fileKey;
+        private String viewUrl;
 
-        public static UploadResDto of(MediaFile mediaFile) {
+        public static UploadResDto of(MediaFile mediaFile, String viewUrl) {
             return UploadResDto.builder()
                     .fileId(mediaFile.getId())
-                    .fileUrl(mediaFile.getFileUrl())
+                    .fileKey(mediaFile.getFileUrl())
+                    .viewUrl(viewUrl)
                     .build();
         }
     }
@@ -26,10 +28,14 @@ public class MediaResDto {
     @Builder
     public static class MediaListResDto {
         private Long mediaId;
+        private String fileKey;
+        private String viewUrl;
 
-        public static MediaListResDto of(MediaFile mediaFile) {
+        public static MediaListResDto of(MediaFile mediaFile, String viewUrl) {
             return MediaListResDto.builder()
                     .mediaId(mediaFile.getId())
+                    .fileKey(mediaFile.getFileUrl())
+                    .viewUrl(viewUrl)
                     .build();
         }
     }
@@ -38,16 +44,18 @@ public class MediaResDto {
     @Builder
     public static class MediaDetailResDto {
         private Long mediaId;
-        private String fileUrl;
+        private String fileKey;
+        private String viewUrl;
         private String mediaType;
         private String diary;
         private LocalDate takenDate;
         private Boolean isFinal;
 
-        public static MediaDetailResDto of(MediaFile mediaFile) {
+        public static MediaDetailResDto of(MediaFile mediaFile, String viewUrl) {
             return MediaDetailResDto.builder()
                     .mediaId(mediaFile.getId())
-                    .fileUrl(mediaFile.getFileUrl())
+                    .fileKey(mediaFile.getFileUrl())
+                    .viewUrl(viewUrl)
                     .mediaType(mediaFile.getMediaType().name())
                     .diary(mediaFile.getDiary())
                     .takenDate(mediaFile.getTakenDate())

@@ -16,11 +16,18 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
     defer-datasource-initialization: true
 
+
   application:
     name: my4cut
 
   profiles:
     default: local
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 55MB
+
 # ec2 서버
 #server:
 #  port: ${SERVER_PORT:8080}

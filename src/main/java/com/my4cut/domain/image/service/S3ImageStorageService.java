@@ -62,13 +62,22 @@ public class S3ImageStorageService implements ImageStorageService {
 
     @Override
     public String generatePresignedGetUrl(String fileKey) {
+        if (fileKey == null || fileKey.isBlank()) {
+            return null;
+        }
+
+        String key = extractKey(fileKey);
+        if (key == null || key.isBlank()) {
+            return null;
+        }
+
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucket)
-                .key(fileKey)
+                .key(key)
                 .build();
 
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(5))
+                .signatureDuration(Duration.ofMinutes(10))
                 .getObjectRequest(getObjectRequest)
                 .build();
 
@@ -76,6 +85,7 @@ public class S3ImageStorageService implements ImageStorageService {
                 .url()
                 .toString();
     }
+
 
     @Override
     public void deleteIfExists(String imagePathOrUrl) {

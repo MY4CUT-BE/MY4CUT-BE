@@ -10,6 +10,7 @@ import com.my4cut.global.exception.BusinessException;
 import com.my4cut.domain.image.service.ImageStorageService;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MediaService {
     private static final String MEDIA_DIRECTORY = "calendar";
     private static final int MAX_BULK_UPLOAD_COUNT = 10;
@@ -63,10 +65,13 @@ public class MediaService {
                 uploadedMediaFiles.add(saved);
             }
         } catch (Exception e) {
-            // 🔥 여기서 S3 보상 삭제
-            uploadedMediaFiles.forEach(media ->
-                    imageStorageService.deleteIfExists(media.getFileUrl())
-            );
+            for (MediaFile media : uploadedMediaFiles) {
+                try {
+                    imageStorageService.deleteIfExists(media.getFileUrl());
+                } catch (Exception deleteEx) {
+                    log.warn("S3 보상 삭제 실패: {}", media.getFileUrl(), deleteEx);
+                }
+            }
             throw e;
         }
 
@@ -138,6 +143,10 @@ public class MediaService {
 
     private MediaFile saveMediaFile(User user, MultipartFile file) {
         // 서버가 multipart 파일을 직접 받아 S3에 업로드하고, 결과로 fileKey를 돌려받는다.
+        //파일 타입 검증
+        validateContentType(file.getContentType());
+
+        // 서버가 multipart 파일을 직접 받아 S3에 업로드
         String fileKey = imageStorageService.upload(file, MEDIA_DIRECTORY);
         MediaType mediaType = determineMediaType(file.getContentType());
 
@@ -156,5 +165,12 @@ public class MediaService {
             return MediaType.VIDEO;
         }
         return MediaType.PHOTO;
+    }
+
+    private void validateContentType(String contentType) {
+        if (contentType == null ||
+                !(contentType.startsWith("image/") || contentType.startsWith("video/"))) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
     }
 }

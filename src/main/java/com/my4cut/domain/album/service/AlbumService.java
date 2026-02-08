@@ -6,6 +6,7 @@ import com.my4cut.domain.album.dto.AlbumResponseDto;
 import com.my4cut.domain.album.exception.AlbumErrorCode;
 import com.my4cut.domain.album.exception.AlbumException;
 import com.my4cut.domain.album.repository.AlbumRepository;
+import com.my4cut.domain.image.service.ImageStorageService;
 import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
@@ -31,6 +32,7 @@ public class AlbumService {
     private final AlbumRepository albumRepository;
     private final MediaFileRepository mediaFileRepository;
     private final UserRepository userRepository;
+    private final ImageStorageService imageStorageService;
 
     /**
      * 새로운 앨범을 생성합니다.
@@ -64,14 +66,14 @@ public class AlbumService {
     public AlbumResponseDto.Detail getAlbumDetail(Long albumId, Long userId) {
         Album album = validateAlbumOwner(albumId, userId);
 
-        List<WorkspacePhotoResponseDto> photos = album.getMediaFiles().stream()
-                .map(this::mapToPhotoDto)
+        List<WorkspacePhotoResponseDto> mediaList = album.getMediaFiles().stream()
+                .map(this::mapToMediaDto)
                 .collect(Collectors.toList());
 
         return new AlbumResponseDto.Detail(
                 album.getId(),
                 album.getAlbumName(),
-                photos,
+                mediaList,
                 album.getCreatedAt()
         );
     }
@@ -102,13 +104,13 @@ public class AlbumService {
     }
 
     /**
-     * 앨범에 사진을 추가합니다.
+     * 앨범에 미디어를 추가합니다.
      */
     @Transactional
-    public AlbumResponseDto.Detail addPhotosToAlbum(Long albumId, AlbumRequestDto.UpdatePhotos requestDto, Long userId) {
+    public AlbumResponseDto.Detail addMediaToAlbum(Long albumId, AlbumRequestDto.UpdateMedia requestDto, Long userId) {
         Album album = validateAlbumOwner(albumId, userId);
 
-        List<MediaFile> mediaFiles = mediaFileRepository.findAllById(requestDto.photoIds());
+        List<MediaFile> mediaFiles = mediaFileRepository.findAllById(requestDto.mediaIds());
         
         for (MediaFile mediaFile : mediaFiles) {
             // 소유권 확인 (본인 미디어만 추가 가능)
@@ -123,13 +125,13 @@ public class AlbumService {
     }
 
     /**
-     * 앨범에서 사진을 제외합니다.
+     * 앨범에서 미디어를 제외합니다.
      */
     @Transactional
-    public AlbumResponseDto.Detail removePhotosFromAlbum(Long albumId, AlbumRequestDto.UpdatePhotos requestDto, Long userId) {
+    public AlbumResponseDto.Detail removeMediaFromAlbum(Long albumId, AlbumRequestDto.UpdateMedia requestDto, Long userId) {
         validateAlbumOwner(albumId, userId);
 
-        List<MediaFile> mediaFiles = mediaFileRepository.findAllById(requestDto.photoIds());
+        List<MediaFile> mediaFiles = mediaFileRepository.findAllById(requestDto.mediaIds());
         
         for (MediaFile mediaFile : mediaFiles) {
             if (mediaFile.getAlbum() != null && mediaFile.getAlbum().getId().equals(albumId)) {
@@ -151,20 +153,23 @@ public class AlbumService {
     }
 
     private AlbumResponseDto.Info mapToInfo(Album album) {
-        String coverUrl = album.getMediaFiles().isEmpty() ? null : album.getMediaFiles().get(0).getFileUrl();
+        String coverKey = album.getMediaFiles().isEmpty() ? null : album.getMediaFiles().get(0).getFileUrl();
+        String coverUrl = imageStorageService.generatePresignedGetUrl(coverKey);
         return new AlbumResponseDto.Info(
                 album.getId(),
                 album.getAlbumName(),
                 album.getMediaFiles().size(),
+                coverKey,
                 coverUrl,
                 album.getCreatedAt()
         );
     }
 
-    private WorkspacePhotoResponseDto mapToPhotoDto(MediaFile file) {
+    private WorkspacePhotoResponseDto mapToMediaDto(MediaFile file) {
         return new WorkspacePhotoResponseDto(
                 file.getId(),
                 file.getFileUrl(),
+                imageStorageService.generatePresignedGetUrl(file.getFileUrl()),
                 file.getMediaType(),
                 file.getTakenDate(),
                 file.getIsFinal(),

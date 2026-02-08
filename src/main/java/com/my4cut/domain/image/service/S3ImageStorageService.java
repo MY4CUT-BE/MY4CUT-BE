@@ -111,6 +111,9 @@ public class S3ImageStorageService implements ImageStorageService {
     }
 
     private String buildKey(String directory, String originalFilename) {
+        if (directory == null || directory.isBlank()) {
+            throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED);
+        }
         String safeName = sanitizeFilename(originalFilename);
         String yearMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
         // 요구사항에 맞춰 URL이 아닌 fileKey만 DB에 저장한다.
@@ -128,10 +131,19 @@ public class S3ImageStorageService implements ImageStorageService {
     }
 
     private String extractKey(String imagePathOrUrl) {
+        if (imagePathOrUrl == null || imagePathOrUrl.isBlank()) {
+            return imagePathOrUrl;
+        }
+
         if (imagePathOrUrl.startsWith("http://") || imagePathOrUrl.startsWith("https://")) {
-            int domainEnd = imagePathOrUrl.indexOf(".amazonaws.com/");
-            if (domainEnd > 0) {
-                return imagePathOrUrl.substring(domainEnd + ".amazonaws.com/".length());
+            try {
+                URI uri = URI.create(imagePathOrUrl);
+                String path = uri.getPath(); // /calendar/2026/02/xxx.jpg
+                if (path != null && path.startsWith("/")) {
+                    return path.substring(1);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to parse image URL: {}", imagePathOrUrl, e);
             }
         }
         return imagePathOrUrl;

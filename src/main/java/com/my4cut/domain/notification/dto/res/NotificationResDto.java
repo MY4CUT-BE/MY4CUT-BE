@@ -1,4 +1,3 @@
-// NotificationResDto.java
 package com.my4cut.domain.notification.dto.res;
 
 import com.my4cut.domain.notification.entity.Notification;
@@ -17,27 +16,50 @@ public record NotificationResDto() {
 
     // 알림 목록 조회 응답
     public record NotificationItemDto(
-            Long id,
+            Long notificationId,     // 알림 id
             NotificationType type,
-            String msg,
-            Boolean isRead
+            String message,           // 최종 메시지
+            Boolean isRead,
+            Long referenceId,         // 친구요청 id (수락/거절용)
+            Long senderId,
+            String senderNickname,
+            Long workspaceId,
+            String workspaceName
     ) {
-        public static NotificationItemDto of(Notification notification) {
+        public static NotificationItemDto of(
+                Notification notification,
+                String senderNickname,
+                String workspaceName
+        ) {
             return new NotificationItemDto(
                     notification.getId(),
                     notification.getType(),
-                    generateMessage(notification),
-                    notification.getIsRead()
+                    generateMessage(notification, senderNickname, workspaceName),
+                    notification.getIsRead(),
+                    notification.getReferenceId(),
+                    notification.getSenderId(),
+                    senderNickname,
+                    notification.getWorkspaceId(),
+                    workspaceName
             );
         }
 
-        private static String generateMessage(Notification notification) {
+        private static String generateMessage(
+                Notification notification,
+                String senderNickname,
+                String workspaceName
+        ) {
             return switch (notification.getType()) {
-                case FRIEND_REQUEST -> "친구 요청이 도착했습니다.";
-                case FRIEND_ACCEPTED -> "친구 요청이 수락되었습니다.";
-                case WORKSPACE_INVITE -> "워크스페이스에 초대되었습니다.";
-                case MEDIA_UPLOADED -> "새로운 미디어가 업로드되었습니다.";
-                case MEDIA_COMMENT -> "미디어에 댓글이 달렸습니다.";
+                case FRIEND_REQUEST ->
+                        senderNickname + "님의 친구 요청";
+                case FRIEND_ACCEPTED ->
+                        senderNickname + "님이 친구 요청을 수락했습니다.";
+                case WORKSPACE_INVITE ->
+                        senderNickname + "님이 " + workspaceName + "스페이스에 초대했습니다.";
+                case MEDIA_COMMENT ->
+                        senderNickname + "님이 " + workspaceName + "스페이스에 댓글을 남겼습니다.";
+                case MEDIA_UPLOADED ->
+                        senderNickname + "님이 새로운 미디어를 업로드했습니다.";
             };
         }
     }

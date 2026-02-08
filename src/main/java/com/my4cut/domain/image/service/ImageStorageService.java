@@ -4,12 +4,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface ImageStorageService {
     String upload(MultipartFile file);
-    //기존 이미지 제거
-    //void delete(String imageUrl);
+    String upload(MultipartFile file, String directory);
+
+    String generatePresignedGetUrl(String fileKey);
 
     /**
-     * 로컬 이미지인 경우만 삭제하고,
-     * URL(S3 등)인 경우는 아무 동작도 하지 않는다.
+     * 저장소 타입에 맞게 fileKey(또는 레거시 URL)를 해석해 실제 파일을 삭제한다.
      */
     void deleteIfExists(String imagePathOrUrl);
 }

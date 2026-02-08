@@ -20,9 +20,15 @@ spring:
       hibernate:
         format_sql: false
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 50MB   # 5MB × 10장
 jwt:
   token:
     secretKey: ${JWT_SECRET_KEY}
+
+
 
 cloud:
   aws:

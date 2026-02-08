@@ -12,6 +12,8 @@ import com.my4cut.domain.user.entity.UserFcmToken;
 import com.my4cut.domain.user.enums.DeviceType;
 import com.my4cut.domain.user.repository.UserFcmTokenRepository;
 import com.my4cut.domain.user.repository.UserRepository;
+import com.my4cut.domain.workspace.entity.Workspace;
+import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class NotificationService {
     private final UserFcmTokenRepository userFcmTokenRepository;
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final WorkspaceRepository workspaceRepository;
 
     // FCM 토큰 등록
     @Transactional
@@ -62,23 +65,6 @@ public class NotificationService {
         return NotificationResDto.RegisterTokenResDto.of(savedToken.getId());
     }
 
-    // 친구요청을 보냈을 때 요청 받은 사용자에게 알림을 보냅니다.
-    @Transactional
-    public void sendFriendRequestNotification(
-            User toUser,
-            Long friendRequestId
-    ) {
-        Notification notification = Notification.builder()
-                .user(toUser)
-                .type(NotificationType.FRIEND_REQUEST)
-                .referenceId(friendRequestId)
-                .isRead(false)
-                .build();
-
-        notificationRepository.save(notification);
-    }
-
-    // 알림 목록 조회
     @Transactional(readOnly = true)
     public List<NotificationResDto.NotificationItemDto> getNotifications(
             Long userId,
@@ -87,13 +73,34 @@ public class NotificationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(page, 20); // 페이지당 20개
+        Pageable pageable = PageRequest.of(page, 20);
 
-        Page<Notification> notifications = notificationRepository
-                .findByUserOrderByCreatedAtDesc(user, pageable);
+        Page<Notification> notifications =
+                notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);
 
         return notifications.stream()
-                .map(NotificationResDto.NotificationItemDto::of)
+                .map(notification -> {
+                    String senderNickname = null;
+                    String workspaceName = null;
+
+                    if (notification.getSenderId() != null) {
+                        senderNickname = userRepository.findById(notification.getSenderId())
+                                .map(User::getNickname)
+                                .orElse("알 수 없음"); //알림은 유효하지만 부가 정보 따로 없음.
+                    }
+
+                    if (notification.getWorkspaceId() != null) {
+                        workspaceName = workspaceRepository.findById(notification.getWorkspaceId())
+                                .map(Workspace::getName)
+                                .orElse("알 수 없음");
+                    }
+
+                    return NotificationResDto.NotificationItemDto.of(
+                            notification,
+                            senderNickname,
+                            workspaceName
+                    );
+                })
                 .toList();
     }
 
@@ -115,4 +122,24 @@ public class NotificationService {
 
         return NotificationResDto.ReadNotificationResDto.of(notification);
     }
+
+    // 친구요청을 보냈을 때 요청 받은 사용자에게 알림을 보냅니다.
+    @Transactional
+    public void sendFriendRequestNotification(
+            User toUser,
+            User fromUser,
+            Long friendRequestId
+    ) {
+        Notification notification = Notification.builder()
+                .user(toUser)
+                .type(NotificationType.FRIEND_REQUEST)
+                .senderId(fromUser.getId())
+                .referenceId(friendRequestId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    //친구수락을 했을 때
 }

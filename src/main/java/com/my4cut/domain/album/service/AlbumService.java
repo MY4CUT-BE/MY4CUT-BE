@@ -36,6 +36,9 @@ public class AlbumService {
 
     /**
      * 새로운 앨범을 생성합니다.
+     * @param requestDto 앨범 생성 정보 DTO
+     * @param userId 유저 ID
+     * @return 생성된 앨범 정보 DTO
      */
     @Transactional
     public AlbumResponseDto.Info createAlbum(AlbumRequestDto.CreateOrUpdate requestDto, Long userId) {
@@ -53,6 +56,8 @@ public class AlbumService {
 
     /**
      * 사용자의 모든 앨범 목록을 조회합니다.
+     * @param userId 유저 ID
+     * @return 앨범 정보 DTO 리스트
      */
     public List<AlbumResponseDto.Info> getMyAlbums(Long userId) {
         return albumRepository.findAllByOwnerId(userId).stream()
@@ -62,6 +67,9 @@ public class AlbumService {
 
     /**
      * 특정 앨범의 상세 정보를 조회합니다.
+     * @param albumId 앨범 ID
+     * @param userId 유저 ID
+     * @return 앨범 상세 정보 DTO
      */
     public AlbumResponseDto.Detail getAlbumDetail(Long albumId, Long userId) {
         Album album = validateAlbumOwner(albumId, userId);
@@ -80,6 +88,10 @@ public class AlbumService {
 
     /**
      * 앨범 이름을 수정합니다.
+     * @param albumId 앨범 ID
+     * @param requestDto 수정할 앨범 정보 DTO
+     * @param userId 유저 ID
+     * @return 수정된 앨범 정보 DTO
      */
     @Transactional
     public AlbumResponseDto.Info updateAlbumName(Long albumId, AlbumRequestDto.CreateOrUpdate requestDto, Long userId) {
@@ -90,6 +102,8 @@ public class AlbumService {
 
     /**
      * 앨범을 삭제합니다.
+     * @param albumId 앨범 ID
+     * @param userId 유저 ID
      */
     @Transactional
     public void deleteAlbum(Long albumId, Long userId) {
@@ -105,6 +119,10 @@ public class AlbumService {
 
     /**
      * 앨범에 미디어를 추가합니다.
+     * @param albumId 앨범 ID
+     * @param requestDto 추가할 미디어 ID 리스트를 담은 DTO
+     * @param userId 유저 ID
+     * @return 업데이트된 앨범 상세 정보 DTO
      */
     @Transactional
     public AlbumResponseDto.Detail addMediaToAlbum(Long albumId, AlbumRequestDto.UpdateMedia requestDto, Long userId) {
@@ -126,6 +144,10 @@ public class AlbumService {
 
     /**
      * 앨범에서 미디어를 제외합니다.
+     * @param albumId 앨범 ID
+     * @param requestDto 제외할 미디어 ID 리스트를 담은 DTO
+     * @param userId 유저 ID
+     * @return 업데이트된 앨범 상세 정보 DTO
      */
     @Transactional
     public AlbumResponseDto.Detail removeMediaFromAlbum(Long albumId, AlbumRequestDto.UpdateMedia requestDto, Long userId) {

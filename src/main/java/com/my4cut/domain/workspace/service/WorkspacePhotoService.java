@@ -25,6 +25,8 @@ import java.util.stream.Collectors;
 
 /**
  * 워크스페이스 사진 관련 비즈니스 로직을 처리하는 서비스 클래스.
+ * @author koohyunmo
+ * @since 2026-02-08
  */
 @Service
 @RequiredArgsConstructor
@@ -39,7 +41,11 @@ public class WorkspacePhotoService {
     private final ImageStorageService imageStorageService;
 
     /**
-     * 워크스페이스에 사진을 업로드합니다.
+     * 워크스페이스에 사진(미디어)을 업로드/연결합니다.
+     * @param workspaceId 워크스페이스 ID
+     * @param requestDto 업로드할 미디어 ID 리스트를 담은 DTO
+     * @param userId 유저 ID
+     * @return 업로드된 사진 응답 DTO 리스트
      */
     @Transactional
     public List<WorkspacePhotoResponseDto> uploadPhotos(Long workspaceId,
@@ -86,7 +92,10 @@ public class WorkspacePhotoService {
     }
 
     /**
-     * 워크스페이스의 사진을 삭제합니다.
+     * 워크스페이스의 특정 사진을 삭제합니다.
+     * @param workspaceId 워크스페이스 ID
+     * @param photoId 사진(미디어) ID
+     * @param userId 유저 ID
      */
     @Transactional
     public void deletePhoto(Long workspaceId, Long photoId, Long userId) {
@@ -116,6 +125,10 @@ public class WorkspacePhotoService {
 
     /**
      * 워크스페이스의 사진 목록을 조회합니다.
+     * @param workspaceId 워크스페이스 ID
+     * @param sort 정렬 기준 (latest, oldest)
+     * @param userId 유저 ID
+     * @return 사진 응답 DTO 리스트
      */
     public List<WorkspacePhotoResponseDto> getPhotos(Long workspaceId, String sort, Long userId) {
         workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
@@ -158,6 +171,10 @@ public class WorkspacePhotoService {
 
     /**
      * 사진의 댓글 목록을 조회합니다.
+     * @param workspaceId 워크스페이스 ID
+     * @param photoId 사진 ID
+     * @param userId 유저 ID
+     * @return 댓글 응답 DTO 리스트
      */
     public List<WorkspacePhotoCommentResponseDto> getComments(Long workspaceId, Long photoId, Long userId) {
         workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
@@ -180,7 +197,11 @@ public class WorkspacePhotoService {
     }
 
     /**
-     * 사진의 댓글을 삭제합니다.
+     * 특정 댓글을 삭제합니다.
+     * @param workspaceId 워크스페이스 ID
+     * @param photoId 사진 ID
+     * @param commentId 삭제할 댓글 ID
+     * @param userId 유저 ID
      */
     @Transactional
     public void deleteComment(Long workspaceId, Long photoId, Long commentId, Long userId) {
@@ -207,6 +228,10 @@ public class WorkspacePhotoService {
 
     /**
      * 사진에 댓글을 등록합니다.
+     * @param workspaceId 워크스페이스 ID
+     * @param photoId 사진 ID
+     * @param dto 댓글 내용 DTO
+     * @param userId 유저 ID
      */
     @Transactional
     public void createComment(Long workspaceId, Long photoId, WorkspacePhotoCommentRequestDto dto, Long userId) {

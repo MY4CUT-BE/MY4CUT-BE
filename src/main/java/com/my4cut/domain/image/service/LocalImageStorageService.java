@@ -18,13 +18,18 @@ import java.util.UUID;
 @Profile("local")
 public class LocalImageStorageService implements ImageStorageService {
 
-    private static final String UPLOAD_DIR =
-            System.getProperty("user.dir") + "/uploads/profile";
+    private static final String UPLOAD_ROOT = System.getProperty("user.dir") + "/uploads";
 
     @Override
     public String upload(MultipartFile file) {
+        return upload(file, "profile");
+    }
+
+    @Override
+    public String upload(MultipartFile file, String directory) {
+
         String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        Path path = Paths.get(UPLOAD_DIR, filename);
+        Path path = Paths.get(UPLOAD_ROOT, directory, filename);
 
         try {
             Files.createDirectories(path.getParent());
@@ -33,7 +38,12 @@ public class LocalImageStorageService implements ImageStorageService {
             throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED, e);
         }
 
-        return "/images/profile/" + filename;
+        return "/images/" + directory + "/" + filename;
+    }
+
+    @Override
+    public String generatePresignedGetUrl(String fileKey) {
+        return fileKey;
     }
 
     @Override
@@ -49,9 +59,8 @@ public class LocalImageStorageService implements ImageStorageService {
 
         try {
             String filePath = imagePathOrUrl;
-            if (filePath.startsWith("/images/profile/")) {
-                String filename = filePath.substring("/images/profile/".length());
-                filePath = UPLOAD_DIR + "/" + filename;
+            if (filePath.startsWith("/images/")) {
+                filePath = UPLOAD_ROOT + filePath.substring("/images".length());
             }
             Path path = Paths.get(filePath);
             Files.deleteIfExists(path);

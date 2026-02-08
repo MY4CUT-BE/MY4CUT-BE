@@ -1,5 +1,7 @@
 package com.my4cut.domain.image.service;
 
+import com.my4cut.global.exception.BusinessException;
+import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,10 +11,16 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Slf4j
@@ -22,16 +30,19 @@ import java.util.UUID;
 public class S3ImageStorageService implements ImageStorageService {
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    /**
-     * 프로필 이미지 업로드
-     */
     @Override
     public String upload(MultipartFile file) {
-        String key = "profile/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
+        return upload(file, "profile");
+    }
+
+    @Override
+    public String upload(MultipartFile file, String directory) {
+        String key = buildKey(directory, file.getOriginalFilename());
 
         try {
             s3Client.putObject(
@@ -43,41 +54,44 @@ public class S3ImageStorageService implements ImageStorageService {
                     RequestBody.fromBytes(file.getBytes())
             );
         } catch (IOException e) {
-            throw new RuntimeException("S3 이미지 업로드 실패", e);
+            throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED, e);
         }
 
-        return "https://" + bucket + ".s3.ap-northeast-2.amazonaws.com/" + key;
+        return key;
     }
 
-    /**
-     * 이미지가 S3 URL이면 S3에서 삭제
-     * - URL이 아니면 무시
-     * - 다른 버킷이면 무시
-     * - 실패해도 예외 던지지 않음
-     */
+    @Override
+    public String generatePresignedGetUrl(String fileKey) {
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(fileKey)
+                .build();
+
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(5))
+                .getObjectRequest(getObjectRequest)
+                .build();
+
+        return s3Presigner.presignGetObject(presignRequest)
+                .url()
+                .toString();
+    }
+
     @Override
     public void deleteIfExists(String imagePathOrUrl) {
         if (imagePathOrUrl == null || imagePathOrUrl.isBlank()) {
             return;
         }
 
-        if (!isS3Url(imagePathOrUrl)) {
-            return;
-        }
+        // 과거 데이터는 전체 S3 URL, 신규 데이터는 fileKey로 저장될 수 있어
+        // 삭제 시점에는 둘 다 안전하게 지원한다.
+        String key = extractKey(imagePathOrUrl);
 
         try {
-            S3Location location = parseS3Url(imagePathOrUrl);
-
-            // 안전장치: 설정된 버킷만 삭제
-            if (!bucket.equals(location.bucket())) {
-                log.warn("Skip deleting S3 object from different bucket: {}", imagePathOrUrl);
-                return;
-            }
-
             s3Client.deleteObject(
                     DeleteObjectRequest.builder()
-                            .bucket(location.bucket())
-                            .key(location.key())
+                            .bucket(bucket)
+                            .key(key)
                             .build()
             );
 
@@ -86,22 +100,30 @@ public class S3ImageStorageService implements ImageStorageService {
         }
     }
 
-    private boolean isS3Url(String url) {
-        return url.startsWith("https://") && url.contains(".amazonaws.com/");
+    private String buildKey(String directory, String originalFilename) {
+        String safeName = sanitizeFilename(originalFilename);
+        String yearMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
+        // 요구사항에 맞춰 URL이 아닌 fileKey만 DB에 저장한다.
+        // 예) calendar/2026/02/{uuid}_image.jpg
+        return directory + "/" + yearMonth + "/" + UUID.randomUUID() + "_" + safeName;
     }
 
-    /**
-     * https://bucket.s3.region.amazonaws.com/key 파싱
-     */
-    private S3Location parseS3Url(String url) {
-        URI uri = URI.create(url);
+    private String sanitizeFilename(String originalFilename) {
+        if (originalFilename == null || originalFilename.isBlank()) {
+            return "unknown";
+        }
 
-        String host = uri.getHost(); // bucket.s3.ap-northeast-2.amazonaws.com
-        String bucketName = host.split("\\.")[0];
-        String key = uri.getPath().substring(1); // leading '/' 제거
-
-        return new S3Location(bucketName, key);
+        String sanitized = originalFilename.replaceAll("[^A-Za-z0-9._-]", "");
+        return sanitized.isBlank() ? "unknown" : sanitized;
     }
 
-    private record S3Location(String bucket, String key) {}
+    private String extractKey(String imagePathOrUrl) {
+        if (imagePathOrUrl.startsWith("http://") || imagePathOrUrl.startsWith("https://")) {
+            int domainEnd = imagePathOrUrl.indexOf(".amazonaws.com/");
+            if (domainEnd > 0) {
+                return imagePathOrUrl.substring(domainEnd + ".amazonaws.com/".length());
+            }
+        }
+        return imagePathOrUrl;
+    }
 }

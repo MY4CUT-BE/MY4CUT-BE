@@ -15,10 +15,17 @@ public class AlbumRequestDto {
             String name
     ) {}
 
-    @Schema(description = "앨범 미디어 추가/제외 요청 DTO")
-    public record UpdatePhotos(
-            @NotEmpty(message = "미디어 ID 리스트는 비어있을 수 없습니다.")
-            @Schema(description = "미디어 ID 리스트", example = "[1, 2, 3]")
-            List<Long> photoIds
-    ) {}
+        @Schema(description = "앨범 미디어 추가/제외 요청 DTO")
+
+        public record UpdateMedia(
+
+                @NotEmpty(message = "미디어 ID 리스트는 비어있을 수 없습니다.")
+
+                @Schema(description = "미디어 ID 리스트", example = "[1, 2, 3]")
+
+                List<Long> mediaIds
+
+        ) {}
+
+    
 }

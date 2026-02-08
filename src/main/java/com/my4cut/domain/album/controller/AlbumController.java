@@ -67,23 +67,23 @@ public class AlbumController {
         return ApiResponse.onSuccess(AlbumSuccessCode.ALBUM_DELETE_SUCCESS, null);
     }
 
-    @Operation(summary = "앨범에 사진 추가", description = "특정 사진들을 앨범에 추가합니다.")
+    @Operation(summary = "앨범에 미디어 추가", description = "특정 미디어들을 앨범에 추가합니다.")
     @PostMapping("/{albumId}/photos")
-    public ApiResponse<AlbumResponseDto.Detail> addPhotosToAlbum(
+    public ApiResponse<AlbumResponseDto.Detail> addMediaToAlbum(
             @PathVariable Long albumId,
-            @Valid @RequestBody AlbumRequestDto.UpdatePhotos requestDto,
+            @Valid @RequestBody AlbumRequestDto.UpdateMedia requestDto,
             @AuthenticationPrincipal Long userId) {
-        AlbumResponseDto.Detail result = albumService.addPhotosToAlbum(albumId, requestDto, userId);
+        AlbumResponseDto.Detail result = albumService.addMediaToAlbum(albumId, requestDto, userId);
         return ApiResponse.onSuccess(AlbumSuccessCode.ALBUM_PHOTO_UPDATE_SUCCESS, result);
     }
 
-    @Operation(summary = "앨범에서 사진 제외", description = "특정 사진들을 앨범에서 제외합니다.")
+    @Operation(summary = "앨범에서 미디어 제외", description = "특정 미디어들을 앨범에서 제외합니다.")
     @DeleteMapping("/{albumId}/photos")
-    public ApiResponse<AlbumResponseDto.Detail> removePhotosFromAlbum(
+    public ApiResponse<AlbumResponseDto.Detail> removeMediaFromAlbum(
             @PathVariable Long albumId,
-            @Valid @RequestBody AlbumRequestDto.UpdatePhotos requestDto,
+            @Valid @RequestBody AlbumRequestDto.UpdateMedia requestDto,
             @AuthenticationPrincipal Long userId) {
-        AlbumResponseDto.Detail result = albumService.removePhotosFromAlbum(albumId, requestDto, userId);
+        AlbumResponseDto.Detail result = albumService.removeMediaFromAlbum(albumId, requestDto, userId);
         return ApiResponse.onSuccess(AlbumSuccessCode.ALBUM_PHOTO_UPDATE_SUCCESS, result);
     }
 }

@@ -18,13 +18,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class MediaService {
     private static final String MEDIA_DIRECTORY = "calendar";
-
+    private static final int MAX_BULK_UPLOAD_COUNT = 10;
     private final MediaFileRepository mediaFileRepository;
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
@@ -50,15 +51,32 @@ public class MediaService {
             throw new BusinessException(ErrorCode.BAD_REQUEST);
         }
 
-        return files.stream()
-                .map(file -> {
-                    MediaFile saved = saveMediaFile(user, file);
-                    return MediaResDto.UploadResDto.of(
-                            saved,
-                            imageStorageService.generatePresignedGetUrl(saved.getFileUrl())
-                    );
-                })
+        if (files.size() > MAX_BULK_UPLOAD_COUNT) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST);
+        }
+
+        List<MediaFile> uploadedMediaFiles = new ArrayList<>();
+
+        try {
+            for (MultipartFile file : files) {
+                MediaFile saved = saveMediaFile(user, file);
+                uploadedMediaFiles.add(saved);
+            }
+        } catch (Exception e) {
+            // 🔥 여기서 S3 보상 삭제
+            uploadedMediaFiles.forEach(media ->
+                    imageStorageService.deleteIfExists(media.getFileUrl())
+            );
+            throw e;
+        }
+
+        return uploadedMediaFiles.stream()
+                .map(media -> MediaResDto.UploadResDto.of(
+                        media,
+                        imageStorageService.generatePresignedGetUrl(media.getFileUrl())
+                ))
                 .toList();
+
     }
 
     // 내 미디어 목록 조회

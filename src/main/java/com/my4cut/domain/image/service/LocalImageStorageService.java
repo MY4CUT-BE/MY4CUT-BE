@@ -28,7 +28,11 @@ public class LocalImageStorageService implements ImageStorageService {
     @Override
     public String upload(MultipartFile file, String directory) {
 
-        String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null) {
+            originalFilename = Paths.get(originalFilename).getFileName().toString();
+        }
+        String filename = UUID.randomUUID() + "_" + originalFilename;
         Path path = Paths.get(UPLOAD_ROOT, directory, filename);
 
         try {

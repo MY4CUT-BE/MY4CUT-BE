@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,6 +75,24 @@ class WorkspaceInvitationServiceTest {
     }
 
     @Test
+    @DisplayName("멤버 초대 실패: 만료된 워크스페이스인 경우 예외 발생")
+    void inviteMembers_Fail_Expired() {
+        // Arrange
+        Long inviterId = 1L;
+        User inviter = createUser(inviterId, "초대자");
+        WorkspaceInviteRequestDto requestDto = new WorkspaceInviteRequestDto(10L, List.of(2L));
+        Workspace workspace = createWorkspace(10L, "만료됨", inviter);
+        workspace.setExpiresAt(LocalDateTime.now().minusDays(1));
+
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(10L)).willReturn(Optional.of(workspace));
+
+        // Act & Assert
+        assertThatThrownBy(() -> workspaceInvitationService.inviteMembers(requestDto, inviterId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.WORKSPACE_EXPIRED);
+    }
+
+    @Test
     @DisplayName("초대 수락 성공: 상태가 ACCEPTED로 변경되고 멤버로 추가된다")
     void acceptInvitation_Success() {
         // Arrange
@@ -99,12 +118,40 @@ class WorkspaceInvitationServiceTest {
     }
 
     @Test
+    @DisplayName("초대 수락 실패: 워크스페이스가 만료된 경우 예외 발생")
+    void acceptInvitation_Fail_Expired() {
+        // Arrange
+        Long invitationId = 1L;
+        Long userId = 2L;
+        User invitee = createUser(userId, "피초대자");
+        Workspace workspace = createWorkspace(10L, "만료됨", createUser(1L, "주인"));
+        workspace.setExpiresAt(LocalDateTime.now().minusDays(1));
+
+        WorkspaceInvitation invitation = WorkspaceInvitation.builder()
+                .workspace(workspace)
+                .invitee(invitee)
+                .inviter(createUser(1L, "주인"))
+                .build();
+        ReflectionTestUtils.setField(invitation, "status", InvitationStatus.PENDING);
+
+        given(workspaceInvitationRepository.findByIdAndInviteeId(invitationId, userId)).willReturn(Optional.of(invitation));
+
+        // Act & Assert
+        assertThatThrownBy(() -> workspaceInvitationService.acceptInvitation(invitationId, userId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.WORKSPACE_EXPIRED);
+    }
+
+    @Test
     @DisplayName("초대 수락 실패: 이미 처리된 초대인 경우 예외 발생")
     void acceptInvitation_Fail_AlreadyProcessed() {
         // Arrange
         Long invitationId = 1L;
         Long userId = 2L;
-        WorkspaceInvitation invitation = WorkspaceInvitation.builder().build();
+        Workspace workspace = createWorkspace(10L, "워크스페이스", createUser(1L, "주인"));
+        WorkspaceInvitation invitation = WorkspaceInvitation.builder()
+                .workspace(workspace)
+                .build();
         ReflectionTestUtils.setField(invitation, "status", InvitationStatus.ACCEPTED);
 
         given(workspaceInvitationRepository.findByIdAndInviteeId(invitationId, userId)).willReturn(Optional.of(invitation));

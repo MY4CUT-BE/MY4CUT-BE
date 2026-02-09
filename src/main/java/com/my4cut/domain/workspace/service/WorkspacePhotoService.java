@@ -162,6 +162,10 @@ public class WorkspacePhotoService {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
+        if (workspace.isExpired()) {
+            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_EXPIRED);
+        }
+
         if (workspaceMemberRepository.findByWorkspaceAndUser(workspace, user).isEmpty()) {
             throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_MEMBER);
         }

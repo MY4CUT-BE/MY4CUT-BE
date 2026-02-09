@@ -3,6 +3,8 @@ package com.my4cut.domain.notification.dto.res;
 import com.my4cut.domain.notification.entity.Notification;
 import com.my4cut.domain.notification.enums.NotificationType;
 
+import java.time.LocalDateTime;
+
 public record NotificationResDto() {
 
     // FCM 토큰 등록 응답
@@ -24,7 +26,8 @@ public record NotificationResDto() {
             Long senderId,
             String senderNickname,
             Long workspaceId,
-            String workspaceName
+            String workspaceName,
+            LocalDateTime createdAt
     ) {
         public static NotificationItemDto of(
                 Notification notification,
@@ -40,7 +43,8 @@ public record NotificationResDto() {
                     notification.getSenderId(),
                     senderNickname,
                     notification.getWorkspaceId(),
-                    workspaceName
+                    workspaceName,
+                    notification.getCreatedAt()
             );
         }
 

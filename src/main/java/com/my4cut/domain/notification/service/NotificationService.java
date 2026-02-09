@@ -131,10 +131,10 @@ public class NotificationService {
             Long friendRequestId
     ) {
         Notification notification = Notification.builder()
-                .user(toUser)
+                .user(toUser) //알림 받는 사람
                 .type(NotificationType.FRIEND_REQUEST)
-                .senderId(fromUser.getId())
-                .referenceId(friendRequestId)
+                .senderId(fromUser.getId()) //알림 보낸 사람
+                .referenceId(friendRequestId) //친구요청 id
                 .isRead(false)
                 .build();
 
@@ -142,4 +142,78 @@ public class NotificationService {
     }
 
     //친구수락을 했을 때
+    @Transactional
+    public void sendFriendAcceptedNotification(
+            User toUser,        // 친구 요청 보낸 사람
+            User fromUser       // 수락한 사람
+    ) {
+        Notification notification = Notification.builder()
+                .user(toUser)
+                .type(NotificationType.FRIEND_ACCEPTED)
+                .senderId(fromUser.getId())
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    // 워크스페이스 초대 알림 생성
+    @Transactional
+    public void sendWorkspaceInviteNotification(
+            User invitee,           // 초대받은 사람
+            User inviter,           // 초대한 사람
+            Long workspaceId,
+            Long invitationId       // 수락/거절용
+    ) {
+        Notification notification = Notification.builder()
+                .user(invitee)
+                .type(NotificationType.WORKSPACE_INVITE)
+                .senderId(inviter.getId())
+                .workspaceId(workspaceId)
+                .referenceId(invitationId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    // 댓글 알림 생성
+    @Transactional
+    public void sendMediaCommentNotification(
+            User owner,         // 미디어 주인
+            User commenter,     // 댓글 단 사람
+            Long workspaceId,
+            Long commentId
+    ) {
+        Notification notification = Notification.builder()
+                .user(owner)
+                .type(NotificationType.MEDIA_COMMENT)
+                .senderId(commenter.getId())
+                .workspaceId(workspaceId)
+                .referenceId(commentId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    // 미디어 업로드 알림
+    @Transactional
+    public void sendMediaUploadedNotification(
+            User targetUser,    // 알림 받을 사람
+            User uploader,      // 업로드한 사람
+            Long workspaceId,
+            Long mediaId
+    ) {
+        Notification notification = Notification.builder()
+                .user(targetUser)
+                .type(NotificationType.MEDIA_UPLOADED)
+                .senderId(uploader.getId())
+                .workspaceId(workspaceId)
+                .referenceId(mediaId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
 }

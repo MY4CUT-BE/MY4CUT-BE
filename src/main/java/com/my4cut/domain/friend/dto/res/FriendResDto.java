@@ -11,6 +11,7 @@ public class FriendResDto { // 친구목록
     private Long userId;
     private String nickname;
     private Boolean isFavorite;
+    private String profileImageUrl;
 
     public record FavoriteFriendResDto(
             boolean isFavorite

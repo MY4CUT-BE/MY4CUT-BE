@@ -30,14 +30,16 @@ public class FriendRequestResDto { //요청 조회용
                     request.getId(),
                     new SenderInfo(
                             request.getFromUser().getId(),
-                            request.getFromUser().getNickname()
+                            request.getFromUser().getNickname(),
+                            request.getFromUser().getProfileImageUrl()
                     )
             );
         }
 
         public record SenderInfo(
                 Long id,
-                String nickname
+                String nickname,
+                String profileImageUrl
         ) {}
     }
 

@@ -124,6 +124,7 @@ public class NotificationService {
         return notifications.stream()
                 .map(notification -> {
                     String senderNickname = null;
+                    String senderProfileImageUrl = null;
                     String workspaceName = null;
 
                     if (notification.getSenderId() != null) {
@@ -141,6 +142,7 @@ public class NotificationService {
                     return NotificationResDto.NotificationItemDto.of(
                             notification,
                             senderNickname,
+                            senderProfileImageUrl,
                             workspaceName
                     );
                 })

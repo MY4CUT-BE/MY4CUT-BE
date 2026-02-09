@@ -25,6 +25,7 @@ public record NotificationResDto() {
             Long referenceId,         // 친구요청 id (수락/거절용)
             Long senderId,
             String senderNickname,
+            String senderProfileImageUrl,
             Long workspaceId,
             String workspaceName,
             LocalDateTime createdAt
@@ -32,6 +33,7 @@ public record NotificationResDto() {
         public static NotificationItemDto of(
                 Notification notification,
                 String senderNickname,
+                String senderProfileImageUrl,
                 String workspaceName
         ) {
             return new NotificationItemDto(
@@ -42,6 +44,7 @@ public record NotificationResDto() {
                     notification.getReferenceId(),
                     notification.getSenderId(),
                     senderNickname,
+                    senderProfileImageUrl,
                     notification.getWorkspaceId(),
                     workspaceName,
                     notification.getCreatedAt()

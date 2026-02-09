@@ -119,6 +119,8 @@ public class WorkspaceService {
                                 workspace.getName(),
                                 workspace.getOwner().getId(),
                                 workspace.getExpiresAt(),
-                                workspace.getCreatedAt());
+                                workspace.getCreatedAt(),
+                                workspaceMemberService.getMemberCount(workspace.getId()),
+                                workspaceMemberService.getMemberProfiles(workspace.getId()));
         }
 }

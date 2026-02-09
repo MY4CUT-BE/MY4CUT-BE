@@ -41,4 +41,8 @@ public class Workspace extends BaseEntity {
         this.owner = owner;
         this.expiresAt = expiresAt;
     }
+
+    public boolean isExpired() {
+        return expiresAt != null && expiresAt.isBefore(LocalDateTime.now());
+    }
 }

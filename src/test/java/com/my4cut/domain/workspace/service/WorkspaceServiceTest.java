@@ -100,6 +100,25 @@ class WorkspaceServiceTest {
     }
 
     @Test
+    @DisplayName("워크스페이스 수정 실패: 만료된 워크스페이스인 경우 예외 발생")
+    void updateWorkspace_Fail_Expired() {
+        // Arrange
+        Long workspaceId = 1L;
+        Long userId = 1L;
+        User owner = createUser(userId, "주인");
+        Workspace workspace = createWorkspace(workspaceId, "만료된 워크스페이스", owner);
+        workspace.setExpiresAt(LocalDateTime.now().minusDays(1));
+        WorkspaceUpdateRequestDto updateDto = new WorkspaceUpdateRequestDto("수정 시도");
+
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+
+        // Act & Assert
+        assertThatThrownBy(() -> workspaceService.updateWorkspace(workspaceId, updateDto, userId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.WORKSPACE_EXPIRED);
+    }
+
+    @Test
     @DisplayName("워크스페이스 상세 조회 성공")
     void getWorkspaceInfo_Success() {
         // Arrange
@@ -118,6 +137,23 @@ class WorkspaceServiceTest {
     }
 
     @Test
+    @DisplayName("워크스페이스 상세 조회 실패: 만료된 워크스페이스인 경우 예외 발생")
+    void getWorkspaceInfo_Fail_Expired() {
+        // Arrange
+        Long workspaceId = 1L;
+        User owner = createUser(1L, "주인");
+        Workspace workspace = createWorkspace(workspaceId, "만료된 워크스페이스", owner);
+        workspace.setExpiresAt(LocalDateTime.now().minusDays(1));
+
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+
+        // Act & Assert
+        assertThatThrownBy(() -> workspaceService.getWorkspaceInfo(workspaceId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.WORKSPACE_EXPIRED);
+    }
+
+    @Test
     @DisplayName("워크스페이스 삭제 성공: 소유자가 삭제하면 soft delete 된다")
     void deleteWorkspace_Success() {
         // Arrange
@@ -133,6 +169,24 @@ class WorkspaceServiceTest {
 
         // Assert
         assertThat(workspace.getDeletedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("워크스페이스 삭제 실패: 만료된 워크스페이스인 경우 예외 발생")
+    void deleteWorkspace_Fail_Expired() {
+        // Arrange
+        Long workspaceId = 1L;
+        Long userId = 1L;
+        User owner = createUser(userId, "주인");
+        Workspace workspace = createWorkspace(workspaceId, "만료된 워크스페이스", owner);
+        workspace.setExpiresAt(LocalDateTime.now().minusDays(1));
+
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+
+        // Act & Assert
+        assertThatThrownBy(() -> workspaceService.deleteWorkspace(workspaceId, userId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.WORKSPACE_EXPIRED);
     }
 
     private User createUser(Long id, String nickname) {

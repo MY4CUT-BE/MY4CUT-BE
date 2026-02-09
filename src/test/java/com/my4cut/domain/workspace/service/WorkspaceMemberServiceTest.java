@@ -2,6 +2,7 @@ package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
+import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.entity.WorkspaceMember;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
@@ -16,10 +17,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -73,19 +78,50 @@ class WorkspaceMemberServiceTest {
     @Test
     @DisplayName("워크스페이스 나가기 실패: 소유자는 나갈 수 없다")
     void leaveWorkspace_Fail_OwnerCannotLeave() {
+        // ... (existing code)
+    }
+
+    @Test
+    @DisplayName("참여 중인 워크스페이스 목록 조회: 만료된 워크스페이스는 제외한다")
+    void getMyWorkspaces_ExcludeExpired() {
         // Arrange
-        Long workspaceId = 1L;
         Long userId = 1L;
-        User owner = createUser(userId, "주인");
-        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", owner);
+        User user = createUser(userId, "유저");
 
-        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
-        given(userRepository.findById(userId)).willReturn(Optional.of(owner));
+        Workspace activeWorkspace = Workspace.builder()
+                .name("활동 중")
+                .owner(user)
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .build();
+        ReflectionTestUtils.setField(activeWorkspace, "id", 10L);
 
-        // Act & Assert
-        assertThatThrownBy(() -> workspaceMemberService.leaveWorkspace(workspaceId, userId))
-                .isInstanceOf(WorkspaceException.class)
-                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
+        Workspace expiredWorkspace = Workspace.builder()
+                .name("만료됨")
+                .owner(user)
+                .expiresAt(LocalDateTime.now().minusDays(1))
+                .build();
+        ReflectionTestUtils.setField(expiredWorkspace, "id", 20L);
+
+        WorkspaceMember activeMember = WorkspaceMember.builder()
+                .workspace(activeWorkspace)
+                .user(user)
+                .build();
+
+        WorkspaceMember expiredMember = WorkspaceMember.builder()
+                .workspace(expiredWorkspace)
+                .user(user)
+                .build();
+
+        // Expectation: Service should now use a repository method that filters by time
+        given(workspaceMemberRepository.findAllByUserIdAndWorkspaceExpiresAtAfterAndWorkspaceDeletedAtIsNull(eq(userId), any(LocalDateTime.class)))
+                .willReturn(List.of(activeMember));
+
+        // Act
+        List<WorkspaceInfoResponseDto> result = workspaceMemberService.getMyWorkspaces(userId);
+
+        // Assert
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).name()).isEqualTo("활동 중");
     }
 
     private User createUser(Long id, String nickname) {

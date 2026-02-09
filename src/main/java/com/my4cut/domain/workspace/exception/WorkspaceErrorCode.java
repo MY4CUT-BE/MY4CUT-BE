@@ -20,6 +20,7 @@ public enum WorkspaceErrorCode implements BaseCode {
     MEDIA_ALREADY_ASSIGNED(HttpStatus.BAD_REQUEST, "W4001", "이미 워크스페이스가 배정되어 있는 미디어입니다."),
     INVITATION_NOT_FOUND(HttpStatus.NOT_FOUND, "W4045", "존재하지 않는 초대입니다."),
     INVITATION_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "W4002", "이미 처리된 초대입니다."),
+    WORKSPACE_EXPIRED(HttpStatus.FORBIDDEN, "W4035", "만료된 워크스페이스입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "W4046", "존재하지 않는 유저입니다.");
 
     private final HttpStatus status;

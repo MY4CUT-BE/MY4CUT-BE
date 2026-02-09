@@ -76,7 +76,7 @@ public class WorkspaceInvitationService {
             WorkspaceInvitation savedInvitation = workspaceInvitationRepository.save(invitation);
 
             // 초대 알림 발송
-            notificationService.sendWorkspaceInviteNotification(invitee, savedInvitation.getId());
+            notificationService.sendWorkspaceInviteNotification(invitee, inviter, workspace, savedInvitation.getId());
         }
     }
 

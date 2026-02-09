@@ -84,16 +84,22 @@ public class NotificationService {
     /**
      * 워크스페이스 초대를 받았을 때 초대 받은 사용자에게 알림을 보냅니다.
      * @param toUser 알림을 받을 사용자
+     * @param fromUser 초대를 보낸 사용자
+     * @param workspace 초대된 워크스페이스
      * @param invitationId 생성된 초대장의 ID
      */
     @Transactional
     public void sendWorkspaceInviteNotification(
             User toUser,
+            User fromUser,
+            Workspace workspace,
             Long invitationId
     ) {
         Notification notification = Notification.builder()
                 .user(toUser)
                 .type(NotificationType.WORKSPACE_INVITE)
+                .senderId(fromUser.getId())
+                .workspaceId(workspace.getId())
                 .referenceId(invitationId)
                 .isRead(false)
                 .build();

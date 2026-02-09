@@ -65,6 +65,42 @@ public class NotificationService {
         return NotificationResDto.RegisterTokenResDto.of(savedToken.getId());
     }
 
+    // 친구요청을 보냈을 때 요청 받은 사용자에게 알림을 보냅니다.
+    @Transactional
+    public void sendFriendRequestNotification(
+            User toUser,
+            Long friendRequestId
+    ) {
+        Notification notification = Notification.builder()
+                .user(toUser)
+                .type(NotificationType.FRIEND_REQUEST)
+                .referenceId(friendRequestId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    /**
+     * 워크스페이스 초대를 받았을 때 초대 받은 사용자에게 알림을 보냅니다.
+     * @param toUser 알림을 받을 사용자
+     * @param invitationId 생성된 초대장의 ID
+     */
+    @Transactional
+    public void sendWorkspaceInviteNotification(
+            User toUser,
+            Long invitationId
+    ) {
+        Notification notification = Notification.builder()
+                .user(toUser)
+                .type(NotificationType.WORKSPACE_INVITE)
+                .referenceId(invitationId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
     @Transactional(readOnly = true)
     public List<NotificationResDto.NotificationItemDto> getNotifications(
             Long userId,

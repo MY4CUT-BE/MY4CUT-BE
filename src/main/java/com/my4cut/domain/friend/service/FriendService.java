@@ -142,6 +142,11 @@ public class FriendService {
         friendRepository.save(friend1);
         friendRepository.save(friend2);
 
+        notificationService.sendFriendAcceptedNotification(
+                request.getFromUser(), // 요청 보낸 사람 (알림 받는 사람)
+                request.getToUser()    // 수락한 사람 (sender)
+        );
+
         return FriendRequestResDto.AcceptRequestResDto.of(request);
     }
 

@@ -65,6 +65,43 @@ public class NotificationService {
         return NotificationResDto.RegisterTokenResDto.of(savedToken.getId());
     }
 
+    // 친구요청을 보냈을 때 요청 받은 사용자에게 알림을 보냅니다.
+    @Transactional
+    public void sendFriendRequestNotification(
+            User toUser,
+            Long friendRequestId
+    ) {
+        Notification notification = Notification.builder()
+                .user(toUser)
+                .type(NotificationType.FRIEND_REQUEST)
+                .referenceId(friendRequestId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    /**
+     * 워크스페이스 초대를 받았을 때 초대 받은 사용자에게 알림을 보냅니다.
+     * @param toUser 알림을 받을 사용자
+     * @param invitationId 생성된 초대장의 ID
+     */
+    @Transactional
+    public void sendWorkspaceInviteNotification(
+            User toUser,
+            Long invitationId
+    ) {
+        Notification notification = Notification.builder()
+                .user(toUser)
+                .type(NotificationType.WORKSPACE_INVITE)
+                .referenceId(invitationId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    // 알림 목록 조회
     @Transactional(readOnly = true)
     public List<NotificationResDto.NotificationItemDto> getNotifications(
             Long userId,
@@ -131,10 +168,10 @@ public class NotificationService {
             Long friendRequestId
     ) {
         Notification notification = Notification.builder()
-                .user(toUser)
+                .user(toUser) //알림 받는 사람
                 .type(NotificationType.FRIEND_REQUEST)
-                .senderId(fromUser.getId())
-                .referenceId(friendRequestId)
+                .senderId(fromUser.getId()) //알림 보낸 사람
+                .referenceId(friendRequestId) //친구요청 id
                 .isRead(false)
                 .build();
 
@@ -142,4 +179,78 @@ public class NotificationService {
     }
 
     //친구수락을 했을 때
+    @Transactional
+    public void sendFriendAcceptedNotification(
+            User toUser,        // 친구 요청 보낸 사람
+            User fromUser       // 수락한 사람
+    ) {
+        Notification notification = Notification.builder()
+                .user(toUser)
+                .type(NotificationType.FRIEND_ACCEPTED)
+                .senderId(fromUser.getId())
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    // 워크스페이스 초대 알림 생성
+    @Transactional
+    public void sendWorkspaceInviteNotification(
+            User invitee,           // 초대받은 사람
+            User inviter,           // 초대한 사람
+            Long workspaceId,
+            Long invitationId       // 수락/거절용
+    ) {
+        Notification notification = Notification.builder()
+                .user(invitee)
+                .type(NotificationType.WORKSPACE_INVITE)
+                .senderId(inviter.getId())
+                .workspaceId(workspaceId)
+                .referenceId(invitationId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    // 댓글 알림 생성
+    @Transactional
+    public void sendMediaCommentNotification(
+            User owner,         // 미디어 주인
+            User commenter,     // 댓글 단 사람
+            Long workspaceId,
+            Long commentId
+    ) {
+        Notification notification = Notification.builder()
+                .user(owner)
+                .type(NotificationType.MEDIA_COMMENT)
+                .senderId(commenter.getId())
+                .workspaceId(workspaceId)
+                .referenceId(commentId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
+
+    // 미디어 업로드 알림
+    @Transactional
+    public void sendMediaUploadedNotification(
+            User targetUser,    // 알림 받을 사람
+            User uploader,      // 업로드한 사람
+            Long workspaceId,
+            Long mediaId
+    ) {
+        Notification notification = Notification.builder()
+                .user(targetUser)
+                .type(NotificationType.MEDIA_UPLOADED)
+                .senderId(uploader.getId())
+                .workspaceId(workspaceId)
+                .referenceId(mediaId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+    }
 }

@@ -43,10 +43,12 @@ public class WorkspaceMemberService {
     }
 
     /**
-     * 사용자가 참여 중인 워크스페이스 목록을 조회합니다.
+     * 사용자가 참여 중인 워크스페이스 목록을 조회합니다. (삭제된 워크스페이스 제외)
+     * @param userId 유저 ID
+     * @return 참여 중인 워크스페이스 정보 DTO 리스트
      */
     public List<WorkspaceInfoResponseDto> getMyWorkspaces(Long userId) {
-        return workspaceMemberRepository.findAllByUserId(userId).stream()
+        return workspaceMemberRepository.findAllByUserIdAndWorkspaceDeletedAtIsNull(userId).stream()
                 .map(member -> convertToInfoDto(member.getWorkspace()))
                 .toList();
     }

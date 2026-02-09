@@ -19,6 +19,8 @@ import java.util.List;
 
 /**
  * 워크스페이스 관련 비즈니스 로직을 처리하는 서비스 클래스.
+ * @author koohyunmo
+ * @since 2026-02-08
  */
 @Service
 @RequiredArgsConstructor
@@ -31,6 +33,9 @@ public class WorkspaceService {
 
         /**
          * 새로운 워크스페이스를 생성하고 생성자를 멤버로 등록합니다.
+         * @param dto 워크스페이스 생성 정보 DTO
+         * @param ownerId 소유자(생성자) ID
+         * @return 생성된 워크스페이스 정보 DTO
          */
         @Transactional
         public WorkspaceInfoResponseDto createWorkspace(WorkspaceCreateRequestDto dto, Long ownerId) {
@@ -53,6 +58,10 @@ public class WorkspaceService {
 
         /**
          * 워크스페이스 정보를 수정합니다. (소유자만 가능)
+         * @param workspaceId 워크스페이스 ID
+         * @param dto 수정할 워크스페이스 정보 DTO
+         * @param userId 유저 ID
+         * @return 수정된 워크스페이스 정보 DTO
          */
         @Transactional
         public WorkspaceInfoResponseDto updateWorkspace(Long workspaceId, WorkspaceUpdateRequestDto dto, Long userId) {
@@ -69,6 +78,8 @@ public class WorkspaceService {
 
         /**
          * 워크스페이스 단건 정보를 조회합니다.
+         * @param workspaceId 워크스페이스 ID
+         * @return 워크스페이스 정보 DTO
          */
         public WorkspaceInfoResponseDto getWorkspaceInfo(Long workspaceId) {
                 Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
@@ -78,6 +89,8 @@ public class WorkspaceService {
 
         /**
          * 워크스페이스를 삭제(Soft Delete)합니다. (소유자만 가능)
+         * @param workspaceId 워크스페이스 ID
+         * @param userId 유저 ID
          */
         @Transactional
         public void deleteWorkspace(Long workspaceId, Long userId) {
@@ -92,7 +105,9 @@ public class WorkspaceService {
         }
 
         /**
-         * 사용자가 참여 중인 워크스페이스 목록을 조회합니다.
+         * 사용자가 참여 중인 워크스페이스 목록을 조회합니다. (삭제된 워크스페이스 제외)
+         * @param userId 유저 ID
+         * @return 참여 중인 워크스페이스 정보 DTO 리스트
          */
         public List<WorkspaceInfoResponseDto> getMyWorkspaces(Long userId) {
                 return workspaceMemberService.getMyWorkspaces(userId);

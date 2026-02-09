@@ -221,6 +221,7 @@ public class FriendService {
                         .friendId(friend.getFriendUser().getId())
                         .userId(user.getId())
                         .nickname(friend.getFriendUser().getNickname())
+                        .profileImageUrl(friend.getFriendUser().getProfileImageUrl())
                         .isFavorite(friend.getIsFavorite())
                         .build()
                 )

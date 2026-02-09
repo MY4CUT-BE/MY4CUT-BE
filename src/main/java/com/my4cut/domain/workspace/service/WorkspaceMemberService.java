@@ -75,12 +75,29 @@ public class WorkspaceMemberService {
     }
 
 
+    public List<String> getMemberProfiles(Long workspaceId) {
+        return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).stream()
+                .map(member -> member.getUser().getProfileImageUrl())
+                .toList();
+    }
+
+    public int getMemberCount(Long workspaceId) {
+        return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).size();
+    }
+
     private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
+        List<WorkspaceMember> members = workspaceMemberRepository.findAllByWorkspaceId(workspace.getId());
+        List<String> memberProfiles = members.stream()
+                .map(member -> member.getUser().getProfileImageUrl())
+                .toList();
+
         return new WorkspaceInfoResponseDto(
                 workspace.getId(),
                 workspace.getName(),
                 workspace.getOwner().getId(),
                 workspace.getExpiresAt(),
-                workspace.getCreatedAt());
+                workspace.getCreatedAt(),
+                members.size(),
+                memberProfiles);
     }
 }

@@ -45,7 +45,7 @@ public class WorkspaceService {
                 Workspace workspace = Workspace.builder()
                                 .name(dto.name())
                                 .owner(owner)
-                                .expiresAt(LocalDateTime.now().plusMonths(1))
+                                .expiresAt(LocalDateTime.now().plusDays(7))
                                 .build();
 
                 workspaceRepository.save(workspace);
@@ -68,6 +68,8 @@ public class WorkspaceService {
                 Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
+                checkWorkspaceExpiration(workspace);
+
                 if (!workspace.getOwner().getId().equals(userId)) {
                         throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
                 }
@@ -84,6 +86,9 @@ public class WorkspaceService {
         public WorkspaceInfoResponseDto getWorkspaceInfo(Long workspaceId) {
                 Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+
+                checkWorkspaceExpiration(workspace);
+
                 return convertToInfoDto(workspace);
         }
 
@@ -96,6 +101,8 @@ public class WorkspaceService {
         public void deleteWorkspace(Long workspaceId, Long userId) {
                 Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
+
+                checkWorkspaceExpiration(workspace);
 
                 if (!workspace.getOwner().getId().equals(userId)) {
                         throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
@@ -111,6 +118,12 @@ public class WorkspaceService {
          */
         public List<WorkspaceInfoResponseDto> getMyWorkspaces(Long userId) {
                 return workspaceMemberService.getMyWorkspaces(userId);
+        }
+
+        private void checkWorkspaceExpiration(Workspace workspace) {
+                if (workspace.isExpired()) {
+                        throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_EXPIRED);
+                }
         }
 
         private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {

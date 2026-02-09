@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,6 +74,26 @@ class WorkspacePhotoServiceTest {
         // Assert
         assertThat(result).hasSize(1);
         assertThat(mediaFile.getWorkspace()).isEqualTo(workspace);
+    }
+
+    @Test
+    @DisplayName("사진 업로드 실패: 만료된 워크스페이스인 경우 예외 발생")
+    void uploadPhotos_Fail_Expired() {
+        // Arrange
+        Long workspaceId = 1L;
+        Long userId = 1L;
+        User user = createUser(userId, "멤버");
+        Workspace workspace = createWorkspace(workspaceId, "만료됨", user);
+        workspace.setExpiresAt(LocalDateTime.now().minusDays(1));
+        WorkspacePhotoUploadRequestDto requestDto = new WorkspacePhotoUploadRequestDto(List.of(100L));
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(workspaceRepository.findById(workspaceId)).willReturn(Optional.of(workspace));
+
+        // Act & Assert
+        assertThatThrownBy(() -> workspacePhotoService.uploadPhotos(workspaceId, requestDto, userId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.WORKSPACE_EXPIRED);
     }
 
     @Test

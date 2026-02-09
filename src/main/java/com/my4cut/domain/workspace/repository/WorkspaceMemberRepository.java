@@ -6,6 +6,7 @@ import com.my4cut.domain.workspace.entity.WorkspaceMember;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,8 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     List<WorkspaceMember> findAllByUserId(Long userId);
 
     List<WorkspaceMember> findAllByUserIdAndWorkspaceDeletedAtIsNull(Long userId);
+
+    List<WorkspaceMember> findAllByUserIdAndWorkspaceExpiresAtAfterAndWorkspaceDeletedAtIsNull(Long userId, LocalDateTime now);
 
     List<WorkspaceMember> findAllByWorkspaceId(Long workspaceId);
 }

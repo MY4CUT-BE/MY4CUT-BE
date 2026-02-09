@@ -51,7 +51,7 @@ class WorkspaceControllerTest {
     void createWorkspace_Test() throws Exception {
         // Arrange
         WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("새 워크스페이스");
-        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(1L, "새 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now());
+        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(1L, "새 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), 1, List.of());
         
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceService.createWorkspace(any(), any())).willReturn(responseDto);
@@ -72,7 +72,7 @@ class WorkspaceControllerTest {
     @DisplayName("내 워크스페이스 목록 조회 API 테스트")
     void getMyWorkspaces_Test() throws Exception {
         // Arrange
-        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(1L, "내 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now());
+        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(1L, "내 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), 1, List.of());
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceService.getMyWorkspaces(any())).willReturn(List.of(responseDto));
 

@@ -46,6 +46,10 @@ public class WorkspaceInvitationService {
         Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(dto.workspaceId())
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
+        if (workspace.isExpired()) {
+            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_EXPIRED);
+        }
+
         if (!workspace.getOwner().getId().equals(inviterId)) {
             throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
         }
@@ -104,6 +108,10 @@ public class WorkspaceInvitationService {
     public void acceptInvitation(Long invitationId, Long userId) {
         WorkspaceInvitation invitation = workspaceInvitationRepository.findByIdAndInviteeId(invitationId, userId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.INVITATION_NOT_FOUND));
+
+        if (invitation.getWorkspace().isExpired()) {
+            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_EXPIRED);
+        }
 
         if (invitation.getStatus() != InvitationStatus.PENDING) {
             throw new WorkspaceException(WorkspaceErrorCode.INVITATION_ALREADY_PROCESSED);

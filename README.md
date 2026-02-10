@@ -147,5 +147,6 @@ src/main/java/com/my4cut/domain/
 ---
 
 ## Infrastructure Architecture
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/edcfe03d-b660-4888-b91d-885683150906" />
+<img width="763" height="485" alt="my4cut 시스템 아키텍처" src="https://github.com/user-attachments/assets/0483c96c-0fa4-4cf7-8f02-036ebbc05f1e" />
+
 

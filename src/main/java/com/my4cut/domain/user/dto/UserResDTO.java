@@ -19,18 +19,20 @@ public class UserResDTO {
             String email,
             String nickname,
             String friendCode,
-            String profileImageUrl,
+            String profileImageFileKey,
+            String profileImageViewUrl,
             String loginType,
 
             long thisMonthDay4CutCount
     ) {
-        public static MeDTO from(User user, long thisMonthDay4CutCount) {
+        public static MeDTO from(User user, String profileImageViewUrl, long thisMonthDay4CutCount) {
             return new MeDTO(
                     user.getId(),
                     user.getEmail(),
                     user.getNickname(),
                     user.getFriendCode(),
                     user.getProfileImageUrl(),
+                    profileImageViewUrl,
                     user.getLoginType().name(),
                     thisMonthDay4CutCount
             );
@@ -44,6 +46,7 @@ public class UserResDTO {
 
     // 프로필 이미지 변경
     public record UpdateProfileImageDTO(
-            String profileImageUrl
+            String fileKey,
+            String viewUrl
     ) {}
 }

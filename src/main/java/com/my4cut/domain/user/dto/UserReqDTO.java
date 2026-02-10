@@ -31,8 +31,4 @@ public class UserReqDTO {
             String nickname
     ) {}
 
-    public record UpdateProfileImageDTO(
-            @NotBlank
-            String profileImageUrl
-    ) {}
 }

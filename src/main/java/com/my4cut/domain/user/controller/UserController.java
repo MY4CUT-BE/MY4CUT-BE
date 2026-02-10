@@ -6,15 +6,18 @@ import com.my4cut.domain.user.service.UserService;
 import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,7 +30,7 @@ public class UserController {
     //마이페이지
     @Operation(
             summary = "내 정보 조회 (마이페이지)",
-            description = "현재 로그인한 사용자의 마이페이지 정보를 조회합니다."
+            description = "현재 로그인한 사용자의 마이페이지 정보를 조회합니다. 프로필 이미지는 fileKey와 viewUrl로 반환됩니다."
     )
     @GetMapping("/me")
     public ApiResponse<UserResDTO.MeDTO> getMyInfo(
@@ -65,25 +68,24 @@ public class UserController {
     // 프로필 사진 변경
     @Operation(
             summary = "프로필 이미지 변경",
-            description = """
-                    사용자의 프로필 이미지를 변경합니다.
-                    Presigned URL로 업로드된 이미지의 fileKey를 서버에 전달합니다.
-                    """
+            description = "multipart/form-data로 이미지 파일을 직접 받아 프로필 이미지를 변경합니다."
     )
-    @PatchMapping("/me/image")
+    @PatchMapping(value = "/me/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<UserResDTO.UpdateProfileImageDTO> updateProfileImage(
             @AuthenticationPrincipal Long userId,
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    required = true,
+            @RequestPart("file")
+            @Parameter(
+                    description = "변경할 프로필 이미지 파일",
                     content = @Content(
-                            schema = @Schema(implementation = UserReqDTO.UpdateProfileImageDTO.class)
+                            mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                            schema = @Schema(type = "string", format = "binary")
                     )
             )
-            @RequestBody @Valid UserReqDTO.UpdateProfileImageDTO request
+            MultipartFile file
     ) {
         return ApiResponse.onSuccess(
                 SuccessCode.OK,
-                userService.updateProfileImage(userId, request)
+                userService.updateProfileImage(userId, file)
         );
     }
 }

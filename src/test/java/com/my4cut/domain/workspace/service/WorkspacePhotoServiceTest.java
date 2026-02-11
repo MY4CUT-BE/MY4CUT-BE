@@ -148,6 +148,43 @@ class WorkspacePhotoServiceTest {
         verify(mediaCommentRepository, times(1)).save(any(MediaComment.class));
     }
 
+    @Test
+    @DisplayName("댓글 목록 조회 성공")
+    void getComments_Success() {
+        // Arrange
+        Long workspaceId = 1L;
+        Long photoId = 10L;
+        Long userId = 1L;
+        User user = createUser(userId, "유저");
+        ReflectionTestUtils.setField(user, "profileImageUrl", "profile-url");
+        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
+        MediaFile photo = MediaFile.builder().uploader(user).workspace(workspace).build();
+        ReflectionTestUtils.setField(photo, "id", photoId);
+
+        MediaComment comment = MediaComment.builder()
+                .mediaFile(photo)
+                .user(user)
+                .content("댓글 내용")
+                .build();
+        ReflectionTestUtils.setField(comment, "id", 100L);
+        ReflectionTestUtils.setField(comment, "createdAt", LocalDateTime.now());
+
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(workspaceRepository.findById(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)).willReturn(Optional.of(WorkspaceMember.builder().build()));
+        given(mediaFileRepository.findById(photoId)).willReturn(Optional.of(photo));
+        given(mediaCommentRepository.findAllByMediaFileIdOrderByCreatedAtDesc(photoId)).willReturn(List.of(comment));
+
+        // Act
+        List<com.my4cut.domain.workspace.dto.WorkspacePhotoCommentResponseDto> result = workspacePhotoService.getComments(workspaceId, photoId, userId);
+
+        // Assert
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).profileImageUrl()).isEqualTo("profile-url");
+        assertThat(result.get(0).content()).isEqualTo("댓글 내용");
+    }
+
     private User createUser(Long id, String nickname) {
         User user = User.builder().nickname(nickname).build();
         ReflectionTestUtils.setField(user, "id", id);

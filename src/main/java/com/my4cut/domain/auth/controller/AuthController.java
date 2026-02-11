@@ -1,6 +1,7 @@
 package com.my4cut.domain.auth.controller;
 
 import com.my4cut.domain.auth.dto.AuthReqDTO;
+import com.my4cut.domain.auth.dto.AuthResDTO;
 import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.auth.service.AuthService;
@@ -12,17 +13,31 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
 @Tag(name = "Auth", description = "인증/인가 관련 API")
+@Validated
 public class AuthController {
 
     private final AuthService authService;
+
+    @Operation(
+            summary = "이메일 중복 확인",
+            description = "회원가입 전 이메일 중복 여부를 확인합니다."
+    )
+    @GetMapping("/check-email")
+    public ApiResponse<AuthResDTO.CheckEmailResDto> checkEmail(
+            @RequestParam @Email String email
+    ) {
+        return ApiResponse.onSuccess(SuccessCode.OK, authService.checkEmailDuplicate(email));
+    }
 
     @Operation(
             summary = "회원가입",

@@ -34,6 +34,12 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final BCryptPasswordEncoder passwordEncoder;
 
+    @Transactional(readOnly = true)
+    public AuthResDTO.CheckEmailResDto checkEmailDuplicate(String email) {
+        boolean duplicated = userRepository.existsByEmail(email);
+        return new AuthResDTO.CheckEmailResDto(email, duplicated);
+    }
+
     // 회원가입
     @Transactional
     public void signup(UserReqDTO.SignUpDTO request) {

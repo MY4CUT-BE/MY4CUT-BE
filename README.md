@@ -14,12 +14,12 @@
 ## 사용 기술 스택
 - **Framework**: Spring Boot 3.5.9
 - **Language**: Java 17
-- **Database**: MySQL 8.0
+- **Database**: MySQL 8.0 (AWS RDS)
 - **ORM**: Spring Data JPA
 - **Security**: Spring Security + JWT
 - **Social Login**: OAuth2 (Kakao)
 - **Build Tool**: Gradle
-- **Infra / Deployment**: AWS EC2, Docker, Docker Compose, GitHub Actions CI/CD
+- **Infra / Deployment**: AWS EC2, Docker, Docker Compose, Nginx, GitHub Actions CI/CD
 ---
 
 ## 사용 라이브러리
@@ -147,5 +147,6 @@ src/main/java/com/my4cut/domain/
 ---
 
 ## Infrastructure Architecture
-<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/edcfe03d-b660-4888-b91d-885683150906" />
+<img width="763" height="485" alt="my4cut 시스템 아키텍처" src="https://github.com/user-attachments/assets/0483c96c-0fa4-4cf7-8f02-036ebbc05f1e" />
+
 

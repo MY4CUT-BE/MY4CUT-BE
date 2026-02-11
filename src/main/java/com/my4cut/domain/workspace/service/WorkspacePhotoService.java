@@ -195,6 +195,7 @@ public class WorkspacePhotoService {
                         comment.getId(),
                         comment.getUser().getId(),
                         comment.getUser().getNickname(),
+                        comment.getUser().getProfileImageUrl(),
                         comment.getContent(),
                         comment.getCreatedAt()))
                 .collect(Collectors.toList());

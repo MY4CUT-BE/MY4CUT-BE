@@ -4,6 +4,7 @@ import com.my4cut.domain.auth.dto.AuthResDTO;
 import com.my4cut.domain.auth.entity.RefreshToken;
 import com.my4cut.domain.auth.jwt.JwtProvider;
 import com.my4cut.domain.auth.repository.RefreshTokenRepository;
+import com.my4cut.domain.image.ImageConstants;
 import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.user.entity.User;
@@ -73,7 +74,7 @@ public class AuthService {
                 .email(request.email())
                 .password(encodedPassword)
                 .nickname(request.nickname())
-                .profileImageUrl(null)
+                .profileImageUrl(ImageConstants.DEFAULT_PROFILE_IMAGE_URL)
                 .loginType(LoginType.EMAIL)
                 .friendCode(friendCode)
                 .status(UserStatus.ACTIVE)
@@ -238,6 +239,7 @@ public class AuthService {
                 .email(null)
                 .password(null)
                 .nickname("kakao_user")
+                .profileImageUrl(ImageConstants.DEFAULT_PROFILE_IMAGE_URL)
                 .friendCode(friendCode)
                 .status(UserStatus.ACTIVE)
                 .build();

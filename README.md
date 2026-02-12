@@ -25,9 +25,12 @@
 ## 사용 라이브러리
 - Spring Web : Android 앱과의 통신을 위한 REST API 구현에 사용
 - Spring Data JPA : 데이터베이스 CRUD 처리를 위한 ORM 라이브러리
+- Spring Security : JWT 기반 인증 및 인가 처리
+- Spring Security OAuth2 Client : 카카오 소셜 로그인 구현
 - Spring Validation : 요청 데이터의 유효성 검증을 위해 사용
 - Lombok : 반복되는 코드 작성을 줄이기 위해 사용
 - Swagger : API 문서화를 위해 사용
+- AWS SDK : 이미지/파일(S3) 업로드 및 저장
 
 ---
 

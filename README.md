@@ -1,9 +1,6 @@
 # MY4CUT-BE
-<img width="773" height="430" alt="my4cut" src="https://github.com/user-attachments/assets/2e4b9d2b-fa14-4985-a17b-b9cf89934adf" />
-
-# 📸 My4Cut
-
 > **인생네컷을 더 의미 있게 기록하고, 함께 선택하는 협업형 사진 기록 서비스**
+<img width="773" height="430" alt="my4cut" src="https://github.com/user-attachments/assets/2e4b9d2b-fa14-4985-a17b-b9cf89934adf" />
 
 ---
 

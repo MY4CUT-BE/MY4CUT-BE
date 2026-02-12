@@ -142,11 +142,11 @@ src/main/java/com/my4cut/domain/
 ---
 
 ## Database (ERD)
-<img width="3112" height="1906" alt="image" src="https://github.com/user-attachments/assets/cc0570ce-1ac1-415b-ac1a-01f29ee02a37" />
+<img width="959" height="860" alt="my4cut ERD 최종본" src="https://github.com/user-attachments/assets/c9ba6614-7869-4d24-8b66-4eb5dcc445f9" />
 
 ---
 
 ## Infrastructure Architecture
-<img width="763" height="485" alt="my4cut 시스템 아키텍처" src="https://github.com/user-attachments/assets/0483c96c-0fa4-4cf7-8f02-036ebbc05f1e" />
+<img width="1536" height="1024" alt="my4cut 서버 아키텍처 최종본" src="https://github.com/user-attachments/assets/351c7bde-108d-4473-9b84-6d3b4effe899" />
 
 

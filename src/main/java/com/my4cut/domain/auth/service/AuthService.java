@@ -36,7 +36,8 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResDTO.CheckEmailResDto checkEmailDuplicate(String email) {
-        boolean duplicated = userRepository.existsByEmailAndStatus(email, UserStatus.ACTIVE);
+        boolean duplicated =
+                userRepository.existsByEmailAndStatusNot(email, UserStatus.DELETED);
         return new AuthResDTO.CheckEmailResDto(email, duplicated);
     }
 
@@ -87,6 +88,10 @@ public class AuthService {
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
+
+        if (user.isDeleted()) {
+            throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);

@@ -13,7 +13,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    boolean existsByEmailAndStatus(String email, UserStatus status);
+    boolean existsByEmailAndStatusNot(String email, UserStatus status);
 
     //friendCode로 User 조회가 필요해 메서드 추가
     Optional<User> findByFriendCode(String friendCode);

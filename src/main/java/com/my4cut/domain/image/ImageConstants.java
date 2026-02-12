@@ -5,5 +5,5 @@ public final class ImageConstants {
     private ImageConstants() {}
 
     public static final String DEFAULT_PROFILE_IMAGE_URL =
-            "/uploads/profile/default.png";
+            "profile/defaultProfile.png";
 }

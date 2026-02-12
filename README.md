@@ -120,12 +120,16 @@ src/main/java/com/my4cut/domain/
 │       ├── Pose.java                # 포즈 정보
 │       └── PoseFavorite.java        # 포즈 즐겨찾기
 ├── workspace/
-│   └── entity/
-│       ├── Workspace.java           # 공유 워크스페이스
-│       └── WorkspaceMember.java     # 워크스페이스 멤버
+│   ├── entity/
+│   │   ├── Workspace.java           # 공유 워크스페이스
+│   │   ├── WorkspaceInvitation.java # 워크스페이스 초대
+│   │   └── WorkspaceMember.java     # 워크스페이스 멤버
+│   └── enums/
+│       ├── InvitationStatus.java    # 초대 상태 (PENDING, ACCEPTED, REJECTED)
+│       └── WorkspaceSuccessCode.java # 워크스페이스 성공 응답 코드
 ├── media/
 │   ├── entity/
-│   │   ├── MediaFile.java           # 미디어 파일 (사진/동영상)
+│   │   ├── MediaFile.java           # 미디어 파일
 │   │   └── MediaComment.java        # 미디어 댓글
 │   └── enums/
 │       └── MediaType.java           # 미디어 유형 (PHOTO, VIDEO)
@@ -135,11 +139,18 @@ src/main/java/com/my4cut/domain/
 │   │   └── Day4CutImage.java        # 하루네컷 이미지
 │   └── enums/
 │       └── EmojiType.java           # 이모지 타입 (HAPPY, SAD, ANGRY, CALM, TIRED)
-└── notification/
-    ├── entity/
-    │   └── Notification.java        # 알림
-    └── enums/
-        └── NotificationType.java    # 알림 유형
+├── album/
+│   ├── domain/
+│   │   └── Album.java               # 앨범
+│   └── enums/
+│       └── AlbumSuccessCode.java    # 앨범 성공 응답 코드
+├── notification/
+│   ├── entity/
+│   │   └── Notification.java        # 알림
+│   └── enums/
+│       └── NotificationType.java    # 알림 유형 (FRIEND_REQUEST, WORKSPACE_INVITE 등)
+└── image/
+    └── ImageConstants.java          # 이미지 관련 상수 (기본 프로필 이미지 등)
 ```
 
 ---

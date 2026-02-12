@@ -36,7 +36,8 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResDTO.CheckEmailResDto checkEmailDuplicate(String email) {
-        boolean duplicated = userRepository.existsByEmail(email);
+        boolean duplicated =
+                userRepository.existsByEmailAndStatusNot(email, UserStatus.DELETED);
         return new AuthResDTO.CheckEmailResDto(email, duplicated);
     }
 
@@ -44,11 +45,24 @@ public class AuthService {
     @Transactional
     public void signup(UserReqDTO.SignUpDTO request) {
 
-        if (userRepository.existsByEmail(request.email())) {
+        User existingUser = userRepository.findByEmail(request.email()).orElse(null);
+
+        //현재 있는 유저인지 조회
+        if (existingUser != null && !existingUser.isDeleted()) {
             throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
         }
 
         String encodedPassword = passwordEncoder.encode(request.password());
+
+        //재가입시
+        if (existingUser != null) {
+            existingUser.activateEmailLogin(request.email());
+            existingUser.updatePassword(encodedPassword);
+            existingUser.updateNickname(request.nickname());
+            existingUser.reactivate();
+            refreshTokenRepository.deleteByUser(existingUser);
+            return;
+        }
 
         String friendCode = UUID.randomUUID()
                 .toString()
@@ -74,6 +88,10 @@ public class AuthService {
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
+
+        if (user.isDeleted()) {
+            throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
@@ -107,7 +125,7 @@ public class AuthService {
         User user = savedToken.getUser();
 
         // 탈퇴 유저 방어
-        if (user.getStatus() == UserStatus.DELETED) {
+        if (user.isDeleted()) {
             throw new BusinessException(ErrorCode.USER_DELETED);
         }
 
@@ -132,7 +150,7 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        if (user.getStatus() == UserStatus.DELETED) {
+        if (user.isDeleted()) {
             throw new BusinessException(ErrorCode.USER_DELETED);
         }
 
@@ -154,6 +172,13 @@ public class AuthService {
         // 유저 조회 or 생성
         User user = userRepository
                 .findByLoginTypeAndOauthId(LoginType.KAKAO, oauthId)
+                .map(existingUser -> {
+                    if (existingUser.isDeleted()) {
+                        existingUser.reactivate();
+                        refreshTokenRepository.deleteByUser(existingUser);
+                    }
+                    return existingUser;
+                })
                 .orElseGet(() -> createKakaoUser(oauthId));
 
         // JWT 발급 (EMAIL 로그인과 동일)
@@ -174,7 +199,7 @@ public class AuthService {
     }
 
     //카카오 API 호출 (분리)
-    private AuthResDTO.KakaoUserResDto getKakaoUser(String accessToken) {
+    AuthResDTO.KakaoUserResDto getKakaoUser(String accessToken) {
 
         RestTemplate restTemplate = new RestTemplate();
 

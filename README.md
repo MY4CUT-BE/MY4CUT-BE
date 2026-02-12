@@ -25,9 +25,12 @@
 ## 사용 라이브러리
 - Spring Web : Android 앱과의 통신을 위한 REST API 구현에 사용
 - Spring Data JPA : 데이터베이스 CRUD 처리를 위한 ORM 라이브러리
+- Spring Security : JWT 기반 인증 및 인가 처리
+- Spring Security OAuth2 Client : 카카오 소셜 로그인 구현
 - Spring Validation : 요청 데이터의 유효성 검증을 위해 사용
 - Lombok : 반복되는 코드 작성을 줄이기 위해 사용
 - Swagger : API 문서화를 위해 사용
+- AWS SDK : 이미지/파일(S3) 업로드 및 저장
 
 ---
 
@@ -117,12 +120,16 @@ src/main/java/com/my4cut/domain/
 │       ├── Pose.java                # 포즈 정보
 │       └── PoseFavorite.java        # 포즈 즐겨찾기
 ├── workspace/
-│   └── entity/
-│       ├── Workspace.java           # 공유 워크스페이스
-│       └── WorkspaceMember.java     # 워크스페이스 멤버
+│   ├── entity/
+│   │   ├── Workspace.java           # 공유 워크스페이스
+│   │   ├── WorkspaceInvitation.java # 워크스페이스 초대
+│   │   └── WorkspaceMember.java     # 워크스페이스 멤버
+│   └── enums/
+│       ├── InvitationStatus.java    # 초대 상태 (PENDING, ACCEPTED, REJECTED)
+│       └── WorkspaceSuccessCode.java # 워크스페이스 성공 응답 코드
 ├── media/
 │   ├── entity/
-│   │   ├── MediaFile.java           # 미디어 파일 (사진/동영상)
+│   │   ├── MediaFile.java           # 미디어 파일
 │   │   └── MediaComment.java        # 미디어 댓글
 │   └── enums/
 │       └── MediaType.java           # 미디어 유형 (PHOTO, VIDEO)
@@ -132,21 +139,28 @@ src/main/java/com/my4cut/domain/
 │   │   └── Day4CutImage.java        # 하루네컷 이미지
 │   └── enums/
 │       └── EmojiType.java           # 이모지 타입 (HAPPY, SAD, ANGRY, CALM, TIRED)
-└── notification/
-    ├── entity/
-    │   └── Notification.java        # 알림
-    └── enums/
-        └── NotificationType.java    # 알림 유형
+├── album/
+│   ├── domain/
+│   │   └── Album.java               # 앨범
+│   └── enums/
+│       └── AlbumSuccessCode.java    # 앨범 성공 응답 코드
+├── notification/
+│   ├── entity/
+│   │   └── Notification.java        # 알림
+│   └── enums/
+│       └── NotificationType.java    # 알림 유형 (FRIEND_REQUEST, WORKSPACE_INVITE 등)
+└── image/
+    └── ImageConstants.java          # 이미지 관련 상수 (기본 프로필 이미지 등)
 ```
 
 ---
 
 ## Database (ERD)
-<img width="3112" height="1906" alt="image" src="https://github.com/user-attachments/assets/cc0570ce-1ac1-415b-ac1a-01f29ee02a37" />
+<img width="959" height="860" alt="my4cut ERD 최종본" src="https://github.com/user-attachments/assets/c9ba6614-7869-4d24-8b66-4eb5dcc445f9" />
 
 ---
 
 ## Infrastructure Architecture
-<img width="763" height="485" alt="my4cut 시스템 아키텍처" src="https://github.com/user-attachments/assets/0483c96c-0fa4-4cf7-8f02-036ebbc05f1e" />
+<img width="1536" height="1024" alt="my4cut 서버 아키텍처 최종본" src="https://github.com/user-attachments/assets/351c7bde-108d-4473-9b84-6d3b4effe899" />
 
 

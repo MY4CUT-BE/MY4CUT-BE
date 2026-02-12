@@ -101,4 +101,23 @@ public class User extends BaseEntity {
     public void updateProfileImage(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
     }
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
+    public void activateEmailLogin(String email) {
+        this.loginType = LoginType.EMAIL;
+        this.oauthId = null;
+        this.email = email;
+    }
+
+    public boolean isDeleted() {
+        return this.status == UserStatus.DELETED;
+    }
+
+    public void reactivate() {
+        this.status = UserStatus.ACTIVE;
+        this.deletedAt = null;
+    }
 }

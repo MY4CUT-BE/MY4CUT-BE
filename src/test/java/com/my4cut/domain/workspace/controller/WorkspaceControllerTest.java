@@ -2,6 +2,7 @@ package com.my4cut.domain.workspace.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
+import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.service.WorkspaceService;
 import com.my4cut.global.config.SecurityConfig;
@@ -20,7 +21,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -82,5 +84,21 @@ class WorkspaceControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").exists())
                 .andExpect(jsonPath("$.data[0].name").value("내 워크스페이스"));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("워크스페이스 삭제 API 테스트")
+    void deleteWorkspace_Test() throws Exception {
+        WorkspaceDeleteResponseDto responseDto = new WorkspaceDeleteResponseDto(1L);
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
+        given(workspaceService.deleteWorkspace(anyLong(), nullable(Long.class))).willReturn(responseDto);
+
+        mockMvc.perform(delete("/workspaces/{workspaceId}", 1L)
+                        .with(csrf())
+                        .with(authentication(auth)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").exists())
+                .andExpect(jsonPath("$.data.ownerId").value(1L));
     }
 }

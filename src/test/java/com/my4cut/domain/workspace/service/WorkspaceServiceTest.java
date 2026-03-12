@@ -3,6 +3,7 @@ package com.my4cut.domain.workspace.service;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
+import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
 import com.my4cut.domain.workspace.entity.Workspace;
@@ -165,10 +166,11 @@ class WorkspaceServiceTest {
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
 
         // Act
-        workspaceService.deleteWorkspace(workspaceId, userId);
+        WorkspaceDeleteResponseDto result = workspaceService.deleteWorkspace(workspaceId, userId);
 
         // Assert
         assertThat(workspace.getDeletedAt()).isNotNull();
+        assertThat(result.ownerId()).isEqualTo(userId);
     }
 
     @Test

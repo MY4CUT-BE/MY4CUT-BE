@@ -3,6 +3,7 @@ package com.my4cut.domain.workspace.service;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
+import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
 import com.my4cut.domain.workspace.entity.Workspace;
@@ -98,7 +99,7 @@ public class WorkspaceService {
          * @param userId 유저 ID
          */
         @Transactional
-        public void deleteWorkspace(Long workspaceId, Long userId) {
+        public WorkspaceDeleteResponseDto deleteWorkspace(Long workspaceId, Long userId) {
                 Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -109,6 +110,7 @@ public class WorkspaceService {
                 }
 
                 workspace.setDeletedAt(LocalDateTime.now());
+                return WorkspaceDeleteResponseDto.of(workspace.getOwner().getId());
         }
 
         /**

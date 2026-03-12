@@ -1,6 +1,7 @@
 package com.my4cut.domain.workspace.controller;
 
 import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
+import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
 import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
@@ -61,10 +62,10 @@ public class WorkspaceController {
 
     @Operation(summary = "워크스페이스 삭제", description = "워크스페이스를 삭제(Soft Delete)합니다.")
     @DeleteMapping("/{workspaceId}")
-    public ApiResponse<Void> deleteWorkspace(
+    public ApiResponse<WorkspaceDeleteResponseDto> deleteWorkspace(
             @PathVariable Long workspaceId,
             @AuthenticationPrincipal Long userId) {
-        workspaceService.deleteWorkspace(workspaceId, userId);
-        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_DELETED);
+        WorkspaceDeleteResponseDto result = workspaceService.deleteWorkspace(workspaceId, userId);
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_DELETED, result);
     }
 }

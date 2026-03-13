@@ -1,6 +1,7 @@
 package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.user.entity.User;
+import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInviteRequestDto;
@@ -27,6 +28,7 @@ public class WorkspaceMemberService {
 
     private final WorkspaceMemberRepository workspaceMemberRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final MediaFileRepository mediaFileRepository;
     private final UserRepository userRepository;
 
     /**
@@ -97,6 +99,7 @@ public class WorkspaceMemberService {
                 workspace.getOwner().getId(),
                 workspace.getExpiresAt(),
                 workspace.getCreatedAt(),
+                mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspace.getId()),
                 members.size(),
                 memberProfiles);
     }

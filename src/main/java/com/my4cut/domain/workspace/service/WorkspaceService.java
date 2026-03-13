@@ -1,6 +1,7 @@
 package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.user.entity.User;
+import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
 import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
@@ -30,6 +31,7 @@ public class WorkspaceService {
 
         private final WorkspaceRepository workspaceRepository;
         private final WorkspaceMemberService workspaceMemberService;
+        private final MediaFileRepository mediaFileRepository;
         private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경
 
         /**
@@ -135,6 +137,7 @@ public class WorkspaceService {
                                 workspace.getOwner().getId(),
                                 workspace.getExpiresAt(),
                                 workspace.getCreatedAt(),
+                                mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspace.getId()),
                                 workspaceMemberService.getMemberCount(workspace.getId()),
                                 workspaceMemberService.getMemberProfiles(workspace.getId()));
         }

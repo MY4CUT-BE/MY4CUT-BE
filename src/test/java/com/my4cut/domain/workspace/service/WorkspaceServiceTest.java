@@ -1,6 +1,7 @@
 package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.user.entity.User;
+import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
 import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
@@ -24,6 +25,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -36,6 +38,9 @@ class WorkspaceServiceTest {
 
     @Mock
     private WorkspaceMemberService workspaceMemberService;
+
+    @Mock
+    private MediaFileRepository mediaFileRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -51,6 +56,7 @@ class WorkspaceServiceTest {
         User user = createUser(userId, "주인");
         WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("새 워크스페이스");
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(nullable(Long.class))).willReturn(false);
 
         // Act
         WorkspaceInfoResponseDto result = workspaceService.createWorkspace(requestDto, userId);
@@ -72,6 +78,7 @@ class WorkspaceServiceTest {
         WorkspaceUpdateRequestDto updateDto = new WorkspaceUpdateRequestDto("수정된 이름");
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspaceId)).willReturn(false);
 
         // Act
         WorkspaceInfoResponseDto result = workspaceService.updateWorkspace(workspaceId, updateDto, userId);
@@ -93,7 +100,6 @@ class WorkspaceServiceTest {
         WorkspaceUpdateRequestDto updateDto = new WorkspaceUpdateRequestDto("수정 시도");
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
-
         // Act & Assert
         assertThatThrownBy(() -> workspaceService.updateWorkspace(workspaceId, updateDto, otherUserId))
                 .isInstanceOf(WorkspaceException.class)
@@ -128,6 +134,7 @@ class WorkspaceServiceTest {
         Workspace workspace = createWorkspace(workspaceId, "조회용", owner);
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspaceId)).willReturn(false);
 
         // Act
         WorkspaceInfoResponseDto result = workspaceService.getWorkspaceInfo(workspaceId);
@@ -135,6 +142,7 @@ class WorkspaceServiceTest {
         // Assert
         assertThat(result.id()).isEqualTo(workspaceId);
         assertThat(result.name()).isEqualTo("조회용");
+        assertThat(result.isFinal()).isFalse();
     }
 
     @Test

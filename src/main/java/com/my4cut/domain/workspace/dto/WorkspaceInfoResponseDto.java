@@ -16,6 +16,8 @@ public record WorkspaceInfoResponseDto(
     LocalDateTime expiresAt,
     @Schema(description = "생성 일시")
     LocalDateTime createdAt,
+    @Schema(description = "최종 확정 미디어 존재 여부")
+    Boolean isFinal,
     @Schema(description = "멤버 수")
     int memberCount,
     @Schema(description = "멤버 프로필 이미지 URL 리스트")

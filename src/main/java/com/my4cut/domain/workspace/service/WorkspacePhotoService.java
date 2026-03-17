@@ -143,7 +143,7 @@ public class WorkspacePhotoService {
 
     private Workspace validateMembership(Long workspaceId, Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_USER_NOT_FOUND));
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -216,7 +216,7 @@ public class WorkspacePhotoService {
         MediaFile mediaFile = validatePhotoInWorkspace(workspaceId, photoId);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_USER_NOT_FOUND));
 
         MediaComment comment = MediaComment.builder()
                 .mediaFile(mediaFile)

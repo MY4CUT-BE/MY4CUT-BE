@@ -50,6 +50,6 @@ logs/
 .claude
 .env
 .gemini
-
+.docs/
 
 

@@ -14,9 +14,12 @@ public enum WorkspaceErrorCode implements BaseCode {
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "W4042", "해당 워크스페이스 멤버를 찾을 수 없습니다."),
     PHOTO_NOT_FOUND(HttpStatus.NOT_FOUND, "W4043", "존재하지 않는 사진입니다."),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "W4044", "존재하지 않는 댓글입니다."),
+    INVITATION_NOT_FOUND(HttpStatus.NOT_FOUND, "W4045", "존재하지 않는 워크스페이스 초대입니다."),
+    WORKSPACE_USER_NOT_FOUND(HttpStatus.NOT_FOUND, "W4046", "워크스페이스 작업 대상 사용자를 찾을 수 없습니다."),
     NOT_COMMENT_OWNER(HttpStatus.FORBIDDEN, "W4032", "해당 댓글을 삭제할 권한이 없습니다."),
     NOT_PHOTO_OWNER(HttpStatus.FORBIDDEN, "W4033", "해당 사진을 삭제할 권한이 없습니다."),
-    MEDIA_ALREADY_ASSIGNED(HttpStatus.BAD_REQUEST, "W4001", "이미 워크스페이스가 배정되어 있는 미디어입니다.");
+    MEDIA_ALREADY_ASSIGNED(HttpStatus.BAD_REQUEST, "W4001", "이미 워크스페이스가 배정되어 있는 미디어입니다."),
+    INVITATION_ALREADY_PROCESSED(HttpStatus.BAD_REQUEST, "W4002", "이미 처리된 워크스페이스 초대입니다.");
 
     private final HttpStatus status;
     private final String code;

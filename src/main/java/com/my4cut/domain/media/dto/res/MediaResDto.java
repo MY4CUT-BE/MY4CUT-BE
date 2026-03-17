@@ -11,13 +11,13 @@ public class MediaResDto {
     @Getter
     @Builder
     public static class UploadResDto {
-        private Long fileId;
+        private Long mediaId;
         private String fileKey;
         private String viewUrl;
 
         public static UploadResDto of(MediaFile mediaFile, String viewUrl) {
             return UploadResDto.builder()
-                    .fileId(mediaFile.getId())
+                    .mediaId(mediaFile.getId())
                     .fileKey(mediaFile.getFileUrl())
                     .viewUrl(viewUrl)
                     .build();

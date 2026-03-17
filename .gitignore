@@ -50,6 +50,7 @@ logs/
 .claude
 .env
 .gemini
+.docs/
 
 ### local 테스트 이미지 ###
 /uploads/

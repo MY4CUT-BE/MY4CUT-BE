@@ -27,7 +27,7 @@ public class MediaController {
             summary = "미디어 파일 업로드",
             description = "미디어 파일 1개를 업로드합니다."
     )
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<MediaResDto.UploadResDto> uploadMedia(
             @AuthenticationPrincipal Long userId,
             @Parameter(description = "업로드할 미디어 파일") @RequestParam("file") MultipartFile file

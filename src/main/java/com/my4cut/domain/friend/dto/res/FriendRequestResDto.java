@@ -14,10 +14,14 @@ public class FriendRequestResDto { //요청 조회용
     private FriendRequestStatus status;
 
     public record SendRequestResDto(
-            FriendRequestStatus status
+            FriendRequestStatus status,
+            String profileImageUrl
     ) {
         public static SendRequestResDto of(FriendRequest request) {
-            return new SendRequestResDto(request.getStatus());
+            return new SendRequestResDto(
+                    request.getStatus(),
+                    request.getToUser().getProfileImageUrl()
+            );
         }
     }
 

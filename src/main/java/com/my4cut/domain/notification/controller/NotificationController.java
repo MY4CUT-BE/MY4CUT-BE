@@ -68,4 +68,18 @@ public class NotificationController {
                 notificationService.markAsRead(userId, id)
         );
     }
+
+    // 알림 삭제
+    @Operation(
+            summary = "알림 삭제",
+            description = "사용자가 선택한 알림을 삭제합니다."
+    )
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> deleteNotification(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long id
+    ) {
+        notificationService.deleteNotification(userId, id); // void타입
+        return ApiResponse.onSuccess(SuccessCode.OK, null);
+    }
 }

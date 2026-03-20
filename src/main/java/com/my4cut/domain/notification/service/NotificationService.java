@@ -275,4 +275,14 @@ public class NotificationService {
 
         notificationRepository.delete(notification);
     }
+
+    // 알림을 전체 삭제합니다.
+    @Transactional
+    public void deleteAllNotifications(Long userId) {
+        //사용자를 찾을 수 없을 때
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
+
+        notificationRepository.deleteAllByUser(user);
+    }
 }

@@ -261,4 +261,18 @@ public class NotificationService {
 
         notificationRepository.save(notification);
     }
+
+    // 알림을 개별로 삭제합니다.
+    @Transactional
+    public void deleteNotification(Long userId, Long notificationId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new NotificationException(NotificationErrorCode.NOTIFICATION_NOT_FOUND));
+
+        // 본인 알림인지 확인
+        if (!notification.getUser().getId().equals(userId)) {
+            throw new NotificationException(NotificationErrorCode.NOT_NOTIFICATION_OWNER);
+        }
+
+        notificationRepository.delete(notification);
+    }
 }

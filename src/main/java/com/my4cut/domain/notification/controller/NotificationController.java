@@ -69,9 +69,9 @@ public class NotificationController {
         );
     }
 
-    // 알림 삭제
+    // 알림 개별 삭제
     @Operation(
-            summary = "알림 삭제",
+            summary = "알림 개별 삭제",
             description = "사용자가 선택한 알림을 삭제합니다."
     )
     @DeleteMapping("/{id}")
@@ -80,6 +80,19 @@ public class NotificationController {
             @PathVariable Long id
     ) {
         notificationService.deleteNotification(userId, id); // void타입
+        return ApiResponse.onSuccess(SuccessCode.OK, null);
+    }
+
+    // 알림 전체 삭제
+    @Operation(
+            summary = "알림 전체 삭제",
+            description = "사용자의 모든 알림을 삭제합니다."
+    )
+    @DeleteMapping
+    public ApiResponse<Void> deleteAllNotifications(
+            @AuthenticationPrincipal Long userId
+    ) {
+        notificationService.deleteAllNotifications(userId);
         return ApiResponse.onSuccess(SuccessCode.OK, null);
     }
 }

@@ -1,7 +1,7 @@
 package com.my4cut.domain.auth.controller;
 
-import com.my4cut.domain.auth.dto.AuthReqDTO;
-import com.my4cut.domain.auth.dto.AuthResDTO;
+import com.my4cut.domain.auth.dto.req.AuthReqDTO;
+import com.my4cut.domain.auth.dto.res.AuthResDTO;
 import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.auth.service.AuthService;

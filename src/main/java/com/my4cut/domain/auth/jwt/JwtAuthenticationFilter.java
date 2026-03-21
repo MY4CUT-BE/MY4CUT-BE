@@ -38,6 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.startsWith("/auth/signup")
                 || path.startsWith("/auth/kakao")
                 || path.startsWith("/auth/refresh")
+                || path.startsWith("/auth/email")
                 || path.startsWith("/swagger-ui")
                 || path.startsWith("/v3/api-docs");
     }
@@ -52,8 +53,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String authHeader = request.getHeader("Authorization");
 
+            // 토큰이 없으면 인증 처리 없이 그냥 통과
             if (authHeader == null || !authHeader.startsWith("Bearer ") || authHeader.length() <= 7) {
-                throw new BusinessException(ErrorCode.UNAUTHORIZED);
+                filterChain.doFilter(request, response);
+                return;
             }
 
             String token = authHeader.substring(7);

@@ -24,6 +24,12 @@ spring:
     multipart:
       max-file-size: 5MB
       max-request-size: 55MB
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+
 jwt:
   token:
     secretKey: ${JWT_SECRET_KEY}
@@ -35,3 +41,6 @@ cloud:
     region: ap-northeast-2
     s3:
       bucket: my4cut-image-bucket
+
+ses:
+  from-email: ${SES_FROM_EMAIL}

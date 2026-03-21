@@ -30,7 +30,16 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             HttpServletResponse response,
             AuthenticationException authException
     ) throws IOException, ServletException {
-        log.debug("Unauthorized request: path={}, message={}", request.getRequestURI(), authException.getMessage());
+        if (response.isCommitted()) {
+            log.debug("Unauthorized response already committed: path={}", request.getRequestURI());
+            return;
+        }
+
+        log.debug(
+                "Unauthorized request: path={}, exception={}",
+                request.getRequestURI(),
+                authException.getClass().getSimpleName()
+        );
 
         response.setStatus(ErrorCode.UNAUTHORIZED.getStatus().value());
         response.setContentType("application/json;charset=UTF-8");

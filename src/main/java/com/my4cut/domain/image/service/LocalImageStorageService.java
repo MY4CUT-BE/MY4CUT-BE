@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-@Profile("prod")
+@Profile("local")
 public class LocalImageStorageService implements ImageStorageService {
 
     private static final String UPLOAD_ROOT = System.getProperty("user.dir") + "/uploads";

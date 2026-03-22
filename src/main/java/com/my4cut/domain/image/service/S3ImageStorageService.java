@@ -25,7 +25,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@Profile("local")
+@Profile("prod")
 @RequiredArgsConstructor
 public class S3ImageStorageService implements ImageStorageService {
 

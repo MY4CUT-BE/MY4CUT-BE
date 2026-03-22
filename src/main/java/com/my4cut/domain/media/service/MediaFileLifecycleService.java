@@ -29,7 +29,7 @@ public class MediaFileLifecycleService {
     public MediaFile createMediaFile(User user, MultipartFile file, String directory, MediaType mediaType) {
         MediaHashService.HashedMedia hashedMedia = mediaHashService.hash(file);
 
-        // 같은 사용자 범위에서만 dedup 한다.
+        // 업로드와 마지막 참조 삭제가 엇갈릴 수 있어 재사용 후보는 row lock으로 확인한다.
         MediaObject activeMediaObject = mediaObjectRepository
                 .findByOwnerIdAndSha256AndFileSizeAndStatus(
                         user.getId(),
@@ -40,7 +40,7 @@ public class MediaFileLifecycleService {
                 .orElse(null);
 
         if (activeMediaObject != null) {
-            // business-facing MediaFile 은 새로 만들고, 실제 저장 객체만 재사용한다.
+            // business-facing MediaFile 은 새로 만들고 실제 파일만 재사용한다.
             return mediaFileRepository.save(createBusinessMediaFile(user, mediaType, activeMediaObject));
         }
 
@@ -54,7 +54,7 @@ public class MediaFileLifecycleService {
         MediaObject mediaObject = mediaObjectRepository
                 .findByOwnerIdAndSha256AndFileSize(user.getId(), hashedMedia.sha256(), hashedMedia.fileSize())
                 .map(existing -> {
-                    // 경합 상황에서 이미 만들어진 객체가 있으면 그 객체를 재활성화해서 사용한다.
+                    // 경합 상황에서 기존 row 가 있으면 해당 row 를 재활성화해 사용한다.
                     existing.activate(
                             hashedMedia.sha256(),
                             uploadedFileKey,
@@ -97,25 +97,29 @@ public class MediaFileLifecycleService {
             return;
         }
 
-        long referenceCount = mediaFileRepository.countByMediaObjectId(mediaObject.getId());
+        // 같은 media_object 에 대한 업로드/삭제를 직렬화해 마지막 참조 판정을 안정적으로 만든다.
+        MediaObject lockedMediaObject = mediaObjectRepository.findById(mediaObject.getId())
+                .orElseThrow(() -> new IllegalStateException("MediaObject not found: " + mediaObject.getId()));
+
+        long referenceCount = mediaFileRepository.countByMediaObjectId(lockedMediaObject.getId());
         if (referenceCount > 0) {
             // 아직 다른 MediaFile 이 참조 중이면 실제 파일은 삭제하지 않는다.
             return;
         }
 
-        // DB 에서 더 이상 참조가 없다는 상태를 먼저 남기고, 그 다음 실제 파일을 지운다.
-        mediaObject.markPendingDelete();
-        mediaObjectRepository.saveAndFlush(mediaObject);
+        // DB 에 먼저 삭제 대기 상태를 남기고 그 다음 실제 파일 삭제를 시도한다.
+        lockedMediaObject.markPendingDelete();
+        mediaObjectRepository.saveAndFlush(lockedMediaObject);
 
-        boolean deleted = imageStorageService.deleteIfExists(mediaObject.getFileKey());
+        boolean deleted = imageStorageService.deleteIfExists(lockedMediaObject.getFileKey());
         if (!deleted) {
             // 스토리지 삭제 실패 시 PENDING_DELETE 상태를 유지해 후속 정리가 가능하게 둔다.
-            log.warn("Physical media delete failed. mediaObjectId={}, fileKey={}", mediaObject.getId(), mediaObject.getFileKey());
+            log.warn("Physical media delete failed. mediaObjectId={}, fileKey={}", lockedMediaObject.getId(), lockedMediaObject.getFileKey());
             return;
         }
 
-        mediaObject.markDeleted();
-        mediaObjectRepository.save(mediaObject);
+        lockedMediaObject.markDeleted();
+        mediaObjectRepository.save(lockedMediaObject);
     }
 
     private MediaObject saveMediaObjectWithRaceHandling(
@@ -128,7 +132,7 @@ public class MediaFileLifecycleService {
         try {
             return mediaObjectRepository.saveAndFlush(mediaObject);
         } catch (DataIntegrityViolationException e) {
-            // 동시에 같은 파일이 업로드된 경우 방금 올린 파일은 지우고 기존 객체를 다시 읽는다.
+            // 동시에 같은 파일이 업로드된 경우 방금 올린 파일은 지우고 기존 row 를 다시 읽는다.
             imageStorageService.deleteIfExists(uploadedFileKey);
             return mediaObjectRepository
                     .findByOwnerIdAndSha256AndFileSizeAndStatus(ownerId, sha256, fileSize, MediaObjectStatus.ACTIVE)

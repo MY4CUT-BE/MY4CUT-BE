@@ -44,3 +44,7 @@ cloud:
 
 ses:
   from-email: ${SES_FROM_EMAIL}
+
+media:
+  cleanup:
+    pending-delete-fixed-delay-ms: 300000

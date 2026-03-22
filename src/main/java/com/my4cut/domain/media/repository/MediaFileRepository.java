@@ -21,4 +21,6 @@ public interface MediaFileRepository extends JpaRepository<MediaFile, Long> {
     Page<MediaFile> findAllByUploader(User uploader, Pageable pageable);
 
     boolean existsByWorkspaceIdAndIsFinalTrue(Long workspaceId);
+
+    long countByMediaObjectId(Long mediaObjectId);
 }

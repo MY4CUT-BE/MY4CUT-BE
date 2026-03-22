@@ -39,6 +39,10 @@ public class MediaFile extends BaseEntity {
     @JoinColumn(name = "album_id")
     private Album album;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "media_object_id")
+    private MediaObject mediaObject;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "media_type", nullable = false)
     private MediaType mediaType;
@@ -56,11 +60,12 @@ public class MediaFile extends BaseEntity {
     private Boolean isFinal;
 
     @Builder
-    public MediaFile(User uploader, Workspace workspace, Album album, MediaType mediaType,
+    public MediaFile(User uploader, Workspace workspace, Album album, MediaObject mediaObject, MediaType mediaType,
                      String fileUrl, LocalDate takenDate, String diary, Boolean isFinal) {
         this.uploader = uploader;
         this.workspace = workspace;
         this.album = album;
+        this.mediaObject = mediaObject;
         this.mediaType = mediaType;
         this.fileUrl = fileUrl;
         this.takenDate = takenDate;

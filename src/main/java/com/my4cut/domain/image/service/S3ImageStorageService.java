@@ -25,7 +25,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@Profile("prod")
+@Profile("local")
 @RequiredArgsConstructor
 public class S3ImageStorageService implements ImageStorageService {
 
@@ -42,20 +42,25 @@ public class S3ImageStorageService implements ImageStorageService {
 
     @Override
     public String upload(MultipartFile file, String directory) {
-        String key = buildKey(directory, file.getOriginalFilename());
-
         try {
-            s3Client.putObject(
-                    PutObjectRequest.builder()
-                            .bucket(bucket)
-                            .key(key)
-                            .contentType(file.getContentType())
-                            .build(),
-                    RequestBody.fromBytes(file.getBytes())
-            );
+            return upload(file.getBytes(), file.getOriginalFilename(), file.getContentType(), directory);
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED, e);
         }
+    }
+
+    @Override
+    public String upload(byte[] bytes, String originalFilename, String contentType, String directory) {
+        String key = buildKey(directory, originalFilename);
+
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(key)
+                        .contentType(contentType)
+                        .build(),
+                RequestBody.fromBytes(bytes)
+        );
 
         return key;
     }
@@ -86,15 +91,12 @@ public class S3ImageStorageService implements ImageStorageService {
                 .toString();
     }
 
-
     @Override
-    public void deleteIfExists(String imagePathOrUrl) {
+    public boolean deleteIfExists(String imagePathOrUrl) {
         if (imagePathOrUrl == null || imagePathOrUrl.isBlank()) {
-            return;
+            return true;
         }
 
-        // 과거 데이터는 전체 S3 URL, 신규 데이터는 fileKey로 저장될 수 있어
-        // 삭제 시점에는 둘 다 안전하게 지원한다.
         String key = extractKey(imagePathOrUrl);
 
         try {
@@ -104,9 +106,10 @@ public class S3ImageStorageService implements ImageStorageService {
                             .key(key)
                             .build()
             );
-
+            return true;
         } catch (Exception e) {
             log.warn("Failed to delete S3 image: {}", imagePathOrUrl, e);
+            return false;
         }
     }
 
@@ -116,8 +119,6 @@ public class S3ImageStorageService implements ImageStorageService {
         }
         String safeName = sanitizeFilename(originalFilename);
         String yearMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM"));
-        // 요구사항에 맞춰 URL이 아닌 fileKey만 DB에 저장한다.
-        // 예) calendar/2026/02/{uuid}_image.jpg
         return directory + "/" + yearMonth + "/" + UUID.randomUUID() + "_" + safeName;
     }
 
@@ -138,7 +139,7 @@ public class S3ImageStorageService implements ImageStorageService {
         if (imagePathOrUrl.startsWith("http://") || imagePathOrUrl.startsWith("https://")) {
             try {
                 URI uri = URI.create(imagePathOrUrl);
-                String path = uri.getPath(); // /calendar/2026/02/xxx.jpg
+                String path = uri.getPath();
                 if (path != null && path.startsWith("/")) {
                     return path.substring(1);
                 }

@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @Service
 @Slf4j
-@Profile("local")
+@Profile("prod")
 public class LocalImageStorageService implements ImageStorageService {
 
     private static final String UPLOAD_ROOT = System.getProperty("user.dir") + "/uploads";
@@ -27,11 +27,19 @@ public class LocalImageStorageService implements ImageStorageService {
 
     @Override
     public String upload(MultipartFile file, String directory) {
+        try {
+            return upload(file.getBytes(), file.getOriginalFilename(), file.getContentType(), directory);
+        } catch (IOException e) {
+            throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED, e);
+        }
+    }
+
+    @Override
+    public String upload(byte[] bytes, String originalFilename, String contentType, String directory) {
         if (directory == null || directory.isBlank()) {
             throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
 
-        String originalFilename = file.getOriginalFilename();
         if (originalFilename != null) {
             originalFilename = Paths.get(originalFilename).getFileName().toString();
         }
@@ -44,7 +52,7 @@ public class LocalImageStorageService implements ImageStorageService {
 
         try {
             Files.createDirectories(path.getParent());
-            file.transferTo(path.toFile());
+            Files.write(path, bytes);
         } catch (IOException e) {
             throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED, e);
         }
@@ -58,14 +66,13 @@ public class LocalImageStorageService implements ImageStorageService {
     }
 
     @Override
-    public void deleteIfExists(String imagePathOrUrl) {
+    public boolean deleteIfExists(String imagePathOrUrl) {
         if (imagePathOrUrl == null || imagePathOrUrl.isBlank()) {
-            return;
+            return true;
         }
 
-        // URL이면 로컬 삭제 대상 아님
         if (isUrl(imagePathOrUrl)) {
-            return;
+            return true;
         }
 
         try {
@@ -74,9 +81,10 @@ public class LocalImageStorageService implements ImageStorageService {
                 filePath = UPLOAD_ROOT + filePath.substring("/images".length());
             }
             Path path = Paths.get(filePath);
-            Files.deleteIfExists(path);
+            return Files.deleteIfExists(path) || !Files.exists(path);
         } catch (Exception e) {
             log.warn("Failed to delete local image: {}", imagePathOrUrl, e);
+            return false;
         }
     }
 

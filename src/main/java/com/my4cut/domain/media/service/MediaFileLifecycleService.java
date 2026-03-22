@@ -51,36 +51,41 @@ public class MediaFileLifecycleService {
                 directory
         );
 
-        MediaObject mediaObject = mediaObjectRepository
-                .findByOwnerIdAndSha256AndFileSize(user.getId(), hashedMedia.sha256(), hashedMedia.fileSize())
-                .map(existing -> {
-                    // 경합 상황에서 기존 row 가 있으면 해당 row 를 재활성화해 사용한다.
-                    existing.activate(
-                            hashedMedia.sha256(),
-                            uploadedFileKey,
-                            hashedMedia.fileSize(),
-                            hashedMedia.contentType()
-                    );
-                    return existing;
-                })
-                .orElseGet(() -> MediaObject.builder()
-                        .owner(user)
-                        .sha256(hashedMedia.sha256())
-                        .fileKey(uploadedFileKey)
-                        .fileSize(hashedMedia.fileSize())
-                        .contentType(hashedMedia.contentType())
-                        .status(MediaObjectStatus.ACTIVE)
-                        .build());
+        try {
+            MediaObject mediaObject = mediaObjectRepository
+                    .findByOwnerIdAndSha256AndFileSize(user.getId(), hashedMedia.sha256(), hashedMedia.fileSize())
+                    .map(existing -> {
+                        // 경합 상황에서 기존 row 가 있으면 해당 row 를 재활성화해 사용한다.
+                        existing.activate(
+                                hashedMedia.sha256(),
+                                uploadedFileKey,
+                                hashedMedia.fileSize(),
+                                hashedMedia.contentType()
+                        );
+                        return existing;
+                    })
+                    .orElseGet(() -> MediaObject.builder()
+                            .owner(user)
+                            .sha256(hashedMedia.sha256())
+                            .fileKey(uploadedFileKey)
+                            .fileSize(hashedMedia.fileSize())
+                            .contentType(hashedMedia.contentType())
+                            .status(MediaObjectStatus.ACTIVE)
+                            .build());
 
-        MediaObject savedMediaObject = saveMediaObjectWithRaceHandling(
-                user.getId(),
-                hashedMedia.sha256(),
-                hashedMedia.fileSize(),
-                uploadedFileKey,
-                mediaObject
-        );
+            MediaObject savedMediaObject = saveMediaObjectWithRaceHandling(
+                    user.getId(),
+                    hashedMedia.sha256(),
+                    hashedMedia.fileSize(),
+                    uploadedFileKey,
+                    mediaObject
+            );
 
-        return mediaFileRepository.save(createBusinessMediaFile(user, mediaType, savedMediaObject));
+            return mediaFileRepository.save(createBusinessMediaFile(user, mediaType, savedMediaObject));
+        } catch (RuntimeException e) {
+            cleanupUploadedFile(uploadedFileKey);
+            throw e;
+        }
     }
 
     @Transactional
@@ -133,7 +138,7 @@ public class MediaFileLifecycleService {
             return mediaObjectRepository.saveAndFlush(mediaObject);
         } catch (DataIntegrityViolationException e) {
             // 동시에 같은 파일이 업로드된 경우 방금 올린 파일은 지우고 기존 row 를 다시 읽는다.
-            imageStorageService.deleteIfExists(uploadedFileKey);
+            cleanupUploadedFile(uploadedFileKey);
             return mediaObjectRepository
                     .findByOwnerIdAndSha256AndFileSizeAndStatus(ownerId, sha256, fileSize, MediaObjectStatus.ACTIVE)
                     .orElseThrow(() -> e);
@@ -149,5 +154,12 @@ public class MediaFileLifecycleService {
                 .mediaObject(mediaObject)
                 .isFinal(false)
                 .build();
+    }
+
+    private void cleanupUploadedFile(String uploadedFileKey) {
+        boolean deleted = imageStorageService.deleteIfExists(uploadedFileKey);
+        if (!deleted) {
+            log.warn("Failed to cleanup uploaded file after DB rollback path. fileKey={}", uploadedFileKey);
+        }
     }
 }

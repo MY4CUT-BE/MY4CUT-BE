@@ -6,6 +6,7 @@ import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.enums.MediaType;
 import com.my4cut.domain.media.repository.MediaCommentRepository;
 import com.my4cut.domain.media.repository.MediaFileRepository;
+import com.my4cut.domain.media.service.MediaFileLifecycleService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspacePhotoCommentRequestDto;
@@ -44,6 +45,7 @@ class WorkspacePhotoServiceTest {
     @Mock private MediaCommentRepository mediaCommentRepository;
     @Mock private UserRepository userRepository;
     @Mock private ImageStorageService imageStorageService;
+    @Mock private MediaFileLifecycleService mediaFileLifecycleService;
 
     @InjectMocks
     private WorkspacePhotoService workspacePhotoService;
@@ -117,8 +119,7 @@ class WorkspacePhotoServiceTest {
         workspacePhotoService.deletePhoto(workspaceId, photoId, userId);
 
         // Assert
-        verify(imageStorageService).deleteIfExists("url");
-        verify(mediaFileRepository).delete(photo);
+        verify(mediaFileLifecycleService).deleteMediaFile(photo);
     }
 
     @Test

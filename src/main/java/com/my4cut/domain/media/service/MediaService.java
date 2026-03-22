@@ -1,5 +1,6 @@
 package com.my4cut.domain.media.service;
 
+import com.my4cut.domain.image.service.ImageStorageService;
 import com.my4cut.domain.media.dto.res.MediaResDto;
 import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.enums.MediaType;
@@ -7,7 +8,6 @@ import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.global.exception.BusinessException;
-import com.my4cut.domain.image.service.ImageStorageService;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,11 +28,12 @@ import java.util.List;
 public class MediaService {
     private static final String MEDIA_DIRECTORY = "calendar";
     private static final int MAX_BULK_UPLOAD_COUNT = 10;
+
     private final MediaFileRepository mediaFileRepository;
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
+    private final MediaFileLifecycleService mediaFileLifecycleService;
 
-    // 미디어 파일 업로드
     @Transactional
     public MediaResDto.UploadResDto uploadMedia(Long userId, MultipartFile file) {
         User user = getUser(userId);
@@ -48,7 +49,6 @@ public class MediaService {
     public List<MediaResDto.UploadResDto> uploadMediaBulk(Long userId, List<MultipartFile> files) {
         User user = getUser(userId);
 
-        // 한 요청에서 여러 이미지를 받을 수 있어야 한다는 요구사항 반영
         if (files == null || files.isEmpty()) {
             throw new BusinessException(ErrorCode.BAD_REQUEST);
         }
@@ -61,15 +61,14 @@ public class MediaService {
 
         try {
             for (MultipartFile file : files) {
-                MediaFile saved = saveMediaFile(user, file);
-                uploadedMediaFiles.add(saved);
+                uploadedMediaFiles.add(saveMediaFile(user, file));
             }
         } catch (Exception e) {
             for (MediaFile media : uploadedMediaFiles) {
                 try {
-                    imageStorageService.deleteIfExists(media.getFileUrl());
+                    mediaFileLifecycleService.deleteMediaFile(media);
                 } catch (Exception deleteEx) {
-                    log.warn("S3 보상 삭제 실패: {}", media.getFileUrl(), deleteEx);
+                    log.warn("Bulk upload compensation failed: {}", media.getFileUrl(), deleteEx);
                 }
             }
             throw e;
@@ -81,10 +80,8 @@ public class MediaService {
                         imageStorageService.generatePresignedGetUrl(media.getFileUrl())
                 ))
                 .toList();
-
     }
 
-    // 내 미디어 목록 조회
     @Transactional(readOnly = true)
     public List<MediaResDto.MediaListResDto> getMyMediaList(Long userId, int page) {
         User user = getUser(userId);
@@ -95,13 +92,11 @@ public class MediaService {
         return mediaFiles.getContent().stream()
                 .map(mediaFile -> MediaResDto.MediaListResDto.of(
                         mediaFile,
-                        // DB에는 fileKey만 저장하고, 조회 시점에만 Presigned GET URL을 생성한다.
                         imageStorageService.generatePresignedGetUrl(mediaFile.getFileUrl())
                 ))
                 .toList();
     }
 
-    // 미디어 상세 조회
     @Transactional(readOnly = true)
     public MediaResDto.MediaDetailResDto getMediaDetail(Long userId, Long mediaId) {
         getUser(userId);
@@ -119,7 +114,6 @@ public class MediaService {
         );
     }
 
-    // ✅ 미디어 삭제 (수정된 부분)
     @Transactional
     public MediaResDto.DeleteResDto deleteMedia(Long userId, Long mediaId) {
         getUser(userId);
@@ -131,33 +125,20 @@ public class MediaService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        mediaFileRepository.delete(mediaFile);
-        mediaFileRepository.flush(); // DB 삭제 먼저 확정
-        imageStorageService.deleteIfExists(mediaFile.getFileUrl());
+        mediaFileLifecycleService.deleteMediaFile(mediaFile);
         return MediaResDto.DeleteResDto.of(true);
     }
+
     private User getUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
     }
 
     private MediaFile saveMediaFile(User user, MultipartFile file) {
-        // 서버가 multipart 파일을 직접 받아 S3에 업로드하고, 결과로 fileKey를 돌려받는다.
-        //파일 타입 검증
         validateContentType(file.getContentType());
-
-        // 서버가 multipart 파일을 직접 받아 S3에 업로드
-        String fileKey = imageStorageService.upload(file, MEDIA_DIRECTORY);
         MediaType mediaType = determineMediaType(file.getContentType());
-
-        MediaFile mediaFile = MediaFile.builder()
-                .uploader(user)
-                .mediaType(mediaType)
-                .fileUrl(fileKey)
-                .isFinal(false)
-                .build();
-
-        return mediaFileRepository.save(mediaFile);
+        // 업로드, dedup, physical delete 순서는 lifecycle 서비스에 위임한다.
+        return mediaFileLifecycleService.createMediaFile(user, file, MEDIA_DIRECTORY, mediaType);
     }
 
     private MediaType determineMediaType(String contentType) {

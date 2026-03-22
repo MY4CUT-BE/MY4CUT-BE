@@ -52,3 +52,7 @@ cloud:
 
 ses:
   from-email: my4cut.back@gmail.com
+
+media:
+  cleanup:
+    pending-delete-fixed-delay-ms: 300000

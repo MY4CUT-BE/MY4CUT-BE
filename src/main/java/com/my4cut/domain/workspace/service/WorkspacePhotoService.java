@@ -61,6 +61,11 @@ public class WorkspacePhotoService {
                 throw new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND);
             }
 
+            // 사진 API 이므로 VIDEO 는 연결하지 않는다.
+            if (mediaFile.getMediaType() != MediaType.PHOTO) {
+                throw new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND);
+            }
+
             if (mediaFile.getWorkspace() != null) {
                 throw new WorkspaceException(WorkspaceErrorCode.MEDIA_ALREADY_ASSIGNED);
             }
@@ -92,7 +97,7 @@ public class WorkspacePhotoService {
         MediaFile photo = mediaFileRepository.findById(photoId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND));
 
-        if (!photo.getWorkspace().getId().equals(workspaceId)) {
+        if (photo.getWorkspace() == null || !photo.getWorkspace().getId().equals(workspaceId)) {
             throw new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND);
         }
 
@@ -194,7 +199,7 @@ public class WorkspacePhotoService {
     private Workspace validateMembership(Long workspaceId, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
-        Workspace workspace = workspaceRepository.findById(workspaceId)
+        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
         if (workspace.isExpired()) {
@@ -212,7 +217,7 @@ public class WorkspacePhotoService {
         MediaFile photo = mediaFileRepository.findById(photoId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND));
 
-        if (!photo.getWorkspace().getId().equals(workspaceId)) {
+        if (photo.getWorkspace() == null || !photo.getWorkspace().getId().equals(workspaceId)) {
             throw new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND);
         }
         return photo;

@@ -12,11 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
-/**
- * 미디어 파일 정보를 저장하는 엔티티이다.
- * 워크스페이스에 업로드된 사진이나 동영상과 관련 다이어리 내용을 관리한다.
- */
 @Entity
 @Table(name = "media_files")
 @Getter
@@ -40,7 +37,7 @@ public class MediaFile extends BaseEntity {
     private Album album;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "media_object_id")
+    @JoinColumn(name = "media_object_id", nullable = false)
     private MediaObject mediaObject;
 
     @Enumerated(EnumType.STRING)
@@ -65,7 +62,8 @@ public class MediaFile extends BaseEntity {
         this.uploader = uploader;
         this.workspace = workspace;
         this.album = album;
-        this.mediaObject = mediaObject;
+        // dedup 구조에서는 모든 MediaFile 이 반드시 하나의 MediaObject 를 가져야 한다.
+        this.mediaObject = Objects.requireNonNull(mediaObject, "mediaObject must not be null");
         this.mediaType = mediaType;
         this.fileUrl = fileUrl;
         this.takenDate = takenDate;

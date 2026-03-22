@@ -10,7 +10,8 @@ public interface ImageStorageService {
     String generatePresignedGetUrl(String fileKey);
 
     /**
-     * 저장소 타입에 맞게 fileKey(또는 레거시 URL)를 해석해 실제 파일을 삭제한다.
+     * 저장소 타입에 맞게 fileKey 또는 URL 을 해석해 실제 파일 삭제를 시도한다.
+     * true 는 삭제 성공 또는 이미 없는 상태를 뜻하고, false 는 삭제 실패를 뜻한다.
      */
     boolean deleteIfExists(String imagePathOrUrl);
 }

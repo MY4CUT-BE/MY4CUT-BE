@@ -95,4 +95,33 @@ public class NotificationController {
         notificationService.deleteAllNotifications(userId);
         return ApiResponse.onSuccess(SuccessCode.OK, null);
     }
+
+    // 페이지 단위 읽음 처리
+    @Operation(
+            summary = "알림 페이지 읽음 처리",
+            description = "조회한 페이지의 알림을 읽음 상태로 변경합니다."
+    )
+    @PatchMapping("/read-page")
+    public ApiResponse<Void> markPageAsRead(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam(defaultValue = "0") int page
+    ) {
+        notificationService.markPageAsRead(userId, page);
+        return ApiResponse.onSuccess(SuccessCode.OK, null);
+    }
+
+    // 읽지 않은 알림 여부 조회
+    @Operation(
+            summary = "읽지 않은 알림 여부 조회",
+            description = "읽지 않은 알림이 있으면 true를 반환합니다."
+    )
+    @GetMapping("/unread-status")
+    public ApiResponse<NotificationResDto.UnreadStatusResDto> getUnreadStatus(
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ApiResponse.onSuccess(
+                SuccessCode.OK,
+                notificationService.getUnreadStatus(userId)
+        );
+    }
 }

@@ -285,4 +285,29 @@ public class NotificationService {
 
         notificationRepository.deleteAllByUser(user);
     }
+
+    // 페이지 단위 읽음 처리
+    @Transactional
+    public void markPageAsRead(Long userId, int page) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(page, 8); // 한 페이지에 8개의 알림.
+
+        List<Notification> notifications =
+                notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable)
+                        .getContent();
+
+        notifications.forEach(Notification::markAsRead);
+    }
+
+    // 읽지 않은 알림 여부 조회
+    @Transactional(readOnly = true)
+    public NotificationResDto.UnreadStatusResDto getUnreadStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
+
+        boolean hasUnread = notificationRepository.existsByUserAndIsReadFalse(user);
+        return NotificationResDto.UnreadStatusResDto.of(hasUnread);
+    }
 }

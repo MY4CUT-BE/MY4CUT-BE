@@ -79,4 +79,13 @@ public record NotificationResDto() {
             return new ReadNotificationResDto(notification.getIsRead());
         }
     }
+
+    // 읽지 않은 알림 여부 조회 후 응답
+    public record UnreadStatusResDto(
+            Boolean hasUnread
+    ) {
+        public static UnreadStatusResDto of(boolean hasUnread) {
+            return new UnreadStatusResDto(hasUnread);
+        }
+    }
 }

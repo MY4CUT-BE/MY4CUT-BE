@@ -116,7 +116,7 @@ public class NotificationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(page, 20);
+        Pageable pageable = PageRequest.of(page, 8);
 
         Page<Notification> notifications =
                 notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);

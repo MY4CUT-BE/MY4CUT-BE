@@ -116,7 +116,7 @@ public class NotificationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(page, 20);
+        Pageable pageable = PageRequest.of(page, 8);
 
         Page<Notification> notifications =
                 notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);
@@ -284,5 +284,27 @@ public class NotificationService {
                 .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
 
         notificationRepository.deleteAllByUser(user);
+    }
+
+    // 페이지 단위 읽음 처리
+    @Transactional
+    public void markPageAsRead(Long userId, NotificationReqDto.MarkReadByIdsDto request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
+
+        List<Notification> notifications =
+                notificationRepository.findAllByIdInAndUser(request.notificationIds(), user);
+
+        notifications.forEach(Notification::markAsRead);
+    }
+
+    // 읽지 않은 알림 여부 조회
+    @Transactional(readOnly = true)
+    public NotificationResDto.UnreadStatusResDto getUnreadStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
+
+        boolean hasUnread = notificationRepository.existsByUserAndIsReadFalse(user);
+        return NotificationResDto.UnreadStatusResDto.of(hasUnread);
     }
 }

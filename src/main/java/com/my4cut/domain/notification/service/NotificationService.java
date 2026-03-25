@@ -288,15 +288,12 @@ public class NotificationService {
 
     // 페이지 단위 읽음 처리
     @Transactional
-    public void markPageAsRead(Long userId, int page) {
+    public void markPageAsRead(Long userId, NotificationReqDto.MarkReadByIdsDto request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(page, 8); // 한 페이지에 8개의 알림.
-
         List<Notification> notifications =
-                notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable)
-                        .getContent();
+                notificationRepository.findAllByIdInAndUser(request.notificationIds(), user);
 
         notifications.forEach(Notification::markAsRead);
     }

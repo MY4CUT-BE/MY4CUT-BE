@@ -7,16 +7,18 @@ import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @Tag(name = "Notification", description = "알림 토큰 및 내역 관리 API")
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
+@Validated
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -45,7 +47,7 @@ public class NotificationController {
     @GetMapping
     public ApiResponse<List<NotificationResDto.NotificationItemDto>> getNotifications(
             @AuthenticationPrincipal Long userId,
-            @RequestParam(defaultValue = "0") int page
+            @RequestParam(defaultValue = "0") @Min(0) int page
     ) {
         return ApiResponse.onSuccess(
                 SuccessCode.OK,
@@ -99,14 +101,14 @@ public class NotificationController {
     // 페이지 단위 읽음 처리
     @Operation(
             summary = "알림 페이지 읽음 처리",
-            description = "조회한 페이지의 알림을 읽음 상태로 변경합니다."
+            description = "조회한 페이지의 알림 ID 목록을 읽음 상태로 변경합니다."
     )
     @PatchMapping("/read-page")
     public ApiResponse<Void> markPageAsRead(
             @AuthenticationPrincipal Long userId,
-            @RequestParam(defaultValue = "0") int page
+            @RequestBody NotificationReqDto.MarkReadByIdsDto request
     ) {
-        notificationService.markPageAsRead(userId, page);
+        notificationService.markPageAsRead(userId, request);
         return ApiResponse.onSuccess(SuccessCode.OK, null);
     }
 

@@ -5,6 +5,7 @@ import com.my4cut.domain.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
@@ -12,4 +13,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     void deleteAllByUser(User user);
     Page<Notification> findByUserAndIsReadFalse(User user, Pageable pageable);
     boolean existsByUserAndIsReadFalse(User user);
+    List<Notification> findAllByIdInAndUser(List<Long> ids, User user);
 }

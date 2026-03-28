@@ -1,6 +1,6 @@
 package com.my4cut.domain.auth.service;
 
-import com.my4cut.domain.auth.dto.AuthResDTO;
+import com.my4cut.domain.auth.dto.res.AuthResDTO;
 import com.my4cut.domain.auth.entity.RefreshToken;
 import com.my4cut.domain.auth.jwt.JwtProvider;
 import com.my4cut.domain.auth.repository.RefreshTokenRepository;
@@ -34,6 +34,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtProvider jwtProvider;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional(readOnly = true)
     public AuthResDTO.CheckEmailResDto checkEmailDuplicate(String email) {
@@ -45,6 +46,9 @@ public class AuthService {
     // 회원가입
     @Transactional
     public void signup(UserReqDTO.SignUpDTO request) {
+        if (!emailVerificationService.isVerified(request.email())) {
+            throw new BusinessException(ErrorCode.AUTH_EMAIL_NOT_VERIFIED);
+        }
 
         User existingUser = userRepository.findByEmail(request.email()).orElse(null);
 
@@ -62,6 +66,7 @@ public class AuthService {
             existingUser.updateNickname(request.nickname());
             existingUser.reactivate();
             refreshTokenRepository.deleteByUser(existingUser);
+            emailVerificationService.clearVerifiedAfterCommit(request.email());
             return;
         }
 
@@ -81,6 +86,7 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+        emailVerificationService.clearVerifiedAfterCommit(request.email());
     }
 
     // 로그인

@@ -36,6 +36,13 @@ public enum ErrorCode implements BaseCode {
     AUTH_INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "A4012", "유효하지 않은 리프레시 토큰입니다."),
     AUTH_INVALID_KAKAO_RESPONSE(HttpStatus.BAD_REQUEST, "A4001", "카카오 사용자 정보를 가져올 수 없습니다."),
 
+    AUTH_EMAIL_CODE_COOLDOWN(HttpStatus.TOO_MANY_REQUESTS, "A4291", "인증코드는 1분 뒤에 다시 요청할 수 있습니다."),
+    AUTH_EMAIL_CODE_NOT_FOUND(HttpStatus.BAD_REQUEST, "A4002", "인증코드가 만료되었거나 존재하지 않습니다."),
+    AUTH_EMAIL_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "A4003", "인증코드가 일치하지 않습니다."),
+    AUTH_EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "A4004", "이메일 인증이 완료되지 않았습니다."),
+    AUTH_EMAIL_VERIFY_FAIL_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "A4292", "인증 시도 횟수를 초과했습니다. 다시 요청해 주세요."),
+    AUTH_EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "A5001", "이메일 전송 중 오류가 발생했습니다."),
+
     // Image Domain Error
     IMAGE_OWNER_NOT_FOUND(HttpStatus.NOT_FOUND, "I4041", "이미지 소유 사용자를 찾을 수 없습니다."),
     IMAGE_INVALID_FILE_NAME(HttpStatus.BAD_REQUEST, "I4001", "지원하지 않는 파일 이름 형식입니다."),

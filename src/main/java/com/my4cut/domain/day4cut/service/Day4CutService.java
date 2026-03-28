@@ -185,7 +185,7 @@ public class Day4CutService {
             Day4CutReqDto.ImageReqDto imageDto = images.get(i);
 
             // MediaFile 조회
-            MediaFile mediaFile = mediaFileRepository.findById(imageDto.mediaFileId())
+            MediaFile mediaFile = mediaFileRepository.findById(imageDto.mediaId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
             // 소유권 검증

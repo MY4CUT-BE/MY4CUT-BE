@@ -53,7 +53,8 @@ class WorkspaceControllerTest {
     void createWorkspace_Test() throws Exception {
         // Arrange
         WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("새 워크스페이스");
-        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(1L, "새 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), false, 1, List.of());
+        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
+                1L, "새 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), false, 1, List.of(1L), List.of(), List.of());
         
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceService.createWorkspace(any(), any())).willReturn(responseDto);
@@ -74,7 +75,8 @@ class WorkspaceControllerTest {
     @DisplayName("내 워크스페이스 목록 조회 API 테스트")
     void getMyWorkspaces_Test() throws Exception {
         // Arrange
-        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(1L, "내 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), false, 1, List.of());
+        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
+                1L, "내 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), false, 1, List.of(1L), List.of(), List.of(2L));
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceService.getMyWorkspaces(any())).willReturn(List.of(responseDto));
 
@@ -83,7 +85,9 @@ class WorkspaceControllerTest {
                         .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").exists())
-                .andExpect(jsonPath("$.data[0].name").value("내 워크스페이스"));
+                .andExpect(jsonPath("$.data[0].name").value("내 워크스페이스"))
+                .andExpect(jsonPath("$.data[0].memberIds[0]").value(1L))
+                .andExpect(jsonPath("$.data[0].pendingInvitationUserIds[0]").value(2L));
     }
 
     @Test

@@ -8,9 +8,10 @@ import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
 import com.my4cut.domain.workspace.entity.Workspace;
-import com.my4cut.domain.workspace.entity.WorkspaceMember;
+import com.my4cut.domain.workspace.enums.InvitationStatus;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
+import com.my4cut.domain.workspace.repository.WorkspaceInvitationRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class WorkspaceService {
 
         private final WorkspaceRepository workspaceRepository;
         private final WorkspaceMemberService workspaceMemberService;
+        private final WorkspaceInvitationRepository workspaceInvitationRepository;
         private final MediaFileRepository mediaFileRepository;
         private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경
 
@@ -139,6 +141,11 @@ public class WorkspaceService {
                                 workspace.getCreatedAt(),
                                 mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspace.getId()),
                                 workspaceMemberService.getMemberCount(workspace.getId()),
-                                workspaceMemberService.getMemberProfiles(workspace.getId()));
+                                workspaceMemberService.getMemberIds(workspace.getId()),
+                                workspaceMemberService.getMemberProfiles(workspace.getId()),
+                                workspaceInvitationRepository.findAllByWorkspaceIdAndStatus(workspace.getId(), InvitationStatus.PENDING)
+                                                .stream()
+                                                .map(invitation -> invitation.getInvitee().getId())
+                                                .toList());
         }
 }

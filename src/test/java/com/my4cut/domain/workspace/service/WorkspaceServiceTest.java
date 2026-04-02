@@ -8,8 +8,11 @@ import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
 import com.my4cut.domain.workspace.entity.Workspace;
+import com.my4cut.domain.workspace.entity.WorkspaceInvitation;
+import com.my4cut.domain.workspace.enums.InvitationStatus;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
+import com.my4cut.domain.workspace.repository.WorkspaceInvitationRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,6 +44,9 @@ class WorkspaceServiceTest {
     private WorkspaceMemberService workspaceMemberService;
 
     @Mock
+    private WorkspaceInvitationRepository workspaceInvitationRepository;
+
+    @Mock
     private MediaFileRepository mediaFileRepository;
 
     @Mock
@@ -57,6 +64,11 @@ class WorkspaceServiceTest {
         WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("새 워크스페이스");
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(nullable(Long.class))).willReturn(false);
+        given(workspaceMemberService.getMemberCount(nullable(Long.class))).willReturn(1);
+        given(workspaceMemberService.getMemberIds(nullable(Long.class))).willReturn(List.of(userId));
+        given(workspaceMemberService.getMemberProfiles(nullable(Long.class))).willReturn(List.of());
+        given(workspaceInvitationRepository.findAllByWorkspaceIdAndStatus(nullable(Long.class), any(InvitationStatus.class)))
+                .willReturn(List.of());
 
         // Act
         WorkspaceInfoResponseDto result = workspaceService.createWorkspace(requestDto, userId);
@@ -79,6 +91,11 @@ class WorkspaceServiceTest {
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspaceId)).willReturn(false);
+        given(workspaceMemberService.getMemberCount(workspaceId)).willReturn(1);
+        given(workspaceMemberService.getMemberIds(workspaceId)).willReturn(List.of(userId));
+        given(workspaceMemberService.getMemberProfiles(workspaceId)).willReturn(List.of());
+        given(workspaceInvitationRepository.findAllByWorkspaceIdAndStatus(workspaceId, InvitationStatus.PENDING))
+                .willReturn(List.of());
 
         // Act
         WorkspaceInfoResponseDto result = workspaceService.updateWorkspace(workspaceId, updateDto, userId);
@@ -135,6 +152,11 @@ class WorkspaceServiceTest {
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspaceId)).willReturn(false);
+        given(workspaceMemberService.getMemberCount(workspaceId)).willReturn(1);
+        given(workspaceMemberService.getMemberIds(workspaceId)).willReturn(List.of(1L));
+        given(workspaceMemberService.getMemberProfiles(workspaceId)).willReturn(List.of("https://example.com/profile.png"));
+        given(workspaceInvitationRepository.findAllByWorkspaceIdAndStatus(workspaceId, InvitationStatus.PENDING))
+                .willReturn(List.of(createInvitation(workspace, owner, createUser(2L, "초대대기"))));
 
         // Act
         WorkspaceInfoResponseDto result = workspaceService.getWorkspaceInfo(workspaceId);
@@ -143,6 +165,8 @@ class WorkspaceServiceTest {
         assertThat(result.id()).isEqualTo(workspaceId);
         assertThat(result.name()).isEqualTo("조회용");
         assertThat(result.isFinal()).isFalse();
+        assertThat(result.memberIds()).containsExactly(1L);
+        assertThat(result.pendingInvitationUserIds()).containsExactly(2L);
     }
 
     @Test
@@ -209,5 +233,15 @@ class WorkspaceServiceTest {
         Workspace workspace = Workspace.builder().name(name).owner(owner).build();
         ReflectionTestUtils.setField(workspace, "id", id);
         return workspace;
+    }
+
+    private WorkspaceInvitation createInvitation(Workspace workspace, User inviter, User invitee) {
+        WorkspaceInvitation invitation = WorkspaceInvitation.builder()
+                .workspace(workspace)
+                .inviter(inviter)
+                .invitee(invitee)
+                .build();
+        ReflectionTestUtils.setField(invitation, "id", 1L);
+        return invitation;
     }
 }

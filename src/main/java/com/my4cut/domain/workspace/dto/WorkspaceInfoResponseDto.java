@@ -20,6 +20,10 @@ public record WorkspaceInfoResponseDto(
     Boolean isFinal,
     @Schema(description = "멤버 수")
     int memberCount,
+    @Schema(description = "참여 중인 멤버 userId 리스트")
+    List<Long> memberIds,
     @Schema(description = "멤버 프로필 이미지 URL 리스트")
-    List<String> memberProfiles
+    List<String> memberProfiles,
+    @Schema(description = "대기 중인 초대 userId 리스트")
+    List<Long> pendingInvitationUserIds
 ) {}

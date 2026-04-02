@@ -83,6 +83,12 @@ public class WorkspaceMemberService {
                 .toList();
     }
 
+    public List<Long> getMemberIds(Long workspaceId) {
+        return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).stream()
+                .map(member -> member.getUser().getId())
+                .toList();
+    }
+
     public int getMemberCount(Long workspaceId) {
         return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).size();
     }
@@ -101,6 +107,10 @@ public class WorkspaceMemberService {
                 workspace.getCreatedAt(),
                 mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspace.getId()),
                 members.size(),
-                memberProfiles);
+                members.stream()
+                        .map(member -> member.getUser().getId())
+                        .toList(),
+                memberProfiles,
+                List.of());
     }
 }

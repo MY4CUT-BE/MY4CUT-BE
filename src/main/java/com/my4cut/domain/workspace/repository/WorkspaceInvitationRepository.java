@@ -10,6 +10,8 @@ import java.util.Optional;
 
 @Repository
 public interface WorkspaceInvitationRepository extends JpaRepository<WorkspaceInvitation, Long> {
+    List<WorkspaceInvitation> findAllByWorkspaceIdAndStatus(Long workspaceId, InvitationStatus status);
+
     List<WorkspaceInvitation> findAllByInviteeIdAndStatus(Long inviteeId, InvitationStatus status);
 
     Optional<WorkspaceInvitation> findByIdAndInviteeId(Long id, Long inviteeId);

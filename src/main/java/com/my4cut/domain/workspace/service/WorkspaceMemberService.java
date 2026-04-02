@@ -2,8 +2,7 @@ package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
-import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
-import com.my4cut.domain.workspace.dto.WorkspaceInviteRequestDto;
+import com.my4cut.domain.workspace.dto.WorkspaceDto;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.entity.WorkspaceMember;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
@@ -47,7 +46,7 @@ public class WorkspaceMemberService {
      * @param userId 유저 ID
      * @return 참여 중인 워크스페이스 정보 DTO 리스트
      */
-    public List<WorkspaceInfoResponseDto> getMyWorkspaces(Long userId) {
+    public List<WorkspaceDto.InfoResponse> getMyWorkspaces(Long userId) {
         return workspaceMemberRepository.findAllByUserIdAndWorkspaceExpiresAtAfterAndWorkspaceDeletedAtIsNull(userId, LocalDateTime.now()).stream()
                 .map(member -> convertToInfoDto(member.getWorkspace()))
                 .toList();
@@ -85,13 +84,13 @@ public class WorkspaceMemberService {
         return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).size();
     }
 
-    private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
+    private WorkspaceDto.InfoResponse convertToInfoDto(Workspace workspace) {
         List<WorkspaceMember> members = workspaceMemberRepository.findAllByWorkspaceId(workspace.getId());
         List<String> memberProfiles = members.stream()
                 .map(member -> member.getUser().getProfileImageUrl())
                 .toList();
 
-        return new WorkspaceInfoResponseDto(
+        return new WorkspaceDto.InfoResponse(
                 workspace.getId(),
                 workspace.getName(),
                 workspace.getOwner().getId(),

@@ -7,7 +7,7 @@ import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.media.entity.MediaComment;
 import com.my4cut.domain.media.repository.MediaCommentRepository;
-import com.my4cut.domain.workspace.dto.*;
+import com.my4cut.domain.workspace.dto.WorkspacePhotoDto;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
@@ -48,8 +48,8 @@ public class WorkspacePhotoService {
      * @return 업로드된 사진 응답 DTO 리스트
      */
     @Transactional
-    public List<WorkspacePhotoResponseDto> uploadPhotos(Long workspaceId,
-            WorkspacePhotoUploadRequestDto requestDto,
+    public List<WorkspacePhotoDto.PhotoResponse> uploadPhotos(Long workspaceId,
+            WorkspacePhotoDto.UploadRequest requestDto,
             Long userId) {
 
         Workspace workspace = validateMembership(workspaceId, userId);
@@ -79,7 +79,7 @@ public class WorkspacePhotoService {
         }
  
         return updatedMediaFiles.stream()
-                .map(file -> new WorkspacePhotoResponseDto(
+                .map(file -> new WorkspacePhotoDto.PhotoResponse(
                         file.getId(),
                         file.getFileUrl(),
                         imageStorageService.generatePresignedGetUrl(file.getFileUrl()),
@@ -130,7 +130,7 @@ public class WorkspacePhotoService {
      * @param userId 유저 ID
      * @return 사진 응답 DTO 리스트
      */
-    public List<WorkspacePhotoResponseDto> getPhotos(Long workspaceId, String sort, Long userId) {
+    public List<WorkspacePhotoDto.PhotoResponse> getPhotos(Long workspaceId, String sort, Long userId) {
         workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -144,7 +144,7 @@ public class WorkspacePhotoService {
                 sorting);
 
         return photos.stream()
-                .map(photo -> new WorkspacePhotoResponseDto(
+                .map(photo -> new WorkspacePhotoDto.PhotoResponse(
                         photo.getId(),
                         photo.getFileUrl(),
                         imageStorageService.generatePresignedGetUrl(photo.getFileUrl()),
@@ -180,7 +180,7 @@ public class WorkspacePhotoService {
      * @param userId 유저 ID
      * @return 댓글 응답 DTO 리스트
      */
-    public List<WorkspacePhotoCommentResponseDto> getComments(Long workspaceId, Long photoId, Long userId) {
+    public List<WorkspacePhotoDto.CommentResponse> getComments(Long workspaceId, Long photoId, Long userId) {
         workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -191,7 +191,7 @@ public class WorkspacePhotoService {
         List<MediaComment> comments = mediaCommentRepository.findAllByMediaFileIdOrderByCreatedAtDesc(photoId);
 
         return comments.stream()
-                .map(comment -> new WorkspacePhotoCommentResponseDto(
+                .map(comment -> new WorkspacePhotoDto.CommentResponse(
                         comment.getId(),
                         comment.getUser().getId(),
                         comment.getUser().getNickname(),
@@ -239,7 +239,7 @@ public class WorkspacePhotoService {
      * @param userId 유저 ID
      */
     @Transactional
-    public void createComment(Long workspaceId, Long photoId, WorkspacePhotoCommentRequestDto dto, Long userId) {
+    public void createComment(Long workspaceId, Long photoId, WorkspacePhotoDto.CommentRequest dto, Long userId) {
         workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 

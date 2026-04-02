@@ -11,7 +11,7 @@ import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
-import com.my4cut.domain.workspace.dto.WorkspacePhotoResponseDto;
+import com.my4cut.domain.workspace.dto.WorkspacePhotoDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,7 +74,7 @@ public class AlbumService {
     public AlbumResponseDto.Detail getAlbumDetail(Long albumId, Long userId) {
         Album album = validateAlbumOwner(albumId, userId);
 
-        List<WorkspacePhotoResponseDto> mediaList = album.getMediaFiles().stream()
+        List<WorkspacePhotoDto.PhotoResponse> mediaList = album.getMediaFiles().stream()
                 .map(this::mapToMediaDto)
                 .collect(Collectors.toList());
 
@@ -187,8 +187,8 @@ public class AlbumService {
         );
     }
 
-    private WorkspacePhotoResponseDto mapToMediaDto(MediaFile file) {
-        return new WorkspacePhotoResponseDto(
+    private WorkspacePhotoDto.PhotoResponse mapToMediaDto(MediaFile file) {
+        return new WorkspacePhotoDto.PhotoResponse(
                 file.getId(),
                 file.getFileUrl(),
                 imageStorageService.generatePresignedGetUrl(file.getFileUrl()),

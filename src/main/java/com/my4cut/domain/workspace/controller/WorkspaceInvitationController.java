@@ -1,7 +1,6 @@
 package com.my4cut.domain.workspace.controller;
 
-import com.my4cut.domain.workspace.dto.WorkspaceInvitationResponseDto;
-import com.my4cut.domain.workspace.dto.WorkspaceInviteRequestDto;
+import com.my4cut.domain.workspace.dto.WorkspaceInvitationDto;
 import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
 import com.my4cut.domain.workspace.service.WorkspaceInvitationService;
 import com.my4cut.global.response.ApiResponse;
@@ -24,7 +23,7 @@ public class WorkspaceInvitationController {
     @Operation(summary = "멤버 초대", description = "워크스페이스에 새로운 멤버를 초대합니다. (초대장 발송)")
     @PostMapping
     public ApiResponse<Void> inviteMembers(
-            @RequestBody WorkspaceInviteRequestDto dto,
+            @RequestBody WorkspaceInvitationDto.InviteRequest dto,
             @AuthenticationPrincipal Long userId) {
         workspaceInvitationService.inviteMembers(dto, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_INVITE_SUCCESS);
@@ -32,9 +31,9 @@ public class WorkspaceInvitationController {
 
     @Operation(summary = "내가 받은 초대 목록 조회", description = "내가 참여 요청을 받은 워크스페이스 초대 목록을 조회합니다.")
     @GetMapping("/me")
-    public ApiResponse<List<WorkspaceInvitationResponseDto>> getMyInvitations(
+    public ApiResponse<List<WorkspaceInvitationDto.InvitationResponse>> getMyInvitations(
             @AuthenticationPrincipal Long userId) {
-        List<WorkspaceInvitationResponseDto> result = workspaceInvitationService.getMyInvitations(userId);
+        List<WorkspaceInvitationDto.InvitationResponse> result = workspaceInvitationService.getMyInvitations(userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_GET_SUCCESS, result);
     }
 

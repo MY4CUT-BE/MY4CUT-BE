@@ -1,8 +1,6 @@
 package com.my4cut.domain.workspace.controller;
 
-import com.my4cut.domain.workspace.dto.WorkspaceInviteRequestDto;
 import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
-import com.my4cut.domain.workspace.service.WorkspaceInvitationService;
 import com.my4cut.domain.workspace.service.WorkspaceMemberService;
 import com.my4cut.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;

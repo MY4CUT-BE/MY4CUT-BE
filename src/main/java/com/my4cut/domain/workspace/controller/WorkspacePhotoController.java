@@ -1,6 +1,6 @@
 package com.my4cut.domain.workspace.controller;
 
-import com.my4cut.domain.workspace.dto.*;
+import com.my4cut.domain.workspace.dto.WorkspacePhotoDto;
 import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
 import com.my4cut.domain.workspace.service.WorkspacePhotoService;
 import com.my4cut.global.response.ApiResponse;
@@ -25,23 +25,23 @@ public class WorkspacePhotoController {
 
     @Operation(summary = "사진 업로드", description = "워크스페이스에 여러 장의 사진(mediaId)을 등록합니다.")
     @PostMapping(value = "/{workspaceId}/photos")
-    public ApiResponse<List<WorkspacePhotoResponseDto>> uploadPhotos(
+    public ApiResponse<List<WorkspacePhotoDto.PhotoResponse>> uploadPhotos(
             @PathVariable Long workspaceId,
-            @RequestBody WorkspacePhotoUploadRequestDto requestDto,
+            @RequestBody WorkspacePhotoDto.UploadRequest requestDto,
             @AuthenticationPrincipal Long userId) {
-        List<WorkspacePhotoResponseDto> result = workspacePhotoService.uploadPhotos(workspaceId, requestDto,
+        List<WorkspacePhotoDto.PhotoResponse> result = workspacePhotoService.uploadPhotos(workspaceId, requestDto,
                 userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_UPLOAD_SUCCESS, result);
     }
 
     @Operation(summary = "사진 목록 조회", description = "워크스페이스의 사진 목록을 조회합니다.")
     @GetMapping("/{workspaceId}/photos")
-    public ApiResponse<List<WorkspacePhotoResponseDto>> getPhotos(
+    public ApiResponse<List<WorkspacePhotoDto.PhotoResponse>> getPhotos(
             @PathVariable Long workspaceId,
             @AuthenticationPrincipal Long userId,
             @Parameter(description = "정렬 순서", schema = @Schema(allowableValues = { "latest",
                     "oldest" })) @RequestParam(name = "sort", defaultValue = "latest") String sort) {
-        List<WorkspacePhotoResponseDto> result = workspacePhotoService.getPhotos(workspaceId, sort, userId);
+        List<WorkspacePhotoDto.PhotoResponse> result = workspacePhotoService.getPhotos(workspaceId, sort, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_LIST_GET_SUCCESS, result);
     }
 
@@ -57,11 +57,11 @@ public class WorkspacePhotoController {
 
     @Operation(summary = "댓글 목록 조회", description = "워크스페이스 특정 사진의 댓글 목록을 조회합니다.")
     @GetMapping("/{workspaceId}/photos/{photoId}/comments")
-    public ApiResponse<List<WorkspacePhotoCommentResponseDto>> getComments(
+    public ApiResponse<List<WorkspacePhotoDto.CommentResponse>> getComments(
             @PathVariable Long workspaceId,
             @PathVariable Long photoId,
             @AuthenticationPrincipal Long userId) {
-        List<WorkspacePhotoCommentResponseDto> result = workspacePhotoService.getComments(workspaceId, photoId,
+        List<WorkspacePhotoDto.CommentResponse> result = workspacePhotoService.getComments(workspaceId, photoId,
                 userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.COMMENT_LIST_GET_SUCCESS, result);
     }
@@ -71,7 +71,7 @@ public class WorkspacePhotoController {
     public ApiResponse<Void> createComment(
             @PathVariable Long workspaceId,
             @PathVariable Long photoId,
-            @Valid @RequestBody WorkspacePhotoCommentRequestDto requestDto,
+            @Valid @RequestBody WorkspacePhotoDto.CommentRequest requestDto,
             @AuthenticationPrincipal Long userId) {
         workspacePhotoService.createComment(workspaceId, photoId, requestDto, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.COMMENT_CREATE_SUCCESS);

@@ -2,9 +2,7 @@ package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
-import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
-import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
-import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
+import com.my4cut.domain.workspace.dto.WorkspaceDto;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.entity.WorkspaceMember;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
@@ -38,7 +36,7 @@ public class WorkspaceService {
          * @return 생성된 워크스페이스 정보 DTO
          */
         @Transactional
-        public WorkspaceInfoResponseDto createWorkspace(WorkspaceCreateRequestDto dto, Long ownerId) {
+        public WorkspaceDto.InfoResponse createWorkspace(WorkspaceDto.CreateRequest dto, Long ownerId) {
                 User owner = userRepository.findById(ownerId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND)); // 공통 유저 예외 적용 필요
 
@@ -64,7 +62,7 @@ public class WorkspaceService {
          * @return 수정된 워크스페이스 정보 DTO
          */
         @Transactional
-        public WorkspaceInfoResponseDto updateWorkspace(Long workspaceId, WorkspaceUpdateRequestDto dto, Long userId) {
+        public WorkspaceDto.InfoResponse updateWorkspace(Long workspaceId, WorkspaceDto.UpdateRequest dto, Long userId) {
                 Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -83,7 +81,7 @@ public class WorkspaceService {
          * @param workspaceId 워크스페이스 ID
          * @return 워크스페이스 정보 DTO
          */
-        public WorkspaceInfoResponseDto getWorkspaceInfo(Long workspaceId) {
+        public WorkspaceDto.InfoResponse getWorkspaceInfo(Long workspaceId) {
                 Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -116,7 +114,7 @@ public class WorkspaceService {
          * @param userId 유저 ID
          * @return 참여 중인 워크스페이스 정보 DTO 리스트
          */
-        public List<WorkspaceInfoResponseDto> getMyWorkspaces(Long userId) {
+        public List<WorkspaceDto.InfoResponse> getMyWorkspaces(Long userId) {
                 return workspaceMemberService.getMyWorkspaces(userId);
         }
 
@@ -126,8 +124,8 @@ public class WorkspaceService {
                 }
         }
 
-        private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
-                return new WorkspaceInfoResponseDto(
+        private WorkspaceDto.InfoResponse convertToInfoDto(Workspace workspace) {
+                return new WorkspaceDto.InfoResponse(
                                 workspace.getId(),
                                 workspace.getName(),
                                 workspace.getOwner().getId(),

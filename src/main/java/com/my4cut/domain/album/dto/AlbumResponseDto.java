@@ -1,6 +1,6 @@
 package com.my4cut.domain.album.dto;
 
-import com.my4cut.domain.workspace.dto.WorkspacePhotoResponseDto;
+import com.my4cut.domain.workspace.dto.WorkspacePhotoDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -22,7 +22,7 @@ public class AlbumResponseDto {
     public record Detail(
             @Schema(description = "앨범 ID") Long id,
             @Schema(description = "앨범 이름") String name,
-            @Schema(description = "미디어 목록") List<WorkspacePhotoResponseDto> mediaList,
+            @Schema(description = "미디어 목록") List<WorkspacePhotoDto.PhotoResponse> mediaList,
             @Schema(description = "생성 일시") LocalDateTime createdAt
     ) {}
 }

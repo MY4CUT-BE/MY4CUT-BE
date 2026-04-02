@@ -1,8 +1,6 @@
 package com.my4cut.domain.workspace.controller;
 
-import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
-import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
-import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
+import com.my4cut.domain.workspace.dto.WorkspaceDto;
 import com.my4cut.domain.workspace.enums.WorkspaceSuccessCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
 import com.my4cut.domain.workspace.service.WorkspaceService;
@@ -26,36 +24,36 @@ public class WorkspaceController {
 
     @Operation(summary = "워크스페이스 생성", description = "새로운 워크스페이스를 생성합니다.")
     @PostMapping
-    public ApiResponse<WorkspaceInfoResponseDto> createWorkspace(
-            @RequestBody WorkspaceCreateRequestDto dto,
+    public ApiResponse<WorkspaceDto.InfoResponse> createWorkspace(
+            @RequestBody WorkspaceDto.CreateRequest dto,
             @AuthenticationPrincipal Long userId) {
-        WorkspaceInfoResponseDto result = workspaceService.createWorkspace(dto, userId);
+        WorkspaceDto.InfoResponse result = workspaceService.createWorkspace(dto, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_CREATED, result);
     }
 
     @Operation(summary = "내 워크스페이스 목록 조회", description = "내가 참여 중인 워크스페이스 목록을 조회합니다.")
     @GetMapping("/me")
-    public ApiResponse<List<WorkspaceInfoResponseDto>> getMyWorkspaces(
+    public ApiResponse<List<WorkspaceDto.InfoResponse>> getMyWorkspaces(
             @AuthenticationPrincipal Long userId) {
-        List<WorkspaceInfoResponseDto> result = workspaceService.getMyWorkspaces(userId);
+        List<WorkspaceDto.InfoResponse> result = workspaceService.getMyWorkspaces(userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_GET_SUCCESS, result);
     }
 
     @Operation(summary = "워크스페이스 상세 조회", description = "워크스페이스 상세 정보를 조회합니다.")
     @GetMapping("/{workspaceId}")
-    public ApiResponse<WorkspaceInfoResponseDto> getWorkspaceInfo(
+    public ApiResponse<WorkspaceDto.InfoResponse> getWorkspaceInfo(
             @PathVariable Long workspaceId) {
-        WorkspaceInfoResponseDto result = workspaceService.getWorkspaceInfo(workspaceId);
+        WorkspaceDto.InfoResponse result = workspaceService.getWorkspaceInfo(workspaceId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_GET_SUCCESS, result);
     }
 
     @Operation(summary = "워크스페이스 수정", description = "워크스페이스 이름을 수정합니다.")
     @PatchMapping("/{workspaceId}")
-    public ApiResponse<WorkspaceInfoResponseDto> updateWorkspace(
+    public ApiResponse<WorkspaceDto.InfoResponse> updateWorkspace(
             @PathVariable Long workspaceId,
-            @RequestBody WorkspaceUpdateRequestDto dto,
+            @RequestBody WorkspaceDto.UpdateRequest dto,
             @AuthenticationPrincipal Long userId) {
-        WorkspaceInfoResponseDto result = workspaceService.updateWorkspace(workspaceId, dto, userId);
+        WorkspaceDto.InfoResponse result = workspaceService.updateWorkspace(workspaceId, dto, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_MODIFIED, result);
     }
 

@@ -3,8 +3,7 @@ package com.my4cut.domain.workspace.service;
 import com.my4cut.domain.notification.service.NotificationService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
-import com.my4cut.domain.workspace.dto.WorkspaceInvitationResponseDto;
-import com.my4cut.domain.workspace.dto.WorkspaceInviteRequestDto;
+import com.my4cut.domain.workspace.dto.WorkspaceInvitationDto;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.entity.WorkspaceInvitation;
 import com.my4cut.domain.workspace.enums.InvitationStatus;
@@ -42,7 +41,7 @@ public class WorkspaceInvitationService {
      * @param inviterId 초대하는 유저 ID
      */
     @Transactional
-    public void inviteMembers(WorkspaceInviteRequestDto dto, Long inviterId) {
+    public void inviteMembers(WorkspaceInvitationDto.InviteRequest dto, Long inviterId) {
         Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(dto.workspaceId())
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
@@ -89,10 +88,10 @@ public class WorkspaceInvitationService {
      * @param userId 유저 ID
      * @return 초대 정보 DTO 리스트
      */
-    public List<WorkspaceInvitationResponseDto> getMyInvitations(Long userId) {
+    public List<WorkspaceInvitationDto.InvitationResponse> getMyInvitations(Long userId) {
         return workspaceInvitationRepository.findAllByInviteeIdAndStatus(userId, InvitationStatus.PENDING)
                 .stream()
-                .map(invitation -> new WorkspaceInvitationResponseDto(
+                .map(invitation -> new WorkspaceInvitationDto.InvitationResponse(
                         invitation.getId(),
                         invitation.getWorkspace().getName(),
                         invitation.getInviter().getNickname(),

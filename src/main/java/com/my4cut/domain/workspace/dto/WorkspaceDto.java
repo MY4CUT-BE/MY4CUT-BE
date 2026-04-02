@@ -33,6 +33,10 @@ public class WorkspaceDto {
             @Schema(description = "멤버 수")
             int memberCount,
             @Schema(description = "멤버 프로필 이미지 URL 리스트")
-            List<String> memberProfiles
+            List<String> memberProfiles,
+            @Schema(description = "초대 대기(PENDING) 유저 ID 리스트")
+            List<Long> pendingInvitationUserIds,
+            @Schema(description = "현재 참여중인 멤버 유저 ID 리스트")
+            List<Long> memberIds
     ) {}
 }

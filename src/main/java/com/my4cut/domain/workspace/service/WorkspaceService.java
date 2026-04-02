@@ -27,6 +27,7 @@ public class WorkspaceService {
 
         private final WorkspaceRepository workspaceRepository;
         private final WorkspaceMemberService workspaceMemberService;
+        private final WorkspaceInvitationService workspaceInvitationService;
         private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경
 
         /**
@@ -132,6 +133,8 @@ public class WorkspaceService {
                                 workspace.getExpiresAt(),
                                 workspace.getCreatedAt(),
                                 workspaceMemberService.getMemberCount(workspace.getId()),
-                                workspaceMemberService.getMemberProfiles(workspace.getId()));
+                                workspaceMemberService.getMemberProfiles(workspace.getId()),
+                                workspaceInvitationService.getPendingInvitationUserIds(workspace.getId()),
+                                workspaceMemberService.getMemberIds(workspace.getId()));
         }
 }

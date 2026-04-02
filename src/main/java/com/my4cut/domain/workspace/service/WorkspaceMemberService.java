@@ -84,6 +84,12 @@ public class WorkspaceMemberService {
         return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).size();
     }
 
+    public List<Long> getMemberIds(Long workspaceId) {
+        return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).stream()
+                .map(member -> member.getUser().getId())
+                .toList();
+    }
+
     private WorkspaceDto.InfoResponse convertToInfoDto(Workspace workspace) {
         List<WorkspaceMember> members = workspaceMemberRepository.findAllByWorkspaceId(workspace.getId());
         List<String> memberProfiles = members.stream()
@@ -97,6 +103,10 @@ public class WorkspaceMemberService {
                 workspace.getExpiresAt(),
                 workspace.getCreatedAt(),
                 members.size(),
-                memberProfiles);
+                memberProfiles,
+                List.of(),
+                members.stream()
+                        .map(member -> member.getUser().getId())
+                        .toList());
     }
 }

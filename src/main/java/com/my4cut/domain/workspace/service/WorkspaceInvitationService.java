@@ -100,6 +100,13 @@ public class WorkspaceInvitationService {
                 .toList();
     }
 
+    public List<Long> getPendingInvitationUserIds(Long workspaceId) {
+        return workspaceInvitationRepository.findAllByWorkspaceIdAndStatus(workspaceId, InvitationStatus.PENDING)
+                .stream()
+                .map(invitation -> invitation.getInvitee().getId())
+                .toList();
+    }
+
     /**
      * 초대를 수락합니다.
      */

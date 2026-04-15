@@ -110,6 +110,24 @@ public class AuthController {
     }
 
     @Operation(
+            summary = "비밀번호 재설정",
+            description = "비밀번호 찾기 단계에서 이메일 인증을 완료한 사용자만 새 비밀번호로 변경할 수 있습니다."
+    )
+    @PostMapping("/password/reset")
+    public ApiResponse<Void> resetPassword(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = AuthReqDTO.ResetPasswordReqDto.class)
+                    )
+            )
+            @RequestBody @Valid AuthReqDTO.ResetPasswordReqDto dto
+    ) {
+        authService.resetPassword(dto);
+        return ApiResponse.onSuccess(SuccessCode.OK, null);
+    }
+
+    @Operation(
             summary = "카카오 로그인",
             description = "카카오 Access Token을 이용해 로그인합니다."
     )

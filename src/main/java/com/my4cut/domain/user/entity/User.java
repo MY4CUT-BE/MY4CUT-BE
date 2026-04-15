@@ -38,6 +38,9 @@ public class User extends BaseEntity {
      */
     private String password;
 
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
     @Column(nullable = false)
     private String nickname;
 
@@ -104,6 +107,7 @@ public class User extends BaseEntity {
 
     public void updatePassword(String password) {
         this.password = password;
+        this.passwordChangedAt = LocalDateTime.now();
     }
 
     public void activateEmailLogin(String email) {

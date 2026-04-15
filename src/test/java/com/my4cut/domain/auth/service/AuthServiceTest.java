@@ -104,6 +104,23 @@ class AuthServiceTest {
     }
 
     @Test
+    @DisplayName("비밀번호 재설정 실패: 공백이 포함된 비밀번호는 정책 위반 예외가 발생한다")
+    void resetPassword_Fail_WhitespaceInPassword() {
+        // Arrange
+        String email = "test@example.com";
+        AuthReqDTO.ResetPasswordReqDto request = new AuthReqDTO.ResetPasswordReqDto(email, "New Passw0rd!");
+
+        given(emailVerificationService.isVerified(email)).willReturn(true);
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.resetPassword(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_PASSWORD_POLICY_VIOLATION);
+
+        verify(userRepository, never()).findByEmail(email);
+    }
+
+    @Test
     @DisplayName("비밀번호 재설정 실패: 기존 비밀번호와 동일하면 예외가 발생한다")
     void resetPassword_Fail_SamePassword() {
         // Arrange
@@ -136,6 +153,24 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.resetPassword(new AuthReqDTO.ResetPasswordReqDto(email, "NewPassw0rd!")))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_DELETED);
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 실패: 이메일 인증은 완료됐지만 사용자가 없으면 인증 정보 오류 예외가 발생한다")
+    void resetPassword_Fail_UserNotFoundAfterVerified() {
+        // Arrange
+        String email = "test@example.com";
+        AuthReqDTO.ResetPasswordReqDto request = new AuthReqDTO.ResetPasswordReqDto(email, "NewPassw0rd!");
+
+        given(emailVerificationService.isVerified(email)).willReturn(true);
+        given(userRepository.findByEmail(email)).willReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.resetPassword(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_INVALID_CREDENTIALS);
+
+        verify(refreshTokenRepository, never()).deleteByUser(org.mockito.ArgumentMatchers.any());
     }
 
     @Test

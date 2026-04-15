@@ -32,7 +32,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthService {
     private static final Pattern PASSWORD_POLICY_PATTERN =
-            Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z\\d]).{8,64}$");
+            Pattern.compile("^(?=\\S{8,64}$)(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z\\d\\s]).*$");
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;

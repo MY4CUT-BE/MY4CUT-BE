@@ -40,6 +40,9 @@ public enum ErrorCode implements BaseCode {
     AUTH_EMAIL_CODE_NOT_FOUND(HttpStatus.BAD_REQUEST, "A4002", "인증코드가 만료되었거나 존재하지 않습니다."),
     AUTH_EMAIL_CODE_MISMATCH(HttpStatus.BAD_REQUEST, "A4003", "인증코드가 일치하지 않습니다."),
     AUTH_EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "A4004", "이메일 인증이 완료되지 않았습니다."),
+    AUTH_PASSWORD_POLICY_VIOLATION(HttpStatus.BAD_REQUEST, "A4005", "비밀번호 정책을 만족하지 않습니다."),
+    AUTH_PASSWORD_SAME_AS_OLD(HttpStatus.BAD_REQUEST, "A4006", "기존 비밀번호와 동일한 비밀번호는 사용할 수 없습니다."),
+    AUTH_PASSWORD_RESET_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "A4007", "해당 계정은 비밀번호 재설정을 사용할 수 없습니다."),
     AUTH_EMAIL_VERIFY_FAIL_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "A4292", "인증 시도 횟수를 초과했습니다. 다시 요청해 주세요."),
     AUTH_EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "A5001", "이메일 전송 중 오류가 발생했습니다."),
 

@@ -103,6 +103,8 @@ public class FriendService {
             throw new FriendException(FriendErrorCode.INVALID_REQUEST_STATUS);
         }
 
+        // 보낸 요청을 취소하면 수신자에게 남아 있는 친구 요청 알림도 함께 제거한다.
+        notificationService.deleteFriendRequestNotification(request.getToUser(), request.getId());
         friendRequestRepository.delete(request);
     }
 
@@ -142,6 +144,9 @@ public class FriendService {
         friendRepository.save(friend1);
         friendRepository.save(friend2);
 
+        // 요청을 처리했으므로 수신자의 친구 요청 알림을 삭제해 재진입 시 잔류하지 않게 한다.
+        notificationService.deleteFriendRequestNotification(request.getToUser(), request.getId());
+
         notificationService.sendFriendAcceptedNotification(
                 request.getFromUser(), // 요청 보낸 사람 (알림 받는 사람)
                 request.getToUser()    // 수락한 사람 (sender)
@@ -172,6 +177,9 @@ public class FriendService {
 
         // 상태 변경
         request.reject();
+
+        // 거절된 요청 알림은 더 이상 액션 대상이 아니므로 즉시 삭제한다.
+        notificationService.deleteFriendRequestNotification(request.getToUser(), request.getId());
 
         return FriendRequestResDto.RejectRequestResDto.of(request);
     }

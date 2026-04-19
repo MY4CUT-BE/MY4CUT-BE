@@ -14,8 +14,6 @@ import com.my4cut.domain.user.repository.UserFcmTokenRepository;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
-import com.my4cut.global.exception.BusinessException;
-import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -119,7 +117,7 @@ public class NotificationService {
         Pageable pageable = PageRequest.of(page, 8);
 
         Page<Notification> notifications =
-                notificationRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+                notificationRepository.findVisibleByUserIdOrderByCreatedAtDesc(user.getId(), pageable);
 
         return notifications.stream()
                 .map(notification -> {
@@ -276,6 +274,26 @@ public class NotificationService {
         notificationRepository.delete(notification);
     }
 
+    // 친구 요청 수락/거절/취소 후에는 해당 요청 알림을 제거해 처리 완료 알림이 다시 노출되지 않게 한다.
+    @Transactional
+    public void deleteFriendRequestNotification(User receiver, Long friendRequestId) {
+        notificationRepository.deleteByUserAndTypeAndReferenceId(
+                receiver,
+                NotificationType.FRIEND_REQUEST,
+                friendRequestId
+        );
+    }
+
+    // 스페이스 초대 수락/거절 후에는 해당 초대 알림을 제거해 알림 상태와 초대 상태를 맞춘다.
+    @Transactional
+    public void deleteWorkspaceInviteNotification(User invitee, Long invitationId) {
+        notificationRepository.deleteByUserAndTypeAndReferenceId(
+                invitee,
+                NotificationType.WORKSPACE_INVITE,
+                invitationId
+        );
+    }
+
     // 알림을 전체 삭제합니다.
     @Transactional
     public void deleteAllNotifications(Long userId) {
@@ -304,7 +322,7 @@ public class NotificationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
 
-        boolean hasUnread = notificationRepository.existsByUserAndIsReadFalse(user);
+        boolean hasUnread = notificationRepository.countVisibleUnreadByUserId(user.getId()) > 0;
         return NotificationResDto.UnreadStatusResDto.of(hasUnread);
     }
 }

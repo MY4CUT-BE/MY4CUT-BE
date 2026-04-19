@@ -84,6 +84,12 @@ class NotificationRepositoryTest {
         persistNotification(receiver, NotificationType.WORKSPACE_INVITE, acceptedInvitation.getId());
         Notification normalNotification = persistNotification(receiver, NotificationType.FRIEND_ACCEPTED, null);
         em.flush();
+
+        LocalDateTime sameCreatedAt = LocalDateTime.of(2026, 4, 19, 10, 0);
+        updateCreatedAt(pendingFriendNotification.getId(), sameCreatedAt);
+        updateCreatedAt(pendingWorkspaceNotification.getId(), sameCreatedAt);
+        updateCreatedAt(normalNotification.getId(), sameCreatedAt);
+        em.flush();
         em.clear();
 
         var notifications = notificationRepository
@@ -93,10 +99,10 @@ class NotificationRepositoryTest {
         // 원본 요청이 PENDING인 액션 알림과 일반 알림만 조회되어야 한다.
         assertThat(notifications)
                 .extracting(Notification::getId)
-                .containsExactlyInAnyOrder(
-                        pendingFriendNotification.getId(),
+                .containsExactly(
+                        normalNotification.getId(),
                         pendingWorkspaceNotification.getId(),
-                        normalNotification.getId()
+                        pendingFriendNotification.getId()
                 );
         assertThat(notificationRepository.countVisibleUnreadByUserId(receiver.getId())).isEqualTo(3);
     }
@@ -105,7 +111,11 @@ class NotificationRepositoryTest {
     @DisplayName("친구 요청 알림은 사용자, 타입, 참조 ID 기준으로 삭제된다")
     void deleteByUserAndTypeAndReferenceId_deletesTargetActionNotification() {
         User receiver = persistUser("delete-receiver@test.com", "deleteReceiver", "DELETE1");
+        User otherReceiver = persistUser("delete-other@test.com", "deleteOther", "DELETE2");
         Notification notification = persistNotification(receiver, NotificationType.FRIEND_REQUEST, 10L);
+        Notification otherUserNotification = persistNotification(otherReceiver, NotificationType.FRIEND_REQUEST, 10L);
+        Notification otherTypeNotification = persistNotification(receiver, NotificationType.WORKSPACE_INVITE, 10L);
+        Notification otherReferenceNotification = persistNotification(receiver, NotificationType.FRIEND_REQUEST, 11L);
         em.flush();
         em.clear();
 
@@ -115,6 +125,9 @@ class NotificationRepositoryTest {
 
         // 처리된 요청 알림만 물리 삭제해 알림창 재진입 시 같은 액션이 반복 표시되지 않게 한다.
         assertThat(notificationRepository.existsById(notification.getId())).isFalse();
+        assertThat(notificationRepository.existsById(otherUserNotification.getId())).isTrue();
+        assertThat(notificationRepository.existsById(otherTypeNotification.getId())).isTrue();
+        assertThat(notificationRepository.existsById(otherReferenceNotification.getId())).isTrue();
     }
 
     private Notification persistNotification(User user) {

@@ -87,7 +87,37 @@ class WorkspaceControllerTest {
                 .andExpect(jsonPath("$.code").exists())
                 .andExpect(jsonPath("$.data[0].name").value("내 워크스페이스"))
                 .andExpect(jsonPath("$.data[0].memberIds[0]").value(1L))
-                .andExpect(jsonPath("$.data[0].pendingInvitationUserIds[0]").value(2L));
+                .andExpect(jsonPath("$.data[0].pendingInvitationUserIds[0]").value(2L))
+                .andExpect(jsonPath("$.data[0].alreadyInvitedFriendIds[0]").value(2L));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("워크스페이스 상세 조회 API 테스트: 이미 초대된 친구 ID 목록을 반환한다")
+    void getWorkspaceInfo_Test() throws Exception {
+        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
+                1L,
+                "조회용 워크스페이스",
+                1L,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                false,
+                2,
+                List.of(1L, 3L),
+                List.of("https://example.com/owner.png", "https://example.com/member.png"),
+                List.of(2L));
+
+        given(workspaceService.getWorkspaceInfo(1L)).willReturn(responseDto);
+
+        mockMvc.perform(get("/workspaces/{workspaceId}", 1L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").exists())
+                .andExpect(jsonPath("$.data.name").value("조회용 워크스페이스"))
+                .andExpect(jsonPath("$.data.memberIds[0]").value(1L))
+                .andExpect(jsonPath("$.data.memberIds[1]").value(3L))
+                .andExpect(jsonPath("$.data.pendingInvitationUserIds[0]").value(2L))
+                .andExpect(jsonPath("$.data.alreadyInvitedFriendIds[0]").value(3L))
+                .andExpect(jsonPath("$.data.alreadyInvitedFriendIds[1]").value(2L));
     }
 
     @Test

@@ -152,9 +152,9 @@ class WorkspaceServiceTest {
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspaceId)).willReturn(false);
-        given(workspaceMemberService.getMemberCount(workspaceId)).willReturn(1);
-        given(workspaceMemberService.getMemberIds(workspaceId)).willReturn(List.of(1L));
-        given(workspaceMemberService.getMemberProfiles(workspaceId)).willReturn(List.of("https://example.com/profile.png"));
+        given(workspaceMemberService.getMemberCount(workspaceId)).willReturn(2);
+        given(workspaceMemberService.getMemberIds(workspaceId)).willReturn(List.of(1L, 3L));
+        given(workspaceMemberService.getMemberProfiles(workspaceId)).willReturn(List.of("https://example.com/owner.png", "https://example.com/member.png"));
         given(workspaceInvitationRepository.findAllByWorkspaceIdAndStatus(workspaceId, InvitationStatus.PENDING))
                 .willReturn(List.of(createInvitation(workspace, owner, createUser(2L, "초대대기"))));
 
@@ -165,8 +165,9 @@ class WorkspaceServiceTest {
         assertThat(result.id()).isEqualTo(workspaceId);
         assertThat(result.name()).isEqualTo("조회용");
         assertThat(result.isFinal()).isFalse();
-        assertThat(result.memberIds()).containsExactly(1L);
+        assertThat(result.memberIds()).containsExactly(1L, 3L);
         assertThat(result.pendingInvitationUserIds()).containsExactly(2L);
+        assertThat(result.alreadyInvitedFriendIds()).containsExactly(3L, 2L);
     }
 
     @Test

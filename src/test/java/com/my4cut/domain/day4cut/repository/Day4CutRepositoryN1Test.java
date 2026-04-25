@@ -63,7 +63,7 @@ class Day4CutRepositoryN1Test {
         for (int i = 0; i < 3; i++) {
             MediaObject mediaObject = MediaObject.builder()
                     .owner(user)
-                    .fileKey("https://example.com/image" + i + ".jpg")
+                    .fileKey("day4cut/image" + i + ".jpg")
                     .status(MediaObjectStatus.ACTIVE)
                     .build();
             em.persist(mediaObject);

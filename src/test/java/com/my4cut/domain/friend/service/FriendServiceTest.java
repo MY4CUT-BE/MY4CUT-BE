@@ -2,6 +2,7 @@ package com.my4cut.domain.friend.service;
 
 import com.my4cut.domain.friend.dto.res.FriendResDto;
 import com.my4cut.domain.friend.entity.Friend;
+import com.my4cut.domain.friend.enums.FriendRequestStatus;
 import com.my4cut.domain.friend.repository.FriendRepository;
 import com.my4cut.domain.friend.repository.FriendRequestRepository;
 import com.my4cut.domain.image.service.ProfileImageUrlService;
@@ -54,6 +55,39 @@ class FriendServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getProfileImageUrl())
                 .isEqualTo("http://localhost:8080/images/profile/friend.png");
+    }
+
+    @Test
+    void searchUserByFriendCode_ReturnsHttpProfileImageUrl() {
+        Long userId = 1L;
+        String friendCode = "ABC123";
+        User user = createUser(userId, "me", null);
+        User target = createUser(2L, "target", "profile/target.png");
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(userRepository.findByFriendCode(friendCode)).willReturn(Optional.of(target));
+        given(friendRepository.existsByUserAndFriendUser(user, target)).willReturn(false);
+        given(friendRequestRepository.existsByFromUserAndToUserAndStatus(
+                user,
+                target,
+                FriendRequestStatus.PENDING))
+                .willReturn(false);
+        given(friendRequestRepository.existsByFromUserAndToUserAndStatus(
+                target,
+                user,
+                FriendRequestStatus.PENDING))
+                .willReturn(false);
+        given(profileImageUrlService.toResponseUrl("profile/target.png"))
+                .willReturn("http://localhost:8080/images/profile/target.png");
+
+        FriendResDto.SearchUserResDto result = friendService.searchUserByFriendCode(userId, friendCode);
+
+        assertThat(result.userId()).isEqualTo(2L);
+        assertThat(result.nickname()).isEqualTo("target");
+        assertThat(result.profileImageUrl()).isEqualTo("http://localhost:8080/images/profile/target.png");
+        assertThat(result.alreadyFriend()).isFalse();
+        assertThat(result.outgoingRequest()).isFalse();
+        assertThat(result.incomingRequest()).isFalse();
     }
 
     private User createUser(Long id, String nickname, String profileImageUrl) {

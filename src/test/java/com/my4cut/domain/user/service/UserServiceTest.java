@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
@@ -60,5 +61,37 @@ class UserServiceTest {
         assertThat(result.profileImageFileKey()).isEqualTo("profile/user.png");
         assertThat(result.profileImageViewUrl())
                 .isEqualTo("https://my4cut-image-bucket.s3.ap-northeast-2.amazonaws.com/profile/user.png");
+    }
+
+    @Test
+    void updateProfileImage_ReturnsProfileImageViewUrl() {
+        Long userId = 1L;
+        User user = User.builder()
+                .email("user@example.com")
+                .nickname("user")
+                .profileImageUrl("profile/old.png")
+                .loginType(LoginType.EMAIL)
+                .friendCode("ABC123")
+                .status(UserStatus.ACTIVE)
+                .build();
+        ReflectionTestUtils.setField(user, "id", userId);
+        MockMultipartFile profileImage = new MockMultipartFile(
+                "file",
+                "profile.png",
+                "image/png",
+                "image".getBytes()
+        );
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(imageStorageService.upload(profileImage, "profile")).willReturn("profile/new.png");
+        given(imageStorageService.deleteIfExists("profile/old.png")).willReturn(true);
+        given(profileImageUrlService.toResponseUrl("profile/new.png"))
+                .willReturn("https://my4cut-image-bucket.s3.ap-northeast-2.amazonaws.com/profile/new.png");
+
+        UserResDTO.UpdateProfileImageDTO result = userService.updateProfileImage(userId, profileImage);
+
+        assertThat(result.fileKey()).isEqualTo("profile/new.png");
+        assertThat(result.viewUrl())
+                .isEqualTo("https://my4cut-image-bucket.s3.ap-northeast-2.amazonaws.com/profile/new.png");
     }
 }

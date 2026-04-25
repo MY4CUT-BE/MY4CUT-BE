@@ -91,7 +91,7 @@ public class UserService {
 
         return new UserResDTO.UpdateProfileImageDTO(
                 uploadedFileKey,
-                imageStorageService.generatePresignedGetUrl(uploadedFileKey)
+                profileImageUrlService.toResponseUrl(uploadedFileKey)
         );
     }
 

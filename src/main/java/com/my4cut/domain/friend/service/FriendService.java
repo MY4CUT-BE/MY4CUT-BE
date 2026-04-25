@@ -286,8 +286,10 @@ public class FriendService {
                         FriendRequestStatus.PENDING
                 );
 
-        return FriendResDto.SearchUserResDto.of(
-                target,
+        return new FriendResDto.SearchUserResDto(
+                target.getId(),
+                target.getNickname(),
+                profileImageUrlService.toResponseUrl(target.getProfileImageUrl()),
                 alreadyFriend,
                 outgoingRequest,
                 incomingRequest

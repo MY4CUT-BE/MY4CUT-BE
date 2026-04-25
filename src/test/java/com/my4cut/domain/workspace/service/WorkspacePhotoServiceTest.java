@@ -113,7 +113,6 @@ class WorkspacePhotoServiceTest {
         Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
         MediaFile photo = createMediaFile(user, workspace);
 
-        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)).willReturn(Optional.of(WorkspaceMember.builder().build()));
@@ -138,7 +137,6 @@ class WorkspacePhotoServiceTest {
         MediaFile photo = createMediaFile(user, workspace);
         ReflectionTestUtils.setField(photo, "id", photoId);
 
-        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)).willReturn(Optional.of(WorkspaceMember.builder().build()));
@@ -174,7 +172,6 @@ class WorkspacePhotoServiceTest {
         ReflectionTestUtils.setField(comment, "id", 100L);
         ReflectionTestUtils.setField(comment, "createdAt", LocalDateTime.now());
 
-        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)).willReturn(Optional.of(WorkspaceMember.builder().build()));

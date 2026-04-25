@@ -4,6 +4,8 @@ import com.my4cut.domain.day4cut.entity.Day4Cut;
 import com.my4cut.domain.day4cut.entity.Day4CutImage;
 import com.my4cut.domain.day4cut.enums.EmojiType;
 import com.my4cut.domain.media.entity.MediaFile;
+import com.my4cut.domain.media.entity.MediaObject;
+import com.my4cut.domain.media.enums.MediaObjectStatus;
 import com.my4cut.domain.media.enums.MediaType;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.enums.LoginType;
@@ -59,8 +61,16 @@ class Day4CutRepositoryN1Test {
 
         // MediaFile 3개 생성 + Day4CutImage 3개 연결
         for (int i = 0; i < 3; i++) {
+            MediaObject mediaObject = MediaObject.builder()
+                    .owner(user)
+                    .fileKey("https://example.com/image" + i + ".jpg")
+                    .status(MediaObjectStatus.ACTIVE)
+                    .build();
+            em.persist(mediaObject);
+
             MediaFile mediaFile = MediaFile.builder()
                     .uploader(user)
+                    .mediaObject(mediaObject)
                     .mediaType(MediaType.PHOTO)
                     .fileUrl("https://example.com/image" + i + ".jpg")
                     .isFinal(true)

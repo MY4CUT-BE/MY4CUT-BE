@@ -1,8 +1,11 @@
 package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.image.service.ImageStorageService;
+import com.my4cut.domain.image.service.ProfileImageUrlService;
 import com.my4cut.domain.media.entity.MediaComment;
 import com.my4cut.domain.media.entity.MediaFile;
+import com.my4cut.domain.media.entity.MediaObject;
+import com.my4cut.domain.media.enums.MediaObjectStatus;
 import com.my4cut.domain.media.enums.MediaType;
 import com.my4cut.domain.media.repository.MediaCommentRepository;
 import com.my4cut.domain.media.repository.MediaFileRepository;
@@ -46,6 +49,7 @@ class WorkspacePhotoServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private ImageStorageService imageStorageService;
     @Mock private MediaFileLifecycleService mediaFileLifecycleService;
+    @Mock private ProfileImageUrlService profileImageUrlService;
 
     @InjectMocks
     private WorkspacePhotoService workspacePhotoService;
@@ -59,11 +63,11 @@ class WorkspacePhotoServiceTest {
         Long mediaId = 10L;
         User user = createUser(userId, "유저");
         Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
-        MediaFile mediaFile = MediaFile.builder().uploader(user).fileUrl("url").mediaType(MediaType.PHOTO).build();
+        MediaFile mediaFile = createMediaFile(user, null);
         ReflectionTestUtils.setField(mediaFile, "id", mediaId);
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(workspaceRepository.findById(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)).willReturn(Optional.of(WorkspaceMember.builder().build()));
         given(mediaFileRepository.findById(mediaId)).willReturn(Optional.of(mediaFile));
         given(imageStorageService.generatePresignedGetUrl("url")).willReturn("presigned-url");
@@ -90,7 +94,7 @@ class WorkspacePhotoServiceTest {
         WorkspacePhotoUploadRequestDto requestDto = new WorkspacePhotoUploadRequestDto(List.of(100L));
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(workspaceRepository.findById(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
 
         // Act & Assert
         assertThatThrownBy(() -> workspacePhotoService.uploadPhotos(workspaceId, requestDto, userId))
@@ -107,11 +111,11 @@ class WorkspacePhotoServiceTest {
         Long userId = 1L;
         User user = createUser(userId, "유저");
         Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
-        MediaFile photo = MediaFile.builder().uploader(user).workspace(workspace).fileUrl("url").build();
+        MediaFile photo = createMediaFile(user, workspace);
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(workspaceRepository.findById(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)).willReturn(Optional.of(WorkspaceMember.builder().build()));
         given(mediaFileRepository.findById(photoId)).willReturn(Optional.of(photo));
 
@@ -131,12 +135,12 @@ class WorkspacePhotoServiceTest {
         Long userId = 1L;
         User user = createUser(userId, "유저");
         Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
-        MediaFile photo = MediaFile.builder().uploader(user).workspace(workspace).build();
+        MediaFile photo = createMediaFile(user, workspace);
         ReflectionTestUtils.setField(photo, "id", photoId);
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(workspaceRepository.findById(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)).willReturn(Optional.of(WorkspaceMember.builder().build()));
         given(mediaFileRepository.findById(photoId)).willReturn(Optional.of(photo));
 
@@ -157,9 +161,9 @@ class WorkspacePhotoServiceTest {
         Long photoId = 10L;
         Long userId = 1L;
         User user = createUser(userId, "유저");
-        ReflectionTestUtils.setField(user, "profileImageUrl", "profile-url");
+        ReflectionTestUtils.setField(user, "profileImageUrl", "/images/profile/user.png");
         Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
-        MediaFile photo = MediaFile.builder().uploader(user).workspace(workspace).build();
+        MediaFile photo = createMediaFile(user, workspace);
         ReflectionTestUtils.setField(photo, "id", photoId);
 
         MediaComment comment = MediaComment.builder()
@@ -172,17 +176,19 @@ class WorkspacePhotoServiceTest {
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
-        given(workspaceRepository.findById(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)).willReturn(Optional.of(WorkspaceMember.builder().build()));
         given(mediaFileRepository.findById(photoId)).willReturn(Optional.of(photo));
         given(mediaCommentRepository.findAllByMediaFileIdOrderByCreatedAtDesc(photoId)).willReturn(List.of(comment));
+        given(profileImageUrlService.toResponseUrl("/images/profile/user.png"))
+                .willReturn("http://localhost:8080/images/profile/user.png");
 
         // Act
         List<com.my4cut.domain.workspace.dto.WorkspacePhotoCommentResponseDto> result = workspacePhotoService.getComments(workspaceId, photoId, userId);
 
         // Assert
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).profileImageUrl()).isEqualTo("profile-url");
+        assertThat(result.get(0).profileImageUrl()).isEqualTo("http://localhost:8080/images/profile/user.png");
         assertThat(result.get(0).content()).isEqualTo("댓글 내용");
     }
 
@@ -196,5 +202,22 @@ class WorkspacePhotoServiceTest {
         Workspace workspace = Workspace.builder().name(name).owner(owner).build();
         ReflectionTestUtils.setField(workspace, "id", id);
         return workspace;
+    }
+
+    private MediaFile createMediaFile(User uploader, Workspace workspace) {
+        MediaObject mediaObject = MediaObject.builder()
+                .owner(uploader)
+                .fileKey("url")
+                .status(MediaObjectStatus.ACTIVE)
+                .build();
+
+        return MediaFile.builder()
+                .uploader(uploader)
+                .workspace(workspace)
+                .mediaObject(mediaObject)
+                .fileUrl("url")
+                .mediaType(MediaType.PHOTO)
+                .isFinal(false)
+                .build();
     }
 }

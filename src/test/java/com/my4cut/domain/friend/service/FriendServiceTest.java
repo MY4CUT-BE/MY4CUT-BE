@@ -1,0 +1,67 @@
+package com.my4cut.domain.friend.service;
+
+import com.my4cut.domain.friend.dto.res.FriendResDto;
+import com.my4cut.domain.friend.entity.Friend;
+import com.my4cut.domain.friend.repository.FriendRepository;
+import com.my4cut.domain.friend.repository.FriendRequestRepository;
+import com.my4cut.domain.image.service.ProfileImageUrlService;
+import com.my4cut.domain.notification.service.NotificationService;
+import com.my4cut.domain.user.entity.User;
+import com.my4cut.domain.user.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+
+@ExtendWith(MockitoExtension.class)
+class FriendServiceTest {
+
+    @Mock private UserRepository userRepository;
+    @Mock private FriendRepository friendRepository;
+    @Mock private FriendRequestRepository friendRequestRepository;
+    @Mock private NotificationService notificationService;
+    @Mock private ProfileImageUrlService profileImageUrlService;
+
+    @InjectMocks
+    private FriendService friendService;
+
+    @Test
+    void getMyFriends_ReturnsHttpProfileImageUrls() {
+        Long userId = 1L;
+        User user = createUser(userId, "me", null);
+        User friendUser = createUser(2L, "friend", "profile/friend.png");
+        Friend friend = Friend.builder()
+                .user(user)
+                .friendUser(friendUser)
+                .isFavorite(false)
+                .build();
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(friendRepository.findAllByUser(user)).willReturn(List.of(friend));
+        given(profileImageUrlService.toResponseUrl("profile/friend.png"))
+                .willReturn("http://localhost:8080/images/profile/friend.png");
+
+        List<FriendResDto> result = friendService.getMyFriends(userId);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getProfileImageUrl())
+                .isEqualTo("http://localhost:8080/images/profile/friend.png");
+    }
+
+    private User createUser(Long id, String nickname, String profileImageUrl) {
+        User user = User.builder()
+                .nickname(nickname)
+                .profileImageUrl(profileImageUrl)
+                .build();
+        ReflectionTestUtils.setField(user, "id", id);
+        return user;
+    }
+}

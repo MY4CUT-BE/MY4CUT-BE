@@ -8,6 +8,7 @@ import com.my4cut.domain.user.enums.UserStatus;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.domain.image.service.ImageStorageService;
+import com.my4cut.domain.image.service.ProfileImageUrlService;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
+    private final ProfileImageUrlService profileImageUrlService;
     private final Day4CutRepository day4CutRepository;
     @Transactional(readOnly = true)
     public UserResDTO.MeDTO getMyInfo(Long userId) {
@@ -38,7 +40,7 @@ public class UserService {
         LocalDate endOfMonth = startOfMonth.plusMonths(1).minusDays(1);
         long thisMonthDay4CutCount = day4CutRepository.countByUserAndDateBetween(user, startOfMonth, endOfMonth);
 
-        String profileImageViewUrl = imageStorageService.generatePresignedGetUrl(user.getProfileImageUrl());
+        String profileImageViewUrl = profileImageUrlService.toResponseUrl(user.getProfileImageUrl());
 
         return UserResDTO.MeDTO.from(user, profileImageViewUrl, thisMonthDay4CutCount);
     }
@@ -89,7 +91,7 @@ public class UserService {
 
         return new UserResDTO.UpdateProfileImageDTO(
                 uploadedFileKey,
-                imageStorageService.generatePresignedGetUrl(uploadedFileKey)
+                profileImageUrlService.toResponseUrl(uploadedFileKey)
         );
     }
 

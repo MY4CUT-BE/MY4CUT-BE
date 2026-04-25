@@ -9,6 +9,7 @@ import com.my4cut.domain.friend.exception.FriendErrorCode;
 import com.my4cut.domain.friend.exception.FriendException;
 import com.my4cut.domain.friend.repository.FriendRepository;
 import com.my4cut.domain.friend.repository.FriendRequestRepository;
+import com.my4cut.domain.image.service.ProfileImageUrlService;
 import com.my4cut.domain.notification.service.NotificationService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
@@ -26,6 +27,7 @@ public class FriendService {
     private final FriendRepository friendRepository;
     private final FriendRequestRepository friendRequestRepository;
     private final NotificationService notificationService;
+    private final ProfileImageUrlService profileImageUrlService;
 
     //친구 요청 보내기
     @Transactional
@@ -229,7 +231,8 @@ public class FriendService {
                         .friendId(friend.getFriendUser().getId())
                         .userId(user.getId())
                         .nickname(friend.getFriendUser().getNickname())
-                        .profileImageUrl(friend.getFriendUser().getProfileImageUrl())
+                        .profileImageUrl(profileImageUrlService.toResponseUrl(
+                                friend.getFriendUser().getProfileImageUrl()))
                         .isFavorite(friend.getIsFavorite())
                         .build()
                 )
@@ -283,8 +286,10 @@ public class FriendService {
                         FriendRequestStatus.PENDING
                 );
 
-        return FriendResDto.SearchUserResDto.of(
-                target,
+        return new FriendResDto.SearchUserResDto(
+                target.getId(),
+                target.getNickname(),
+                profileImageUrlService.toResponseUrl(target.getProfileImageUrl()),
                 alreadyFriend,
                 outgoingRequest,
                 incomingRequest

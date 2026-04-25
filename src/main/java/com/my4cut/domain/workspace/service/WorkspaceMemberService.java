@@ -1,5 +1,6 @@
 package com.my4cut.domain.workspace.service;
 
+import com.my4cut.domain.image.service.ProfileImageUrlService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.repository.UserRepository;
@@ -32,6 +33,7 @@ public class WorkspaceMemberService {
     private final MediaFileRepository mediaFileRepository;
     private final UserRepository userRepository;
     private final WorkspaceInvitationRepository workspaceInvitationRepository;
+    private final ProfileImageUrlService profileImageUrlService;
 
     /**
      * 워크스페이스에 새로운 멤버를 수동으로 추가합니다. (워크스페이스 생성 시 등 내부용)
@@ -81,7 +83,8 @@ public class WorkspaceMemberService {
 
     public List<String> getMemberProfiles(Long workspaceId) {
         return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).stream()
-                .map(member -> member.getUser().getProfileImageUrl())
+                .map(member -> profileImageUrlService.toResponseUrl(
+                        member.getUser().getProfileImageUrl()))
                 .toList();
     }
 
@@ -98,7 +101,8 @@ public class WorkspaceMemberService {
     private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
         List<WorkspaceMember> members = workspaceMemberRepository.findAllByWorkspaceId(workspace.getId());
         List<String> memberProfiles = members.stream()
-                .map(member -> member.getUser().getProfileImageUrl())
+                .map(member -> profileImageUrlService.toResponseUrl(
+                        member.getUser().getProfileImageUrl()))
                 .toList();
         List<Long> pendingInvitationUserIds = workspaceInvitationRepository
                 .findAllByWorkspaceIdAndStatus(workspace.getId(), InvitationStatus.PENDING)

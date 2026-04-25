@@ -17,3 +17,11 @@ JWT_SECRET_KEY: "test_secret_key_test_secret_key_test_secret_key_test_secret_key
 DB_URL: "jdbc:h2:mem:testdb"
 DB_USERNAME: "sa"
 DB_PASSWORD: ""
+
+ses:
+  from-email: test@example.com
+
+cloud:
+  aws:
+    s3:
+      bucket: test-bucket

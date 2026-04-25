@@ -1,6 +1,7 @@
 package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.image.service.ImageStorageService;
+import com.my4cut.domain.image.service.ProfileImageUrlService;
 import com.my4cut.domain.media.entity.MediaComment;
 import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.enums.MediaType;
@@ -39,6 +40,7 @@ public class WorkspacePhotoService {
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
     private final MediaFileLifecycleService mediaFileLifecycleService;
+    private final ProfileImageUrlService profileImageUrlService;
 
     @Transactional
     public List<WorkspacePhotoResponseDto> uploadPhotos(
@@ -148,7 +150,7 @@ public class WorkspacePhotoService {
                         comment.getId(),
                         comment.getUser().getId(),
                         comment.getUser().getNickname(),
-                        comment.getUser().getProfileImageUrl(),
+                        profileImageUrlService.toResponseUrl(comment.getUser().getProfileImageUrl()),
                         comment.getContent(),
                         comment.getCreatedAt()))
                 .collect(Collectors.toList());

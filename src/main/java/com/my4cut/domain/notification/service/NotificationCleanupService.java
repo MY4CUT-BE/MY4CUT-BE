@@ -36,6 +36,10 @@ public class NotificationCleanupService {
 
     public int deleteOlderThanRetentionDays(int retentionDays, ZoneId zoneId, int batchSize) {
         // 요구사항 기준은 Asia/Seoul이다. 서버나 DB timezone이 달라도 같은 삭제 경계를 쓰기 위해 zoneId로 cutoff를 계산한다.
+        if (retentionDays <= 0) {
+            throw new IllegalArgumentException("Notification cleanup retentionDays must be greater than 0.");
+        }
+
         LocalDateTime cutoff = LocalDateTime.now(zoneId).minusDays(retentionDays);
         return deleteOlderThan(cutoff, batchSize);
     }

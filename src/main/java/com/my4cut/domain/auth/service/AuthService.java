@@ -187,7 +187,7 @@ public class AuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
 
         if (user.isDeleted()) { //탈퇴한 유저일 경우
-            throw new BusinessException(ErrorCode.USER_DELETED);
+            throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
         }
 
         if (user.getLoginType() != LoginType.EMAIL) {   //카카오 로그인일 경우 비밀번호 교체 불가

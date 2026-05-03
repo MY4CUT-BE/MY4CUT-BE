@@ -152,7 +152,7 @@ class AuthServiceTest {
         // Act & Assert
         assertThatThrownBy(() -> authService.resetPassword(new AuthReqDTO.ResetPasswordReqDto(email, "NewPassw0rd!")))
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_DELETED);
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_INVALID_CREDENTIALS);
     }
 
     @Test

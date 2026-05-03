@@ -23,4 +23,6 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     List<WorkspaceMember> findAllByUserIdAndWorkspaceExpiresAtAfterAndWorkspaceDeletedAtIsNull(Long userId, LocalDateTime now);
 
     List<WorkspaceMember> findAllByWorkspaceId(Long workspaceId);
+
+    boolean existsByWorkspaceIdAndUserId(Long workspaceId, Long userId);
 }

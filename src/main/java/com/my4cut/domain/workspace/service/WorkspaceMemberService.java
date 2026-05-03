@@ -98,7 +98,11 @@ public class WorkspaceMemberService {
         return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).size();
     }
 
-    private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
+    public boolean isWorkspaceMember(Long workspaceId, Long userId) {
+        return workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId);
+    }
+
+    public WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
         List<WorkspaceMember> members = workspaceMemberRepository.findAllByWorkspaceId(workspace.getId());
         List<String> memberProfiles = members.stream()
                 .map(member -> profileImageUrlService.toResponseUrl(

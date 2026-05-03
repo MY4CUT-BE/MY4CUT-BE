@@ -3,19 +3,30 @@ package com.my4cut.domain.notification.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
 import java.time.ZoneId;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Collections;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationCleanupScheduler {
 
+    private static final String LOCK_KEY = "notification:cleanup:lock";
+    private static final Duration LOCK_TTL = Duration.ofMinutes(30);
+    private static final DefaultRedisScript<Long> RELEASE_LOCK_SCRIPT = new DefaultRedisScript<>(
+            "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end",
+            Long.class
+    );
+
     private final NotificationCleanupService notificationCleanupService;
-    private final AtomicBoolean running = new AtomicBoolean(false);
+    private final StringRedisTemplate redisTemplate;
 
     @Value("${notification.cleanup.retention-days:30}")
     private int retentionDays;
@@ -35,9 +46,11 @@ public class NotificationCleanupScheduler {
             zone = "${notification.cleanup.zone:Asia/Seoul}"
     )
     public void deleteOldNotifications() {
-        // 이전 정리 작업이 아직 끝나지 않았으면 같은 인스턴스 안에서 중복 삭제 작업이 겹치지 않도록 건너뛴다.
-        if (!running.compareAndSet(false, true)) {
-            log.info("Notification cleanup skipped because previous job is still running.");
+        // 이전 정리 작업이 아직 끝나지 않았으면 전체 인스턴스에서 중복 삭제 작업이 겹치지 않도록 건너뛴다.
+        String lockToken = UUID.randomUUID().toString();
+        Boolean acquired = redisTemplate.opsForValue().setIfAbsent(LOCK_KEY, lockToken, LOCK_TTL);
+        if (!Boolean.TRUE.equals(acquired)) {
+            log.info("Notification cleanup skipped because another instance is running.");
             return;
         }
 
@@ -52,7 +65,7 @@ public class NotificationCleanupScheduler {
         } catch (Exception e) {
             log.warn("Notification cleanup failed.", e);
         } finally {
-            running.set(false);
+            redisTemplate.execute(RELEASE_LOCK_SCRIPT, Collections.singletonList(LOCK_KEY), lockToken);
         }
     }
 }

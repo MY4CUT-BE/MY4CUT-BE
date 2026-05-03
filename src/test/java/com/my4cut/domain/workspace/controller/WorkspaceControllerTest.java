@@ -107,9 +107,11 @@ class WorkspaceControllerTest {
                 List.of("https://example.com/owner.png", "https://example.com/member.png"),
                 List.of(2L));
 
-        given(workspaceService.getWorkspaceInfo(1L)).willReturn(responseDto);
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
+        given(workspaceService.getWorkspaceInfo(anyLong(), nullable(Long.class))).willReturn(responseDto);
 
-        mockMvc.perform(get("/workspaces/{workspaceId}", 1L))
+        mockMvc.perform(get("/workspaces/{workspaceId}", 1L)
+                        .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").exists())
                 .andExpect(jsonPath("$.data.name").value("조회용 워크스페이스"))

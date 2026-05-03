@@ -1,17 +1,14 @@
 package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.user.entity.User;
-import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
 import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
 import com.my4cut.domain.workspace.entity.Workspace;
-import com.my4cut.domain.workspace.enums.InvitationStatus;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
-import com.my4cut.domain.workspace.repository.WorkspaceInvitationRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 워크스페이스 관련 비즈니스 로직을 처리하는 서비스 클래스.
@@ -32,8 +30,6 @@ public class WorkspaceService {
 
         private final WorkspaceRepository workspaceRepository;
         private final WorkspaceMemberService workspaceMemberService;
-        private final WorkspaceInvitationRepository workspaceInvitationRepository;
-        private final MediaFileRepository mediaFileRepository;
         private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경
 
         /**
@@ -58,7 +54,7 @@ public class WorkspaceService {
                 // 생성자를 첫 번째 멤버로 추가
                 workspaceMemberService.addMember(workspace, owner);
 
-                return convertToInfoDto(workspace);
+                return workspaceMemberService.convertToInfoDto(workspace);
         }
 
         /**
@@ -80,7 +76,7 @@ public class WorkspaceService {
                 }
 
                 workspace.setName(dto.name());
-                return convertToInfoDto(workspace);
+                return workspaceMemberService.convertToInfoDto(workspace);
         }
 
         /**
@@ -88,13 +84,18 @@ public class WorkspaceService {
          * @param workspaceId 워크스페이스 ID
          * @return 워크스페이스 정보 DTO
          */
-        public WorkspaceInfoResponseDto getWorkspaceInfo(Long workspaceId) {
+        public WorkspaceInfoResponseDto getWorkspaceInfo(Long workspaceId, Long userId) {
                 Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
                 checkWorkspaceExpiration(workspace);
 
-                return convertToInfoDto(workspace);
+                if (!Objects.equals(workspace.getOwner().getId(), userId)
+                                && !workspaceMemberService.isWorkspaceMember(workspaceId, userId)) {
+                        throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_MEMBER);
+                }
+
+                return workspaceMemberService.convertToInfoDto(workspace);
         }
 
         /**
@@ -132,20 +133,4 @@ public class WorkspaceService {
                 }
         }
 
-        private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
-                return new WorkspaceInfoResponseDto(
-                                workspace.getId(),
-                                workspace.getName(),
-                                workspace.getOwner().getId(),
-                                workspace.getExpiresAt(),
-                                workspace.getCreatedAt(),
-                                mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspace.getId()),
-                                workspaceMemberService.getMemberCount(workspace.getId()),
-                                workspaceMemberService.getMemberIds(workspace.getId()),
-                                workspaceMemberService.getMemberProfiles(workspace.getId()),
-                                workspaceInvitationRepository.findAllByWorkspaceIdAndStatus(workspace.getId(), InvitationStatus.PENDING)
-                                                .stream()
-                                                .map(invitation -> invitation.getInvitee().getId())
-                                                .toList());
-        }
 }

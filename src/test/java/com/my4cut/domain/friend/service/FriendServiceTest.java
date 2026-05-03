@@ -2,6 +2,7 @@ package com.my4cut.domain.friend.service;
 
 import com.my4cut.domain.friend.dto.res.FriendResDto;
 import com.my4cut.domain.friend.entity.Friend;
+import com.my4cut.domain.friend.entity.FriendRequest;
 import com.my4cut.domain.friend.enums.FriendRequestStatus;
 import com.my4cut.domain.friend.repository.FriendRepository;
 import com.my4cut.domain.friend.repository.FriendRequestRepository;
@@ -21,6 +22,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class FriendServiceTest {
@@ -90,6 +92,51 @@ class FriendServiceTest {
         assertThat(result.incomingRequest()).isFalse();
     }
 
+    @Test
+    void cancelSentRequest_DeletesFriendRequestNotification() {
+        Long userId = 1L;
+        Long requestId = 10L;
+        User fromUser = createUser(userId, "me", null);
+        User toUser = createUser(2L, "other", null);
+        FriendRequest request = createPendingRequest(requestId, fromUser, toUser);
+
+        given(friendRequestRepository.findById(requestId)).willReturn(Optional.of(request));
+
+        friendService.cancelSentRequest(userId, requestId);
+
+        verify(notificationService).deleteFriendRequestNotification(toUser, requestId);
+    }
+
+    @Test
+    void acceptFriendRequest_DeletesFriendRequestNotification() {
+        Long userId = 2L;
+        Long requestId = 10L;
+        User fromUser = createUser(1L, "sender", null);
+        User toUser = createUser(userId, "me", null);
+        FriendRequest request = createPendingRequest(requestId, fromUser, toUser);
+
+        given(friendRequestRepository.findById(requestId)).willReturn(Optional.of(request));
+
+        friendService.acceptFriendRequest(userId, requestId);
+
+        verify(notificationService).deleteFriendRequestNotification(toUser, requestId);
+    }
+
+    @Test
+    void rejectFriendRequest_DeletesFriendRequestNotification() {
+        Long userId = 2L;
+        Long requestId = 10L;
+        User fromUser = createUser(1L, "sender", null);
+        User toUser = createUser(userId, "me", null);
+        FriendRequest request = createPendingRequest(requestId, fromUser, toUser);
+
+        given(friendRequestRepository.findById(requestId)).willReturn(Optional.of(request));
+
+        friendService.rejectFriendRequest(userId, requestId);
+
+        verify(notificationService).deleteFriendRequestNotification(toUser, requestId);
+    }
+
     private User createUser(Long id, String nickname, String profileImageUrl) {
         User user = User.builder()
                 .nickname(nickname)
@@ -97,5 +144,15 @@ class FriendServiceTest {
                 .build();
         ReflectionTestUtils.setField(user, "id", id);
         return user;
+    }
+
+    private FriendRequest createPendingRequest(Long id, User fromUser, User toUser) {
+        FriendRequest request = FriendRequest.builder()
+                .fromUser(fromUser)
+                .toUser(toUser)
+                .status(FriendRequestStatus.PENDING)
+                .build();
+        ReflectionTestUtils.setField(request, "id", id);
+        return request;
     }
 }

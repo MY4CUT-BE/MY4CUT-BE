@@ -53,7 +53,8 @@ class WorkspaceControllerTest {
     void createWorkspace_Test() throws Exception {
         // Arrange
         WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("새 워크스페이스");
-        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(1L, "새 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), false, 1, List.of());
+        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
+                1L, "새 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), false, 1, List.of(1L), List.of(), List.of());
         
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceService.createWorkspace(any(), any())).willReturn(responseDto);
@@ -74,7 +75,8 @@ class WorkspaceControllerTest {
     @DisplayName("내 워크스페이스 목록 조회 API 테스트")
     void getMyWorkspaces_Test() throws Exception {
         // Arrange
-        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(1L, "내 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), false, 1, List.of());
+        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
+                1L, "내 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), false, 1, List.of(1L), List.of(), List.of(2L));
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceService.getMyWorkspaces(any())).willReturn(List.of(responseDto));
 
@@ -83,7 +85,41 @@ class WorkspaceControllerTest {
                         .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").exists())
-                .andExpect(jsonPath("$.data[0].name").value("내 워크스페이스"));
+                .andExpect(jsonPath("$.data[0].name").value("내 워크스페이스"))
+                .andExpect(jsonPath("$.data[0].memberIds[0]").value(1L))
+                .andExpect(jsonPath("$.data[0].pendingInvitationUserIds[0]").value(2L))
+                .andExpect(jsonPath("$.data[0].alreadyInvitedFriendIds[0]").value(2L));
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("워크스페이스 상세 조회 API 테스트: 이미 초대된 친구 ID 목록을 반환한다")
+    void getWorkspaceInfo_Test() throws Exception {
+        WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
+                1L,
+                "조회용 워크스페이스",
+                1L,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                false,
+                2,
+                List.of(1L, 3L),
+                List.of("https://example.com/owner.png", "https://example.com/member.png"),
+                List.of(2L));
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
+        given(workspaceService.getWorkspaceInfo(anyLong(), nullable(Long.class))).willReturn(responseDto);
+
+        mockMvc.perform(get("/workspaces/{workspaceId}", 1L)
+                        .with(authentication(auth)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").exists())
+                .andExpect(jsonPath("$.data.name").value("조회용 워크스페이스"))
+                .andExpect(jsonPath("$.data.memberIds[0]").value(1L))
+                .andExpect(jsonPath("$.data.memberIds[1]").value(3L))
+                .andExpect(jsonPath("$.data.pendingInvitationUserIds[0]").value(2L))
+                .andExpect(jsonPath("$.data.alreadyInvitedFriendIds[0]").value(3L))
+                .andExpect(jsonPath("$.data.alreadyInvitedFriendIds[1]").value(2L));
     }
 
     @Test

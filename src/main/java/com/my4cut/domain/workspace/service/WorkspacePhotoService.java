@@ -1,6 +1,7 @@
 package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.image.service.ImageStorageService;
+import com.my4cut.domain.image.service.ProfileImageUrlService;
 import com.my4cut.domain.media.entity.MediaComment;
 import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.enums.MediaType;
@@ -39,6 +40,7 @@ public class WorkspacePhotoService {
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
     private final MediaFileLifecycleService mediaFileLifecycleService;
+    private final ProfileImageUrlService profileImageUrlService;
 
     @Transactional
     public List<WorkspacePhotoResponseDto> uploadPhotos(
@@ -109,6 +111,20 @@ public class WorkspacePhotoService {
         mediaFileLifecycleService.deleteMediaFile(photo);
     }
 
+    @Transactional
+    public void selectFinalPhoto(Long workspaceId, Long photoId, Long userId) {
+        validateMembership(workspaceId, userId, true);
+
+        MediaFile photo = validatePhotoInWorkspace(workspaceId, photoId);
+        if (photo.getMediaType() != MediaType.PHOTO) {
+            throw new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND);
+        }
+
+        mediaFileRepository.clearFinalPhotosExcept(workspaceId, MediaType.PHOTO, photoId);
+        photo.selectAsFinal();
+        mediaFileRepository.save(photo);
+    }
+
     public List<WorkspacePhotoResponseDto> getPhotos(Long workspaceId, String sort, Long userId) {
         workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
@@ -148,7 +164,7 @@ public class WorkspacePhotoService {
                         comment.getId(),
                         comment.getUser().getId(),
                         comment.getUser().getNickname(),
-                        comment.getUser().getProfileImageUrl(),
+                        profileImageUrlService.toResponseUrl(comment.getUser().getProfileImageUrl()),
                         comment.getContent(),
                         comment.getCreatedAt()))
                 .collect(Collectors.toList());
@@ -197,9 +213,15 @@ public class WorkspacePhotoService {
     }
 
     private Workspace validateMembership(Long workspaceId, Long userId) {
+        return validateMembership(workspaceId, userId, false);
+    }
+
+    private Workspace validateMembership(Long workspaceId, Long userId, boolean forUpdate) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
-        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+        Workspace workspace = (forUpdate
+                ? workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)
+                : workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId))
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
         if (workspace.isExpired()) {

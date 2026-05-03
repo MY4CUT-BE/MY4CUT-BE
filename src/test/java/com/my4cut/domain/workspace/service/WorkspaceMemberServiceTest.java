@@ -1,12 +1,15 @@
 package com.my4cut.domain.workspace.service;
 
+import com.my4cut.domain.image.service.ProfileImageUrlService;
+import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.entity.Workspace;
+import com.my4cut.domain.workspace.entity.WorkspaceInvitation;
 import com.my4cut.domain.workspace.entity.WorkspaceMember;
-import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
-import com.my4cut.domain.workspace.exception.WorkspaceException;
+import com.my4cut.domain.workspace.enums.InvitationStatus;
+import com.my4cut.domain.workspace.repository.WorkspaceInvitationRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceMemberRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -35,6 +37,9 @@ class WorkspaceMemberServiceTest {
     @Mock private WorkspaceMemberRepository workspaceMemberRepository;
     @Mock private WorkspaceRepository workspaceRepository;
     @Mock private UserRepository userRepository;
+    @Mock private MediaFileRepository mediaFileRepository;
+    @Mock private WorkspaceInvitationRepository workspaceInvitationRepository;
+    @Mock private ProfileImageUrlService profileImageUrlService;
 
     @InjectMocks
     private WorkspaceMemberService workspaceMemberService;
@@ -86,6 +91,7 @@ class WorkspaceMemberServiceTest {
     void getMyWorkspaces_ExcludeExpired() {
         // Arrange
         Long userId = 1L;
+        User pendingInvitee = createUser(2L, "pending");
         User user = createUser(userId, "유저");
 
         Workspace activeWorkspace = Workspace.builder()
@@ -115,13 +121,40 @@ class WorkspaceMemberServiceTest {
         // Expectation: Service should now use a repository method that filters by time
         given(workspaceMemberRepository.findAllByUserIdAndWorkspaceExpiresAtAfterAndWorkspaceDeletedAtIsNull(eq(userId), any(LocalDateTime.class)))
                 .willReturn(List.of(activeMember));
+        given(workspaceMemberRepository.findAllByWorkspaceId(10L)).willReturn(List.of(activeMember));
+        given(mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(10L)).willReturn(false);
+        given(workspaceInvitationRepository.findAllByWorkspaceIdAndStatus(10L, InvitationStatus.PENDING))
+                .willReturn(List.of(createInvitation(activeWorkspace, user, pendingInvitee)));
 
         // Act
         List<WorkspaceInfoResponseDto> result = workspaceMemberService.getMyWorkspaces(userId);
 
         // Assert
         assertThat(result).hasSize(1);
+        assertThat(result.get(0).pendingInvitationUserIds()).containsExactly(2L);
+        assertThat(result.get(0).alreadyInvitedFriendIds()).containsExactly(2L);
         assertThat(result.get(0).name()).isEqualTo("활동 중");
+    }
+
+    @Test
+    void getMemberProfiles_ReturnsHttpProfileImageUrls() {
+        Long workspaceId = 1L;
+        User user = User.builder()
+                .nickname("member")
+                .profileImageUrl("/images/profile/member.png")
+                .build();
+        ReflectionTestUtils.setField(user, "id", 1L);
+        WorkspaceMember member = WorkspaceMember.builder()
+                .user(user)
+                .build();
+
+        given(workspaceMemberRepository.findAllByWorkspaceId(workspaceId)).willReturn(List.of(member));
+        given(profileImageUrlService.toResponseUrl("/images/profile/member.png"))
+                .willReturn("http://localhost:8080/images/profile/member.png");
+
+        List<String> result = workspaceMemberService.getMemberProfiles(workspaceId);
+
+        assertThat(result).containsExactly("http://localhost:8080/images/profile/member.png");
     }
 
     private User createUser(Long id, String nickname) {
@@ -134,5 +167,15 @@ class WorkspaceMemberServiceTest {
         Workspace workspace = Workspace.builder().name(name).owner(owner).build();
         ReflectionTestUtils.setField(workspace, "id", id);
         return workspace;
+    }
+
+    private WorkspaceInvitation createInvitation(Workspace workspace, User inviter, User invitee) {
+        WorkspaceInvitation invitation = WorkspaceInvitation.builder()
+                .workspace(workspace)
+                .inviter(inviter)
+                .invitee(invitee)
+                .build();
+        ReflectionTestUtils.setField(invitation, "id", 1L);
+        return invitation;
     }
 }

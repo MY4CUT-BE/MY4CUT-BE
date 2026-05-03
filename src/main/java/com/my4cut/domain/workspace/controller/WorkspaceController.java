@@ -45,8 +45,9 @@ public class WorkspaceController {
     @Operation(summary = "워크스페이스 상세 조회", description = "워크스페이스 상세 정보를 조회합니다.")
     @GetMapping("/{workspaceId}")
     public ApiResponse<WorkspaceInfoResponseDto> getWorkspaceInfo(
-            @PathVariable Long workspaceId) {
-        WorkspaceInfoResponseDto result = workspaceService.getWorkspaceInfo(workspaceId);
+            @PathVariable Long workspaceId,
+            @AuthenticationPrincipal Long userId) {
+        WorkspaceInfoResponseDto result = workspaceService.getWorkspaceInfo(workspaceId, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_GET_SUCCESS, result);
     }
 

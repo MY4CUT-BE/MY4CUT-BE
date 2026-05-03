@@ -14,7 +14,12 @@ import lombok.NoArgsConstructor;
  * 친구 요청, 워크스페이스 초대 등 다양한 알림을 사용자에게 전달하기 위한 정보를 관리한다.
  */
 @Entity
-@Table(name = "notifications")
+@Table(
+        name = "notifications",
+        indexes = {
+                @Index(name = "idx_notifications_created_at_id", columnList = "created_at, id")
+        }
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Notification extends BaseEntity {

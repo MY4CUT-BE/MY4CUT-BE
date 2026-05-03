@@ -1,14 +1,16 @@
 package com.my4cut.domain.workspace.service;
 
+import com.my4cut.domain.image.service.ProfileImageUrlService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
-import com.my4cut.domain.workspace.dto.WorkspaceInviteRequestDto;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.entity.WorkspaceMember;
+import com.my4cut.domain.workspace.enums.InvitationStatus;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
+import com.my4cut.domain.workspace.repository.WorkspaceInvitationRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceMemberRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,8 @@ public class WorkspaceMemberService {
     private final WorkspaceRepository workspaceRepository;
     private final MediaFileRepository mediaFileRepository;
     private final UserRepository userRepository;
+    private final WorkspaceInvitationRepository workspaceInvitationRepository;
+    private final ProfileImageUrlService profileImageUrlService;
 
     /**
      * 워크스페이스에 새로운 멤버를 수동으로 추가합니다. (워크스페이스 생성 시 등 내부용)
@@ -79,7 +83,14 @@ public class WorkspaceMemberService {
 
     public List<String> getMemberProfiles(Long workspaceId) {
         return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).stream()
-                .map(member -> member.getUser().getProfileImageUrl())
+                .map(member -> profileImageUrlService.toResponseUrl(
+                        member.getUser().getProfileImageUrl()))
+                .toList();
+    }
+
+    public List<Long> getMemberIds(Long workspaceId) {
+        return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).stream()
+                .map(member -> member.getUser().getId())
                 .toList();
     }
 
@@ -87,10 +98,20 @@ public class WorkspaceMemberService {
         return workspaceMemberRepository.findAllByWorkspaceId(workspaceId).size();
     }
 
-    private WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
+    public boolean isWorkspaceMember(Long workspaceId, Long userId) {
+        return workspaceMemberRepository.existsByWorkspaceIdAndUserId(workspaceId, userId);
+    }
+
+    public WorkspaceInfoResponseDto convertToInfoDto(Workspace workspace) {
         List<WorkspaceMember> members = workspaceMemberRepository.findAllByWorkspaceId(workspace.getId());
         List<String> memberProfiles = members.stream()
-                .map(member -> member.getUser().getProfileImageUrl())
+                .map(member -> profileImageUrlService.toResponseUrl(
+                        member.getUser().getProfileImageUrl()))
+                .toList();
+        List<Long> pendingInvitationUserIds = workspaceInvitationRepository
+                .findAllByWorkspaceIdAndStatus(workspace.getId(), InvitationStatus.PENDING)
+                .stream()
+                .map(invitation -> invitation.getInvitee().getId())
                 .toList();
 
         return new WorkspaceInfoResponseDto(
@@ -101,6 +122,10 @@ public class WorkspaceMemberService {
                 workspace.getCreatedAt(),
                 mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspace.getId()),
                 members.size(),
-                memberProfiles);
+                members.stream()
+                        .map(member -> member.getUser().getId())
+                        .toList(),
+                memberProfiles,
+                pendingInvitationUserIds);
     }
 }

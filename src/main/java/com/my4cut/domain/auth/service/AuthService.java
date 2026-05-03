@@ -1,5 +1,6 @@
 package com.my4cut.domain.auth.service;
 
+import com.my4cut.domain.auth.dto.req.AuthReqDTO;
 import com.my4cut.domain.auth.dto.res.AuthResDTO;
 import com.my4cut.domain.auth.entity.RefreshToken;
 import com.my4cut.domain.auth.jwt.JwtProvider;
@@ -24,11 +25,14 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
+import java.util.regex.Pattern;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    private static final Pattern PASSWORD_POLICY_PATTERN =
+            Pattern.compile("^(?=\\S{8,64}$)(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z\\d\\s]).*$");
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -166,6 +170,37 @@ public class AuthService {
 
         // Soft delete
         user.withdraw();
+    }
+
+    //비밀번호 재설정
+    @Transactional
+    public void resetPassword(AuthReqDTO.ResetPasswordReqDto request) {
+        if (!emailVerificationService.isVerified(request.email())) {    //이메일 인증 확인
+            throw new BusinessException(ErrorCode.AUTH_EMAIL_NOT_VERIFIED);
+        }
+
+        if (!PASSWORD_POLICY_PATTERN.matcher(request.newPassword()).matches()) {    //비밀번호 정책 확인
+            throw new BusinessException(ErrorCode.AUTH_PASSWORD_POLICY_VIOLATION);
+        }
+
+        User user = userRepository.findByEmail(request.email()) //이메일로 유저 검증
+                .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
+
+        if (user.isDeleted()) { //탈퇴한 유저일 경우
+            throw new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS);
+        }
+
+        if (user.getLoginType() != LoginType.EMAIL) {   //카카오 로그인일 경우 비밀번호 교체 불가
+            throw new BusinessException(ErrorCode.AUTH_PASSWORD_RESET_NOT_ALLOWED);
+        }
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {   //이전 비밀번호와 동일한지 비교
+            throw new BusinessException(ErrorCode.AUTH_PASSWORD_SAME_AS_OLD);
+        }
+
+        user.updatePassword(passwordEncoder.encode(request.newPassword())); //비밀번호 갱신
+        refreshTokenRepository.deleteByUser(user);  //리프레시 토큰 제거(기존 로그인 상태 무효화)
+        emailVerificationService.clearVerifiedAfterCommit(request.email()); //
     }
 
     // 카카오 로그인

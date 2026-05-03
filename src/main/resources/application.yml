@@ -56,3 +56,10 @@ ses:
 media:
   cleanup:
     pending-delete-fixed-delay-ms: 300000
+
+notification:
+  cleanup:
+    retention-days: ${NOTIFICATION_CLEANUP_RETENTION_DAYS:30}
+    zone: ${NOTIFICATION_CLEANUP_ZONE:Asia/Seoul}
+    cron: ${NOTIFICATION_CLEANUP_CRON:0 0 4 * * *}
+    batch-size: ${NOTIFICATION_CLEANUP_BATCH_SIZE:1000}

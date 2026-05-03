@@ -9,6 +9,7 @@ import com.my4cut.domain.friend.exception.FriendErrorCode;
 import com.my4cut.domain.friend.exception.FriendException;
 import com.my4cut.domain.friend.repository.FriendRepository;
 import com.my4cut.domain.friend.repository.FriendRequestRepository;
+import com.my4cut.domain.image.service.ProfileImageUrlService;
 import com.my4cut.domain.notification.service.NotificationService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
@@ -26,6 +27,7 @@ public class FriendService {
     private final FriendRepository friendRepository;
     private final FriendRequestRepository friendRequestRepository;
     private final NotificationService notificationService;
+    private final ProfileImageUrlService profileImageUrlService;
 
     //친구 요청 보내기
     @Transactional
@@ -103,6 +105,8 @@ public class FriendService {
             throw new FriendException(FriendErrorCode.INVALID_REQUEST_STATUS);
         }
 
+        // 보낸 요청을 취소하면 수신자에게 남아 있는 친구 요청 알림도 함께 제거한다.
+        notificationService.deleteFriendRequestNotification(request.getToUser(), request.getId());
         friendRequestRepository.delete(request);
     }
 
@@ -142,6 +146,9 @@ public class FriendService {
         friendRepository.save(friend1);
         friendRepository.save(friend2);
 
+        // 요청을 처리했으므로 수신자의 친구 요청 알림을 삭제해 재진입 시 잔류하지 않게 한다.
+        notificationService.deleteFriendRequestNotification(request.getToUser(), request.getId());
+
         notificationService.sendFriendAcceptedNotification(
                 request.getFromUser(), // 요청 보낸 사람 (알림 받는 사람)
                 request.getToUser()    // 수락한 사람 (sender)
@@ -172,6 +179,9 @@ public class FriendService {
 
         // 상태 변경
         request.reject();
+
+        // 거절된 요청 알림은 더 이상 액션 대상이 아니므로 즉시 삭제한다.
+        notificationService.deleteFriendRequestNotification(request.getToUser(), request.getId());
 
         return FriendRequestResDto.RejectRequestResDto.of(request);
     }
@@ -221,7 +231,8 @@ public class FriendService {
                         .friendId(friend.getFriendUser().getId())
                         .userId(user.getId())
                         .nickname(friend.getFriendUser().getNickname())
-                        .profileImageUrl(friend.getFriendUser().getProfileImageUrl())
+                        .profileImageUrl(profileImageUrlService.toResponseUrl(
+                                friend.getFriendUser().getProfileImageUrl()))
                         .isFavorite(friend.getIsFavorite())
                         .build()
                 )
@@ -275,8 +286,10 @@ public class FriendService {
                         FriendRequestStatus.PENDING
                 );
 
-        return FriendResDto.SearchUserResDto.of(
-                target,
+        return new FriendResDto.SearchUserResDto(
+                target.getId(),
+                target.getNickname(),
+                profileImageUrlService.toResponseUrl(target.getProfileImageUrl()),
                 alreadyFriend,
                 outgoingRequest,
                 incomingRequest

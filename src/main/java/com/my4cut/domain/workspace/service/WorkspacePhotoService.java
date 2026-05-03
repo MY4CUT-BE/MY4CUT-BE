@@ -111,6 +111,20 @@ public class WorkspacePhotoService {
         mediaFileLifecycleService.deleteMediaFile(photo);
     }
 
+    @Transactional
+    public void selectFinalPhoto(Long workspaceId, Long photoId, Long userId) {
+        validateMembership(workspaceId, userId, true);
+
+        MediaFile photo = validatePhotoInWorkspace(workspaceId, photoId);
+        if (photo.getMediaType() != MediaType.PHOTO) {
+            throw new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND);
+        }
+
+        mediaFileRepository.clearFinalPhotosExcept(workspaceId, MediaType.PHOTO, photoId);
+        photo.selectAsFinal();
+        mediaFileRepository.save(photo);
+    }
+
     public List<WorkspacePhotoResponseDto> getPhotos(Long workspaceId, String sort, Long userId) {
         workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
@@ -199,9 +213,15 @@ public class WorkspacePhotoService {
     }
 
     private Workspace validateMembership(Long workspaceId, Long userId) {
+        return validateMembership(workspaceId, userId, false);
+    }
+
+    private Workspace validateMembership(Long workspaceId, Long userId, boolean forUpdate) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
-        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+        Workspace workspace = (forUpdate
+                ? workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)
+                : workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId))
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
         if (workspace.isExpired()) {

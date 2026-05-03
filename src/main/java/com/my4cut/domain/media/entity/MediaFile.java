@@ -78,4 +78,8 @@ public class MediaFile extends BaseEntity {
     public void assignToAlbum(Album album) {
         this.album = album;
     }
+
+    public void selectAsFinal() {
+        this.isFinal = true;
+    }
 }

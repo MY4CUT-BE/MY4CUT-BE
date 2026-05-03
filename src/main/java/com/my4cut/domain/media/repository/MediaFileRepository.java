@@ -25,7 +25,7 @@ public interface MediaFileRepository extends JpaRepository<MediaFile, Long> {
 
     boolean existsByWorkspaceIdAndIsFinalTrue(Long workspaceId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("""
             update MediaFile mediaFile
             set mediaFile.isFinal = false

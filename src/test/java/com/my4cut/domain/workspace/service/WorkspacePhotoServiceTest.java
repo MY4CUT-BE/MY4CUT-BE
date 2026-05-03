@@ -177,6 +177,73 @@ class WorkspacePhotoServiceTest {
     }
 
     @Test
+    @DisplayName("최종 사진 선택 실패: 워크스페이스가 만료되면 예외가 발생한다")
+    void selectFinalPhoto_Fail_ExpiredWorkspace() {
+        // Arrange
+        Long workspaceId = 1L;
+        Long photoId = 10L;
+        Long userId = 1L;
+        User user = createUser(userId, "사용자");
+        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
+        workspace.setExpiresAt(LocalDateTime.now().minusDays(1));
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)).willReturn(Optional.of(workspace));
+
+        // Act & Assert
+        assertThatThrownBy(() -> workspacePhotoService.selectFinalPhoto(workspaceId, photoId, userId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.WORKSPACE_EXPIRED);
+        verify(mediaFileRepository, never()).clearFinalPhotosExcept(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("최종 사진 선택 실패: 워크스페이스 멤버가 아니면 예외가 발생한다")
+    void selectFinalPhoto_Fail_NotWorkspaceMember() {
+        // Arrange
+        Long workspaceId = 1L;
+        Long photoId = 10L;
+        Long userId = 1L;
+        User user = createUser(userId, "사용자");
+        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)).willReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> workspacePhotoService.selectFinalPhoto(workspaceId, photoId, userId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.NOT_WORKSPACE_MEMBER);
+        verify(mediaFileRepository, never()).clearFinalPhotosExcept(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("최종 사진 선택 실패: 사진 타입이 아니면 예외가 발생한다")
+    void selectFinalPhoto_Fail_NotPhotoType() {
+        // Arrange
+        Long workspaceId = 1L;
+        Long photoId = 10L;
+        Long userId = 1L;
+        User user = createUser(userId, "사용자");
+        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
+        MediaFile mediaFile = createMediaFile(user, workspace);
+        ReflectionTestUtils.setField(mediaFile, "id", photoId);
+        ReflectionTestUtils.setField(mediaFile, "mediaType", MediaType.VIDEO);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)).willReturn(Optional.of(WorkspaceMember.builder().build()));
+        given(mediaFileRepository.findById(photoId)).willReturn(Optional.of(mediaFile));
+
+        // Act & Assert
+        assertThatThrownBy(() -> workspacePhotoService.selectFinalPhoto(workspaceId, photoId, userId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.PHOTO_NOT_FOUND);
+        verify(mediaFileRepository, never()).clearFinalPhotosExcept(any(), any(), any());
+    }
+
+    @Test
     @DisplayName("댓글 등록 성공")
     void createComment_Success() {
         // Arrange

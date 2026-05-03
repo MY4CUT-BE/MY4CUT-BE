@@ -113,7 +113,7 @@ public class WorkspacePhotoService {
 
     @Transactional
     public void selectFinalPhoto(Long workspaceId, Long photoId, Long userId) {
-        validateMembershipForFinalSelection(workspaceId, userId);
+        validateMembership(workspaceId, userId, true);
 
         MediaFile photo = validatePhotoInWorkspace(workspaceId, photoId);
         if (photo.getMediaType() != MediaType.PHOTO) {
@@ -122,6 +122,7 @@ public class WorkspacePhotoService {
 
         mediaFileRepository.clearFinalPhotosExcept(workspaceId, MediaType.PHOTO, photoId);
         photo.selectAsFinal();
+        mediaFileRepository.save(photo);
     }
 
     public List<WorkspacePhotoResponseDto> getPhotos(Long workspaceId, String sort, Long userId) {
@@ -212,9 +213,15 @@ public class WorkspacePhotoService {
     }
 
     private Workspace validateMembership(Long workspaceId, Long userId) {
+        return validateMembership(workspaceId, userId, false);
+    }
+
+    private Workspace validateMembership(Long workspaceId, Long userId, boolean forUpdate) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
-        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+        Workspace workspace = (forUpdate
+                ? workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)
+                : workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId))
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
         if (workspace.isExpired()) {
@@ -226,21 +233,6 @@ public class WorkspacePhotoService {
         }
 
         return workspace;
-    }
-
-    private void validateMembershipForFinalSelection(Long workspaceId, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
-        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)
-                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
-
-        if (workspace.isExpired()) {
-            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_EXPIRED);
-        }
-
-        if (workspaceMemberRepository.findByWorkspaceAndUser(workspace, user).isEmpty()) {
-            throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_MEMBER);
-        }
     }
 
     private MediaFile validatePhotoInWorkspace(Long workspaceId, Long photoId) {

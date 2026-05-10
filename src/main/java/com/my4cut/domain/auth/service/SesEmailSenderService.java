@@ -3,6 +3,7 @@ package com.my4cut.domain.auth.service;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.sesv2.SesV2Client;
@@ -12,12 +13,14 @@ import software.amazon.awssdk.services.sesv2.model.Destination;
 import software.amazon.awssdk.services.sesv2.model.EmailContent;
 import software.amazon.awssdk.services.sesv2.model.Message;
 import software.amazon.awssdk.services.sesv2.model.SendEmailRequest;
+import software.amazon.awssdk.services.sesv2.model.SesV2Exception;
 
 /*
  * AWS SES를 통해 인증 메일을 발송하는 구현체다.
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SesEmailSenderService implements EmailSenderService {
 
     private static final String SUBJECT = "[MY4CUT] 이메일 인증코드";
@@ -62,8 +65,32 @@ public class SesEmailSenderService implements EmailSenderService {
 
         try {
             sesV2Client.sendEmail(request);
+        } catch (SesV2Exception exception) {
+            log.error(
+                    "Failed to send verification email. email={}, provider=SES, awsErrorCode={}, awsMessage={}",
+                    toEmail,
+                    getAwsErrorCode(exception),
+                    getAwsMessage(exception),
+                    exception
+            );
+            throw new BusinessException(ErrorCode.AUTH_EMAIL_SEND_FAILED, exception);
         } catch (RuntimeException exception) {
+            log.error(
+                    "Failed to send verification email. email={}, provider=SES, exceptionType={}, message={}",
+                    toEmail,
+                    exception.getClass().getName(),
+                    exception.getMessage(),
+                    exception
+            );
             throw new BusinessException(ErrorCode.AUTH_EMAIL_SEND_FAILED, exception);
         }
+    }
+
+    private String getAwsErrorCode(SesV2Exception exception) {
+        return exception.awsErrorDetails() == null ? null : exception.awsErrorDetails().errorCode();
+    }
+
+    private String getAwsMessage(SesV2Exception exception) {
+        return exception.awsErrorDetails() == null ? null : exception.awsErrorDetails().errorMessage();
     }
 }

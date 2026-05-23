@@ -20,9 +20,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -31,6 +32,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final FcmService fcmService;
 
     // FCM 토큰 등록
     @Transactional
@@ -59,50 +61,141 @@ public class NotificationService {
                 .build();
 
         UserFcmToken savedToken = userFcmTokenRepository.save(fcmToken);
-
         return NotificationResDto.RegisterTokenResDto.of(savedToken.getId());
     }
 
-    // 친구요청을 보냈을 때 요청 받은 사용자에게 알림을 보냅니다.
+    // 친구 요청 알림 생성 + FCM 발송
     @Transactional
     public void sendFriendRequestNotification(
             User toUser,
+            User fromUser,
             Long friendRequestId
     ) {
         Notification notification = Notification.builder()
                 .user(toUser)
                 .type(NotificationType.FRIEND_REQUEST)
+                .senderId(fromUser.getId())
                 .referenceId(friendRequestId)
                 .isRead(false)
                 .build();
 
         notificationRepository.save(notification);
+
+        sendPushToUserTokens(
+                toUser,
+                "친구 요청",
+                fromUser.getNickname() + "님이 친구 요청을 보냈습니다.",
+                NotificationType.FRIEND_REQUEST.name(),
+                friendRequestId
+        );
     }
 
-    /**
-     * 워크스페이스 초대를 받았을 때 초대 받은 사용자에게 알림을 보냅니다.
-     * @param toUser 알림을 받을 사용자
-     * @param fromUser 초대를 보낸 사용자
-     * @param workspace 초대된 워크스페이스
-     * @param invitationId 생성된 초대장의 ID
-     */
+    // 친구 수락 알림 생성 + FCM 발송
+    @Transactional
+    public void sendFriendAcceptedNotification(
+            User toUser,
+            User fromUser
+    ) {
+        Notification notification = Notification.builder()
+                .user(toUser)
+                .type(NotificationType.FRIEND_ACCEPTED)
+                .senderId(fromUser.getId())
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+
+        sendPushToUserTokens(
+                toUser,
+                "친구 요청 수락",
+                fromUser.getNickname() + "님이 친구 요청을 수락했습니다.",
+                NotificationType.FRIEND_ACCEPTED.name(),
+                null
+        );
+    }
+
+    // 워크스페이스 초대 알림 생성 + FCM 발송
     @Transactional
     public void sendWorkspaceInviteNotification(
-            User toUser,
-            User fromUser,
+            User invitee,
+            User inviter,
             Workspace workspace,
             Long invitationId
     ) {
         Notification notification = Notification.builder()
-                .user(toUser)
+                .user(invitee)
                 .type(NotificationType.WORKSPACE_INVITE)
-                .senderId(fromUser.getId())
+                .senderId(inviter.getId())
                 .workspaceId(workspace.getId())
                 .referenceId(invitationId)
                 .isRead(false)
                 .build();
 
         notificationRepository.save(notification);
+
+        sendPushToUserTokens(
+                invitee,
+                "워크스페이스 초대",
+                inviter.getNickname() + "님이 " + workspace.getName() + " 워크스페이스에 초대했습니다.",
+                NotificationType.WORKSPACE_INVITE.name(),
+                invitationId
+        );
+    }
+
+    // 댓글 알림 생성 + FCM 발송
+    @Transactional
+    public void sendMediaCommentNotification(
+            User owner,
+            User commenter,
+            Long workspaceId,
+            Long commentId
+    ) {
+        Notification notification = Notification.builder()
+                .user(owner)
+                .type(NotificationType.MEDIA_COMMENT)
+                .senderId(commenter.getId())
+                .workspaceId(workspaceId)
+                .referenceId(commentId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+
+        sendPushToUserTokens(
+                owner,
+                "새 댓글",
+                commenter.getNickname() + "님이 댓글을 남겼습니다.",
+                NotificationType.MEDIA_COMMENT.name(),
+                commentId
+        );
+    }
+
+    // 미디어 업로드 알림 생성 + FCM 발송
+    @Transactional
+    public void sendMediaUploadedNotification(
+            User targetUser,
+            User uploader,
+            Long workspaceId,
+            Long mediaId
+    ) {
+        Notification notification = Notification.builder()
+                .user(targetUser)
+                .type(NotificationType.MEDIA_UPLOADED)
+                .senderId(uploader.getId())
+                .workspaceId(workspaceId)
+                .referenceId(mediaId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+
+        sendPushToUserTokens(
+                targetUser,
+                "새 사진 업로드",
+                uploader.getNickname() + "님이 사진을 업로드했습니다.",
+                NotificationType.MEDIA_UPLOADED.name(),
+                mediaId
+        );
     }
 
     // 알림 목록 조회
@@ -128,7 +221,7 @@ public class NotificationService {
                     if (notification.getSenderId() != null) {
                         senderNickname = userRepository.findById(notification.getSenderId())
                                 .map(User::getNickname)
-                                .orElse("알 수 없음"); //알림은 유효하지만 부가 정보 따로 없음.
+                                .orElse("알 수 없음");
                     }
 
                     if (notification.getWorkspaceId() != null) {
@@ -156,117 +249,20 @@ public class NotificationService {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotificationException(NotificationErrorCode.NOTIFICATION_NOT_FOUND));
 
-        // 본인의 알림인지 확인
         if (!notification.getUser().getId().equals(userId)) {
             throw new NotificationException(NotificationErrorCode.NOT_NOTIFICATION_OWNER);
         }
-        // 읽음 처리
-        notification.markAsRead();
 
+        notification.markAsRead();
         return NotificationResDto.ReadNotificationResDto.of(notification);
     }
 
-    // 친구요청을 보냈을 때 요청 받은 사용자에게 알림을 보냅니다.
-    @Transactional
-    public void sendFriendRequestNotification(
-            User toUser,
-            User fromUser,
-            Long friendRequestId
-    ) {
-        Notification notification = Notification.builder()
-                .user(toUser) //알림 받는 사람
-                .type(NotificationType.FRIEND_REQUEST)
-                .senderId(fromUser.getId()) //알림 보낸 사람
-                .referenceId(friendRequestId) //친구요청 id
-                .isRead(false)
-                .build();
-
-        notificationRepository.save(notification);
-    }
-
-    //친구수락을 했을 때
-    @Transactional
-    public void sendFriendAcceptedNotification(
-            User toUser,        // 친구 요청 보낸 사람
-            User fromUser       // 수락한 사람
-    ) {
-        Notification notification = Notification.builder()
-                .user(toUser)
-                .type(NotificationType.FRIEND_ACCEPTED)
-                .senderId(fromUser.getId())
-                .isRead(false)
-                .build();
-
-        notificationRepository.save(notification);
-    }
-
-    // 워크스페이스 초대 알림 생성
-    @Transactional
-    public void sendWorkspaceInviteNotification(
-            User invitee,           // 초대받은 사람
-            User inviter,           // 초대한 사람
-            Long workspaceId,
-            Long invitationId       // 수락/거절용
-    ) {
-        Notification notification = Notification.builder()
-                .user(invitee)
-                .type(NotificationType.WORKSPACE_INVITE)
-                .senderId(inviter.getId())
-                .workspaceId(workspaceId)
-                .referenceId(invitationId)
-                .isRead(false)
-                .build();
-
-        notificationRepository.save(notification);
-    }
-
-    // 댓글 알림 생성
-    @Transactional
-    public void sendMediaCommentNotification(
-            User owner,         // 미디어 주인
-            User commenter,     // 댓글 단 사람
-            Long workspaceId,
-            Long commentId
-    ) {
-        Notification notification = Notification.builder()
-                .user(owner)
-                .type(NotificationType.MEDIA_COMMENT)
-                .senderId(commenter.getId())
-                .workspaceId(workspaceId)
-                .referenceId(commentId)
-                .isRead(false)
-                .build();
-
-        notificationRepository.save(notification);
-    }
-
-    // 미디어 업로드 알림
-    @Transactional
-    public void sendMediaUploadedNotification(
-            User targetUser,    // 알림 받을 사람
-            User uploader,      // 업로드한 사람
-            Long workspaceId,
-            Long mediaId
-    ) {
-        Notification notification = Notification.builder()
-                .user(targetUser)
-                .type(NotificationType.MEDIA_UPLOADED)
-                .senderId(uploader.getId())
-                .workspaceId(workspaceId)
-                .referenceId(mediaId)
-                .isRead(false)
-                .build();
-
-        notificationRepository.save(notification);
-    }
-
-    // 알림을 개별로 삭제합니다.
+    // 알림 개별 삭제
     @Transactional
     public void deleteNotification(Long userId, Long notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotificationException(NotificationErrorCode.NOTIFICATION_NOT_FOUND));
 
-        // 본인 알림인지 확인
         if (!notification.getUser().getId().equals(userId)) {
             throw new NotificationException(NotificationErrorCode.NOT_NOTIFICATION_OWNER);
         }
@@ -274,7 +270,7 @@ public class NotificationService {
         notificationRepository.delete(notification);
     }
 
-    // 친구 요청 수락/거절/취소 후에는 해당 요청 알림을 제거해 처리 완료 알림이 다시 노출되지 않게 한다.
+    // 친구 요청 알림 삭제
     @Transactional
     public void deleteFriendRequestNotification(User receiver, Long friendRequestId) {
         notificationRepository.deleteByUserAndTypeAndReferenceId(
@@ -284,7 +280,7 @@ public class NotificationService {
         );
     }
 
-    // 스페이스 초대 수락/거절 후에는 해당 초대 알림을 제거해 알림 상태와 초대 상태를 맞춘다.
+    // 워크스페이스 초대 알림 삭제
     @Transactional
     public void deleteWorkspaceInviteNotification(User invitee, Long invitationId) {
         notificationRepository.deleteByUserAndTypeAndReferenceId(
@@ -294,10 +290,9 @@ public class NotificationService {
         );
     }
 
-    // 알림을 전체 삭제합니다.
+    // 알림 전체 삭제
     @Transactional
     public void deleteAllNotifications(Long userId) {
-        //사용자를 찾을 수 없을 때
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
 
@@ -324,5 +319,26 @@ public class NotificationService {
 
         boolean hasUnread = notificationRepository.countVisibleUnreadByUserId(user.getId()) > 0;
         return NotificationResDto.UnreadStatusResDto.of(hasUnread);
+    }
+
+    private void sendPushToUserTokens(
+            User user,
+            String title,
+            String body,
+            String type,
+            Long targetId
+    ) {
+        List<UserFcmToken> tokens = userFcmTokenRepository.findAllByUser(user);
+        log.info("[FCM] 대상 userId={}, tokenCount={}", user.getId(), tokens.size());
+
+        for (UserFcmToken token : tokens) {
+            fcmService.sendPush(
+                    token.getFcmToken(),
+                    title,
+                    body,
+                    type,
+                    targetId
+            );
+        }
     }
 }

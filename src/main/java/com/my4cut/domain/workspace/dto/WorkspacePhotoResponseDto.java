@@ -22,6 +22,10 @@ public record WorkspacePhotoResponseDto(
 
         @Schema(description = "업로드 일시") LocalDateTime createdAt,
 
-        @Schema(description = "업로더 닉네임") String uploaderNickname
+        @Schema(description = "업로더 ID") Long uploaderId,
+
+        @Schema(description = "업로더 닉네임") String uploaderNickname,
+
+        @Schema(description = "업로더 프로필 이미지 URL") String uploaderProfileImageUrl
 ) {
 }

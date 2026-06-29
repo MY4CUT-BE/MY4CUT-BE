@@ -1,6 +1,8 @@
 package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.image.service.ProfileImageUrlService;
+import com.my4cut.domain.media.entity.MediaComment;
+import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.repository.MediaCommentRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.media.repository.MediaFileRepository;
@@ -17,7 +19,7 @@ import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.Optional;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -116,6 +118,35 @@ public class WorkspaceMemberService {
                 .map(invitation -> invitation.getInvitee().getId())
                 .toList();
 
+        Optional<MediaFile> latestPhoto =
+                mediaFileRepository.findTopByWorkspaceIdOrderByCreatedAtDesc(workspace.getId());
+
+        Optional<MediaComment> latestComment =
+                mediaCommentRepository.findTopByMediaFileWorkspaceIdOrderByCreatedAtDesc(workspace.getId());
+
+        String recentActivityType = null;
+        String recentActivityUserNickname = null;
+        LocalDateTime recentActivityAt = null;
+
+        if (latestPhoto.isPresent() &&
+                (latestComment.isEmpty()
+                        || latestPhoto.get().getCreatedAt().isAfter(latestComment.get().getCreatedAt()))) {
+
+            MediaFile photo = latestPhoto.get();
+
+            recentActivityType = "PHOTO";
+            recentActivityUserNickname = photo.getUploader().getNickname();
+            recentActivityAt = photo.getCreatedAt();
+
+        } else if (latestComment.isPresent()) {
+
+            MediaComment comment = latestComment.get();
+
+            recentActivityType = "COMMENT";
+            recentActivityUserNickname = comment.getUser().getNickname();
+            recentActivityAt = comment.getCreatedAt();
+        }
+
         return new WorkspaceInfoResponseDto(
                 workspace.getId(),
                 workspace.getName(),
@@ -129,9 +160,9 @@ public class WorkspaceMemberService {
                         .toList(),
                 memberProfiles,
                 pendingInvitationUserIds,
-                null,   // recentActivityType
-                null,   // recentActivityUserNickname
-                null
+                recentActivityType,
+                recentActivityUserNickname,
+                recentActivityAt
         );  // recentActivityAt;
     }
 }

@@ -28,7 +28,7 @@ public class EmailVerificationService {
     private final EmailSenderService emailSenderService;
 
     /*
-     * 인증코드를 생성하고 Redis 저장 후 SES로 발송한다.
+     * 인증코드를 생성하고 Redis 저장 후 이메일로 발송한다.
      */
     @Transactional
     public void sendCode(String email) {

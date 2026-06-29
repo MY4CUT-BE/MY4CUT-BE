@@ -16,11 +16,19 @@ import java.io.InputStream;
 @Configuration
 public class FirebaseConfig {
 
-    @Value("${firebase.config-path}")
+    @Value("${firebase.config-path:}")
     private String firebaseConfigPath;
+
+    @Value("${firebase.enabled:true}")
+    private boolean firebaseEnabled;
 
     @PostConstruct
     public void initialize() throws IOException {
+        if (!firebaseEnabled) {
+            log.info("FirebaseApp initialization skipped");
+            return;
+        }
+
         if (!FirebaseApp.getApps().isEmpty()) {
             log.info("FirebaseApp already initialized");
             return;

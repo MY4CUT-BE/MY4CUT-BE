@@ -50,8 +50,13 @@ cloud:
     s3:
       bucket: my4cut-image-bucket   # 실제 버킷명
 
-ses:
-  from-email: dlwonjun@gmail.com
+resend:
+  api-key: ${RESEND_API_KEY}
+  connect-timeout: ${RESEND_CONNECT_TIMEOUT:3s}
+  read-timeout: ${RESEND_READ_TIMEOUT:5s}
+
+mail:
+  from: ${MAIL_FROM}
 
 media:
   cleanup:

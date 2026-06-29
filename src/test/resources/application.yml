@@ -18,8 +18,17 @@ DB_URL: "jdbc:h2:mem:testdb"
 DB_USERNAME: "sa"
 DB_PASSWORD: ""
 
-ses:
-  from-email: test@example.com
+resend:
+  api-key: test_resend_api_key
+  connect-timeout: 1s
+  read-timeout: 1s
+
+mail:
+  from: "MY4CUT <noreply@example.com>"
+
+firebase:
+  enabled: false
+  config-path: src/test/resources/firebase-test.json
 
 cloud:
   aws:

@@ -42,8 +42,17 @@ cloud:
     s3:
       bucket: my4cut-image-bucket
 
-ses:
-  from-email: ${SES_FROM_EMAIL}
+resend:
+  api-key: ${RESEND_API_KEY}
+  connect-timeout: ${RESEND_CONNECT_TIMEOUT:3s}
+  read-timeout: ${RESEND_READ_TIMEOUT:5s}
+
+mail:
+  from: ${MAIL_FROM}
+
+firebase:
+  enabled: ${FIREBASE_ENABLED:true}
+  config-path: ${FIREBASE_CONFIG_PATH:}
 
 media:
   cleanup:

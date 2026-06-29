@@ -37,7 +37,7 @@ public class Day4Cut extends BaseEntity {
     @Column(nullable = false)
     private LocalDate date;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(EnumType.STRING)

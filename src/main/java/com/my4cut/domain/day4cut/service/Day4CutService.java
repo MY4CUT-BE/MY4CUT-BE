@@ -50,9 +50,6 @@ public class Day4CutService {
         // 이미지 검증
         validateImages(reqDto.images());
 
-        // 내용 검증
-        validateContent(reqDto.content());
-
         // 하루네컷 생성
         Day4Cut day4Cut = Day4Cut.builder()
                 .user(user)

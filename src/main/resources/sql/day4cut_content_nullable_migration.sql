@@ -1,0 +1,2 @@
+ALTER TABLE day4cut
+    MODIFY COLUMN content TEXT NULL;

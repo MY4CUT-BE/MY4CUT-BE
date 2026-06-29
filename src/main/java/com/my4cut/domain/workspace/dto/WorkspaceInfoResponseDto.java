@@ -30,7 +30,13 @@ public record WorkspaceInfoResponseDto(
     @Schema(description = "대기 중인 초대 userId 리스트")
     List<Long> pendingInvitationUserIds,
     @Schema(description = "이미 초대된 친구 userId 리스트 (수락 완료 멤버 + 대기 중인 초대, owner 제외)")
-    List<Long> alreadyInvitedFriendIds
+    List<Long> alreadyInvitedFriendIds,
+    @Schema(description = "최근 활동 타입")
+    String recentActivityType,
+    @Schema(description = "최근 활동 유저 닉네임")
+    String recentActivityUserNickname,
+    @Schema(description = "최근 활동 시간")
+    LocalDateTime recentActivityAt
 ) {
     public WorkspaceInfoResponseDto(
             Long id,
@@ -42,7 +48,10 @@ public record WorkspaceInfoResponseDto(
             int memberCount,
             List<Long> memberIds,
             List<String> memberProfiles,
-            List<Long> pendingInvitationUserIds) {
+            List<Long> pendingInvitationUserIds,
+            String recentActivityType,
+            String recentActivityUserNickname,
+            LocalDateTime recentActivityAt) {
         this(
                 id,
                 name,
@@ -54,7 +63,11 @@ public record WorkspaceInfoResponseDto(
                 memberIds,
                 memberProfiles,
                 pendingInvitationUserIds,
-                buildAlreadyInvitedFriendIds(ownerId, memberIds, pendingInvitationUserIds));
+                buildAlreadyInvitedFriendIds(ownerId, memberIds, pendingInvitationUserIds),
+                recentActivityType,
+                recentActivityUserNickname,
+                recentActivityAt
+        );
     }
 
     private static List<Long> buildAlreadyInvitedFriendIds(

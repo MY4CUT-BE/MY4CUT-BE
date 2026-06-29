@@ -1,6 +1,7 @@
 package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.image.service.ProfileImageUrlService;
+import com.my4cut.domain.media.repository.MediaCommentRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.repository.UserRepository;
@@ -34,6 +35,7 @@ public class WorkspaceMemberService {
     private final UserRepository userRepository;
     private final WorkspaceInvitationRepository workspaceInvitationRepository;
     private final ProfileImageUrlService profileImageUrlService;
+    private final MediaCommentRepository mediaCommentRepository;
 
     /**
      * 워크스페이스에 새로운 멤버를 수동으로 추가합니다. (워크스페이스 생성 시 등 내부용)
@@ -126,6 +128,10 @@ public class WorkspaceMemberService {
                         .map(member -> member.getUser().getId())
                         .toList(),
                 memberProfiles,
-                pendingInvitationUserIds);
+                pendingInvitationUserIds,
+                null,   // recentActivityType
+                null,   // recentActivityUserNickname
+                null
+        );  // recentActivityAt;
     }
 }

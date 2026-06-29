@@ -60,4 +60,25 @@ class EmailVerificationServiceTest {
         verify(emailSenderService).sendVerificationCode(email, code);
         verify(redisService).clearCodeAndCooldown(email);
     }
+
+    @Test
+    @DisplayName("이메일 발송 결과 불명: Redis 코드와 쿨다운을 정리하지 않는다")
+    void sendCode_DeliveryUnknown_DoesNotClearCodeAndCooldown() {
+        String email = "test@example.com";
+        String code = "123456";
+        EmailDeliveryUnknownException deliveryUnknown =
+                new EmailDeliveryUnknownException(new RuntimeException("timeout"));
+
+        given(redisService.acquireCooldown(email)).willReturn(true);
+        given(codeGenerator.generate()).willReturn(code);
+        doThrow(deliveryUnknown).when(emailSenderService).sendVerificationCode(email, code);
+
+        assertThatThrownBy(() -> emailVerificationService.sendCode(email))
+                .isSameAs(deliveryUnknown);
+
+        verify(redisService).saveCode(email, code);
+        verify(redisService).clearFailCount(email);
+        verify(emailSenderService).sendVerificationCode(email, code);
+        verify(redisService, never()).clearCodeAndCooldown(email);
+    }
 }

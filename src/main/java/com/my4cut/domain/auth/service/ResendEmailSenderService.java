@@ -45,7 +45,7 @@ public class ResendEmailSenderService implements EmailSenderService {
             HttpStatusCode statusCode = exception.getStatusCode();
             log.error(
                     "Failed to send verification email. email={}, provider=RESEND, failureType={}, status={}, statusText={}",
-                    toEmail,
+                    maskEmail(toEmail),
                     classifyFailure(statusCode),
                     statusCode.value(),
                     exception.getStatusText(),
@@ -54,17 +54,17 @@ public class ResendEmailSenderService implements EmailSenderService {
             throw new BusinessException(ErrorCode.AUTH_EMAIL_SEND_FAILED, exception);
         } catch (ResourceAccessException exception) {
             log.error(
-                    "Failed to send verification email. email={}, provider=RESEND, failureType=TRANSIENT, exceptionType={}, message={}",
-                    toEmail,
+                    "Verification email delivery result is unknown. email={}, provider=RESEND, failureType=DELIVERY_UNKNOWN, exceptionType={}, message={}",
+                    maskEmail(toEmail),
                     exception.getClass().getName(),
                     exception.getMessage(),
                     exception
             );
-            throw new BusinessException(ErrorCode.AUTH_EMAIL_SEND_FAILED, exception);
+            throw new EmailDeliveryUnknownException(exception);
         } catch (RestClientException exception) {
             log.error(
                     "Failed to send verification email. email={}, provider=RESEND, failureType=UNKNOWN, exceptionType={}, message={}",
-                    toEmail,
+                    maskEmail(toEmail),
                     exception.getClass().getName(),
                     exception.getMessage(),
                     exception
@@ -91,6 +91,21 @@ public class ResendEmailSenderService implements EmailSenderService {
         }
 
         return "PERMANENT";
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return "unknown";
+        }
+
+        int atIndex = email.indexOf('@');
+        if (atIndex <= 0 || atIndex == email.length() - 1) {
+            return "***";
+        }
+
+        String localPart = email.substring(0, atIndex);
+        String domain = email.substring(atIndex + 1);
+        return localPart.charAt(0) + "***@" + domain.charAt(0) + "***";
     }
 
     private record ResendEmailRequest(

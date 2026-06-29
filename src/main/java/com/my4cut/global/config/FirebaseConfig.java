@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -27,6 +28,10 @@ public class FirebaseConfig {
         if (!firebaseEnabled) {
             log.info("FirebaseApp initialization skipped");
             return;
+        }
+
+        if (!StringUtils.hasText(firebaseConfigPath)) {
+            throw new IllegalStateException("firebase.enabled=true requires firebase.config-path.");
         }
 
         if (!FirebaseApp.getApps().isEmpty()) {

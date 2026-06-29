@@ -5,15 +5,24 @@ import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class FcmService {
 
+    @Value("${firebase.enabled:true}")
+    private boolean firebaseEnabled;
+
     public void sendPush(String fcmToken, String title, String body, String type, Long targetId) {
         log.info("[FCM] 발송 로직 진입 - type={}, targetId={}, tokenExists={}",
                 type, targetId, fcmToken != null);
+
+        if (!firebaseEnabled) {
+            log.info("[FCM] 발송 중단 - Firebase disabled");
+            return;
+        }
 
         if (fcmToken == null || fcmToken.isBlank()) {
             log.warn("[FCM] 발송 중단 - FCM token 없음");

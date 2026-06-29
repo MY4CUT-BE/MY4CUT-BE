@@ -43,6 +43,8 @@ public class EmailVerificationService {
 
         try {
             emailSenderService.sendVerificationCode(email, code);
+        } catch (EmailDeliveryUnknownException exception) {
+            throw exception;
         } catch (RuntimeException exception) {
             // 발송 실패 시 저장된 코드와 쿨다운을 정리해 재요청이 가능하도록 맞춘다.
             redisService.clearCodeAndCooldown(email);

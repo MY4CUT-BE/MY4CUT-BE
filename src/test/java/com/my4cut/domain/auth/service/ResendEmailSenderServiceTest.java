@@ -1,6 +1,7 @@
 package com.my4cut.domain.auth.service;
 
 import com.my4cut.global.exception.BusinessException;
+import com.my4cut.global.config.ResendConfig;
 import com.my4cut.global.response.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +16,7 @@ import org.springframework.web.client.RestClient;
 import java.net.SocketTimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -29,8 +31,8 @@ class ResendEmailSenderServiceTest {
 
     @BeforeEach
     void setUp() {
-        RestClient.Builder builder = RestClient.builder()
-                .baseUrl("https://api.resend.com");
+        RestClient.Builder builder = new ResendConfig()
+                .applyResendDefaults(RestClient.builder(), "test_resend_api_key");
         server = MockRestServiceServer.bindTo(builder).build();
         resendEmailSenderService = new ResendEmailSenderService(builder.build());
         ReflectionTestUtils.setField(resendEmailSenderService, "fromEmail", "MY4CUT <noreply@example.com>");
@@ -41,6 +43,8 @@ class ResendEmailSenderServiceTest {
     void sendVerificationCode_Success_2xx() {
         server.expect(requestTo("https://api.resend.com/emails"))
                 .andExpect(method(HttpMethod.POST))
+                .andExpect(header("Authorization", "Bearer test_resend_api_key"))
+                .andExpect(header("Content-Type", MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$.from").value("MY4CUT <noreply@example.com>"))
                 .andExpect(jsonPath("$.to[0]").value("test@example.com"))
                 .andExpect(jsonPath("$.subject").value("[MY4CUT] 이메일 인증코드"))
@@ -85,15 +89,15 @@ class ResendEmailSenderServiceTest {
     }
 
     @Test
-    @DisplayName("Resend 발송 실패: timeout/network 예외를 기존 이메일 발송 실패 예외로 변환한다")
+    @DisplayName("Resend 발송 실패: timeout/network 예외를 발송 결과 불명 예외로 변환한다")
     void sendVerificationCode_Fail_Timeout() {
         server.expect(requestTo("https://api.resend.com/emails"))
                 .andExpect(method(HttpMethod.POST))
                 .andRespond(withException(new SocketTimeoutException("Read timed out")));
 
         assertThatThrownBy(() -> resendEmailSenderService.sendVerificationCode("test@example.com", "123456"))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_EMAIL_SEND_FAILED);
+                .isInstanceOf(EmailDeliveryUnknownException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_EMAIL_DELIVERY_UNKNOWN);
 
         server.verify();
     }

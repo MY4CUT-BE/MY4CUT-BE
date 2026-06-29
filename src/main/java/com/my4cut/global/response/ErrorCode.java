@@ -45,6 +45,7 @@ public enum ErrorCode implements BaseCode {
     AUTH_PASSWORD_RESET_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "A4007", "해당 계정은 비밀번호 재설정을 사용할 수 없습니다."),
     AUTH_EMAIL_VERIFY_FAIL_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "A4292", "인증 시도 횟수를 초과했습니다. 다시 요청해 주세요."),
     AUTH_EMAIL_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "A5001", "이메일 전송 중 오류가 발생했습니다."),
+    AUTH_EMAIL_DELIVERY_UNKNOWN(HttpStatus.SERVICE_UNAVAILABLE, "A5031", "이메일 전송 결과를 확인할 수 없습니다. 이메일 수신 여부를 확인해 주세요."),
 
     // Image Domain Error
     IMAGE_OWNER_NOT_FOUND(HttpStatus.NOT_FOUND, "I4041", "이미지 소유 사용자를 찾을 수 없습니다."),

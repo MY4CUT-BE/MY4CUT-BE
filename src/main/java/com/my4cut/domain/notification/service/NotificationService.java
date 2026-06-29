@@ -15,6 +15,7 @@ import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,9 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final WorkspaceRepository workspaceRepository;
     private final FcmService fcmService;
+
+    @Value("${firebase.enabled:true}")
+    private boolean firebaseEnabled;
 
     // FCM 토큰 등록
     @Transactional
@@ -328,6 +332,11 @@ public class NotificationService {
             String type,
             Long targetId
     ) {
+        if (!firebaseEnabled) {
+            log.info("[FCM] 발송 생략 - Firebase disabled, userId={}", user.getId());
+            return;
+        }
+
         List<UserFcmToken> tokens = userFcmTokenRepository.findAllByUser(user);
         log.info("[FCM] 대상 userId={}, tokenCount={}", user.getId(), tokens.size());
 

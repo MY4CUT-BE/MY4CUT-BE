@@ -24,11 +24,15 @@ public class ResendConfig {
         requestFactory.setConnectTimeout(connectTimeout);
         requestFactory.setReadTimeout(readTimeout);
 
+        return applyResendDefaults(restClientBuilder, apiKey)
+                .requestFactory(requestFactory)
+                .build();
+    }
+
+    public RestClient.Builder applyResendDefaults(RestClient.Builder restClientBuilder, String apiKey) {
         return restClientBuilder
                 .baseUrl("https://api.resend.com")
-                .requestFactory(requestFactory)
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .build();
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
     }
 }

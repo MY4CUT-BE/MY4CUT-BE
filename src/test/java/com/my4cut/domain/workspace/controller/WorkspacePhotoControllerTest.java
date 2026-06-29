@@ -27,6 +27,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -131,5 +132,24 @@ class WorkspacePhotoControllerTest {
                 .andExpect(jsonPath("$.code").exists());
 
         verify(workspacePhotoService).selectFinalPhoto(eq(workspaceId), eq(photoId), isNull());
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("최종 사진 선택 해제 API 테스트")
+    void deselectFinalPhoto_Test() throws Exception {
+        // Arrange
+        Long workspaceId = 1L;
+        Long photoId = 10L;
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
+
+        // Act & Assert
+        mockMvc.perform(delete("/workspaces/{workspaceId}/photos/{photoId}/final", workspaceId, photoId)
+                        .with(csrf())
+                        .with(authentication(auth)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("W2014"));
+
+        verify(workspacePhotoService).deselectFinalPhoto(eq(workspaceId), eq(photoId), isNull());
     }
 }

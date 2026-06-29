@@ -82,4 +82,8 @@ public class MediaFile extends BaseEntity {
     public void selectAsFinal() {
         this.isFinal = true;
     }
+
+    public void deselectAsFinal() {
+        this.isFinal = false;
+    }
 }

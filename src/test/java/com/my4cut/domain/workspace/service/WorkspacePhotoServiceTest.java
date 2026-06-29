@@ -151,6 +151,33 @@ class WorkspacePhotoServiceTest {
     }
 
     @Test
+    @DisplayName("최종 사진 선택 해제 성공: 선택된 사진을 최종 사진에서 해제한다")
+    void deselectFinalPhoto_Success() {
+        // Arrange
+        Long workspaceId = 1L;
+        Long photoId = 10L;
+        Long userId = 1L;
+        User user = createUser(userId, "사용자");
+        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
+        MediaFile photo = createMediaFile(user, workspace);
+        ReflectionTestUtils.setField(photo, "id", photoId);
+        photo.selectAsFinal();
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user))
+                .willReturn(Optional.of(WorkspaceMember.builder().build()));
+        given(mediaFileRepository.findById(photoId)).willReturn(Optional.of(photo));
+
+        // Act
+        workspacePhotoService.deselectFinalPhoto(workspaceId, photoId, userId);
+
+        // Assert
+        assertThat(photo.getIsFinal()).isFalse();
+        verify(mediaFileRepository).save(photo);
+    }
+
+    @Test
     @DisplayName("최종 사진 선택 실패: 사진이 대상 워크스페이스에 속하지 않으면 예외가 발생한다")
     void selectFinalPhoto_Fail_PhotoNotInWorkspace() {
         // Arrange

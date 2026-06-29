@@ -65,6 +65,16 @@ public class WorkspacePhotoController {
         return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_FINAL_SELECT_SUCCESS);
     }
 
+    @Operation(summary = "최종 사진 선택 해제", description = "워크스페이스의 특정 사진을 최종 사진에서 해제합니다.")
+    @DeleteMapping("/{workspaceId}/photos/{photoId}/final")
+    public ApiResponse<Void> deselectFinalPhoto(
+            @PathVariable Long workspaceId,
+            @PathVariable Long photoId,
+            @AuthenticationPrincipal Long userId) {
+        workspacePhotoService.deselectFinalPhoto(workspaceId, photoId, userId);
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.PHOTO_FINAL_DESELECT_SUCCESS);
+    }
+
     @Operation(summary = "댓글 목록 조회", description = "워크스페이스 특정 사진의 댓글 목록을 조회합니다.")
     @GetMapping("/{workspaceId}/photos/{photoId}/comments")
     public ApiResponse<List<WorkspacePhotoCommentResponseDto>> getComments(

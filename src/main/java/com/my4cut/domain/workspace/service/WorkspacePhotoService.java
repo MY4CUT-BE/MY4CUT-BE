@@ -130,6 +130,19 @@ public class WorkspacePhotoService {
         mediaFileRepository.save(photo);
     }
 
+    @Transactional
+    public void deselectFinalPhoto(Long workspaceId, Long photoId, Long userId) {
+        validateMembership(workspaceId, userId, true);
+
+        MediaFile photo = validatePhotoInWorkspace(workspaceId, photoId);
+        if (photo.getMediaType() != MediaType.PHOTO) {
+            throw new WorkspaceException(WorkspaceErrorCode.PHOTO_NOT_FOUND);
+        }
+
+        photo.deselectAsFinal();
+        mediaFileRepository.save(photo);
+    }
+
     public List<WorkspacePhotoResponseDto> getPhotos(Long workspaceId, String sort, Long userId) {
         workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));

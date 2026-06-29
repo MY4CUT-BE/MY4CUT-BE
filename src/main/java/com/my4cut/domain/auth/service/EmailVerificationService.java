@@ -28,7 +28,7 @@ public class EmailVerificationService {
     private final EmailSenderService emailSenderService;
 
     /*
-     * 인증코드를 생성하고 Redis 저장 후 SES로 발송한다.
+     * 인증코드를 생성하고 Redis 저장 후 이메일로 발송한다.
      */
     @Transactional
     public void sendCode(String email) {
@@ -43,6 +43,8 @@ public class EmailVerificationService {
 
         try {
             emailSenderService.sendVerificationCode(email, code);
+        } catch (EmailDeliveryUnknownException exception) {
+            throw exception;
         } catch (RuntimeException exception) {
             // 발송 실패 시 저장된 코드와 쿨다운을 정리해 재요청이 가능하도록 맞춘다.
             redisService.clearCodeAndCooldown(email);

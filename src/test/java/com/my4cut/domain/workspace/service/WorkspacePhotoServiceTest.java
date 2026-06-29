@@ -83,6 +83,39 @@ class WorkspacePhotoServiceTest {
     }
 
     @Test
+    @DisplayName("사진 목록 조회 성공: 업로더 ID와 프로필 이미지 URL을 반환한다")
+    void getPhotos_Success_WithUploaderInfo() {
+        // Arrange
+        Long workspaceId = 1L;
+        Long userId = 1L;
+        Long photoId = 10L;
+        User user = createUser(userId, "유저");
+        ReflectionTestUtils.setField(user, "profileImageUrl", "profiles/user.png");
+        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
+        MediaFile photo = createMediaFile(user, workspace);
+        ReflectionTestUtils.setField(photo, "id", photoId);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user))
+                .willReturn(Optional.of(WorkspaceMember.builder().build()));
+        given(mediaFileRepository.findAllByWorkspaceIdAndMediaType(
+                eq(workspaceId), eq(MediaType.PHOTO), any()))
+                .willReturn(List.of(photo));
+        given(profileImageUrlService.toResponseUrl("profiles/user.png"))
+                .willReturn("https://example.com/profile.jpg");
+
+        // Act
+        List<WorkspacePhotoResponseDto> result = workspacePhotoService.getPhotos(workspaceId, "latest", userId);
+
+        // Assert
+        assertThat(result).singleElement().satisfies(response -> {
+            assertThat(response.uploaderId()).isEqualTo(userId);
+            assertThat(response.uploaderProfileImageUrl()).isEqualTo("https://example.com/profile.jpg");
+        });
+    }
+
+    @Test
     @DisplayName("사진 업로드 실패: 만료된 워크스페이스인 경우 예외 발생")
     void uploadPhotos_Fail_Expired() {
         // Arrange

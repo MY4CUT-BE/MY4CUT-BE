@@ -111,7 +111,10 @@ class WorkspacePhotoControllerTest {
                         .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").exists())
-                .andExpect(jsonPath("$.data[0].mediaId").value(10L));
+                .andExpect(jsonPath("$.data[0].mediaId").value(10L))
+                .andExpect(jsonPath("$.data[0].uploaderId").value(1L))
+                .andExpect(jsonPath("$.data[0].uploaderProfileImageUrl")
+                        .value("https://example.com/profile.jpg"));
     }
 
     @Test

@@ -26,6 +26,8 @@ public interface MediaFileRepository extends JpaRepository<MediaFile, Long> {
 
     boolean existsByWorkspaceIdAndIsFinalTrue(Long workspaceId);
 
+    Optional<MediaFile> findTopByWorkspaceIdOrderByCreatedAtDesc(Long workspaceId);
+
     @Modifying(clearAutomatically = true)
     @Query("""
             update MediaFile mediaFile

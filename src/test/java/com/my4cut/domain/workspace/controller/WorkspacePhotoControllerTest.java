@@ -57,7 +57,18 @@ class WorkspacePhotoControllerTest {
         // Arrange
         Long workspaceId = 1L;
         WorkspacePhotoUploadRequestDto requestDto = new WorkspacePhotoUploadRequestDto(List.of(10L));
-        WorkspacePhotoResponseDto responseDto = new WorkspacePhotoResponseDto(10L, "url", "presigned", null, null, true, LocalDateTime.now(), "닉네임");
+        WorkspacePhotoResponseDto responseDto = new WorkspacePhotoResponseDto(
+                10L,
+                "url",
+                "presigned",
+                null,
+                null,
+                true,
+                LocalDateTime.now(),
+                1L,
+                "닉네임",
+                "https://example.com/profile.jpg"
+        );
         
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspacePhotoService.uploadPhotos(any(), any(), any())).willReturn(List.of(responseDto));
@@ -79,7 +90,18 @@ class WorkspacePhotoControllerTest {
     void getPhotos_Test() throws Exception {
         // Arrange
         Long workspaceId = 1L;
-        WorkspacePhotoResponseDto responseDto = new WorkspacePhotoResponseDto(10L, "url", "presigned", null, null, true, LocalDateTime.now(), "닉네임");
+        WorkspacePhotoResponseDto responseDto = new WorkspacePhotoResponseDto(
+                10L,
+                "url",
+                "presigned",
+                null,
+                null,
+                true,
+                LocalDateTime.now(),
+                1L,
+                "닉네임",
+                "https://example.com/profile.jpg"
+        );
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspacePhotoService.getPhotos(any(), any(), any())).willReturn(List.of(responseDto));
 

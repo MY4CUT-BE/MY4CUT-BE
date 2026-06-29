@@ -85,7 +85,12 @@ public class WorkspacePhotoService {
                         file.getTakenDate(),
                         file.getIsFinal(),
                         file.getCreatedAt(),
-                        file.getUploader().getNickname()))
+                        file.getUploader().getId(), // 업로더 ID 추가
+                        file.getUploader().getNickname(),
+                        profileImageUrlService.toResponseUrl(
+                                file.getUploader().getProfileImageUrl()
+                        ) // 프로필 이미지 URL 추가
+                ))
                 .collect(Collectors.toList());
     }
 
@@ -146,7 +151,12 @@ public class WorkspacePhotoService {
                         photo.getTakenDate(),
                         photo.getIsFinal(),
                         photo.getCreatedAt(),
-                        photo.getUploader().getNickname()))
+                        photo.getUploader().getId(),
+                        photo.getUploader().getNickname(),
+                        profileImageUrlService.toResponseUrl(
+                                photo.getUploader().getProfileImageUrl()
+                        )
+                ))
                 .collect(Collectors.toList());
     }
 

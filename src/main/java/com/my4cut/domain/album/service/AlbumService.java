@@ -7,6 +7,7 @@ import com.my4cut.domain.album.exception.AlbumErrorCode;
 import com.my4cut.domain.album.exception.AlbumException;
 import com.my4cut.domain.album.repository.AlbumRepository;
 import com.my4cut.domain.image.service.ImageStorageService;
+import com.my4cut.domain.image.service.ProfileImageUrlService;
 import com.my4cut.domain.media.entity.MediaFile;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
@@ -33,6 +34,7 @@ public class AlbumService {
     private final MediaFileRepository mediaFileRepository;
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
+    private final ProfileImageUrlService profileImageUrlService;
 
     /**
      * 새로운 앨범을 생성합니다.
@@ -196,7 +198,11 @@ public class AlbumService {
                 file.getTakenDate(),
                 file.getIsFinal(),
                 file.getCreatedAt(),
-                file.getUploader().getNickname()
+                file.getUploader().getId(),
+                file.getUploader().getNickname(),
+                profileImageUrlService.toResponseUrl(
+                        file.getUploader().getProfileImageUrl()
+                )
         );
     }
 }

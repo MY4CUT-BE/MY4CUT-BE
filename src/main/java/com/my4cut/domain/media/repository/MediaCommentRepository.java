@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * MediaComment 엔티티에 대한 데이터 접근 기능을 제공하는 리포지토리 인터페이스.
@@ -12,4 +13,8 @@ import java.util.List;
 @Repository
 public interface MediaCommentRepository extends JpaRepository<MediaComment, Long> {
     List<MediaComment> findAllByMediaFileIdOrderByCreatedAtDesc(Long mediaId);
+
+    Optional<MediaComment> findTopByMediaFileWorkspaceIdOrderByCreatedAtDesc(
+            Long workspaceId
+    );
 }

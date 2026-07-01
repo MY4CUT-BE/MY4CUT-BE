@@ -54,7 +54,20 @@ class WorkspaceControllerTest {
         // Arrange
         WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("새 워크스페이스");
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
-                1L, "새 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), false, 1, List.of(1L), List.of(), List.of());
+                1L,
+                "새 워크스페이스",
+                1L,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                false,
+                1,
+                List.of(1L),
+                List.of(),
+                List.of(),
+                null,
+                null,
+                null,
+                null);
         
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceService.createWorkspace(any(), any())).willReturn(responseDto);
@@ -76,7 +89,20 @@ class WorkspaceControllerTest {
     void getMyWorkspaces_Test() throws Exception {
         // Arrange
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
-                1L, "내 워크스페이스", 1L, LocalDateTime.now(), LocalDateTime.now(), false, 1, List.of(1L), List.of(), List.of(2L));
+                1L,
+                "내 워크스페이스",
+                1L,
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                false,
+                1,
+                List.of(1L),
+                List.of(),
+                List.of(2L),
+                List.of(3L),
+                "https://example.com/profile.png",
+                "PHOTO",
+                LocalDateTime.now().minusMinutes(5));
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceService.getMyWorkspaces(any())).willReturn(List.of(responseDto));
 
@@ -104,8 +130,15 @@ class WorkspaceControllerTest {
                 false,
                 2,
                 List.of(1L, 3L),
-                List.of("https://example.com/owner.png", "https://example.com/member.png"),
-                List.of(2L));
+                List.of(
+                        "https://example.com/owner.png",
+                        "https://example.com/member.png"
+                ),
+                List.of(2L),
+                List.of(3L),
+                "https://example.com/member.png",
+                "COMMENT",
+                LocalDateTime.now().minusHours(1));
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceService.getWorkspaceInfo(anyLong(), nullable(Long.class))).willReturn(responseDto);

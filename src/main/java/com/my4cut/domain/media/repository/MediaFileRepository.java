@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * MediaFile 엔티티에 대한 데이터 접근 기능을 제공하는 리포지토리 인터페이스.
@@ -24,6 +25,8 @@ public interface MediaFileRepository extends JpaRepository<MediaFile, Long> {
     Page<MediaFile> findAllByUploader(User uploader, Pageable pageable);
 
     boolean existsByWorkspaceIdAndIsFinalTrue(Long workspaceId);
+
+    Optional<MediaFile> findTopByWorkspaceIdOrderByCreatedAtDesc(Long workspaceId);
 
     @Modifying(clearAutomatically = true)
     @Query("""
@@ -40,4 +43,9 @@ public interface MediaFileRepository extends JpaRepository<MediaFile, Long> {
     );
 
     long countByMediaObjectId(Long mediaObjectId);
+
+    Optional<MediaFile> findTopByWorkspaceIdAndMediaTypeOrderByCreatedAtDesc(
+            Long workspaceId,
+            MediaType mediaType
+    );
 }

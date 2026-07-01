@@ -51,8 +51,21 @@ class WorkspaceServiceTest {
         User user = createUser(userId, "owner");
         WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("new workspace");
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
-                1L, "new workspace", userId, LocalDateTime.now().plusDays(7), LocalDateTime.now(), false,
-                1, List.of(userId), List.of(), List.of());
+                1L,
+                "new workspace",
+                userId,
+                LocalDateTime.now().plusDays(7),
+                LocalDateTime.now(),
+                false,
+                1,
+                List.of(userId),
+                List.of(),
+                List.of(),
+                null,
+                null,
+                null,
+                null
+        );
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(workspaceMemberService.convertToInfoDto(any(Workspace.class))).willReturn(responseDto);
@@ -73,8 +86,21 @@ class WorkspaceServiceTest {
         Workspace workspace = createWorkspace(workspaceId, "old name", owner);
         WorkspaceUpdateRequestDto updateDto = new WorkspaceUpdateRequestDto("updated name");
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
-                workspaceId, "updated name", userId, workspace.getExpiresAt(), workspace.getCreatedAt(), false,
-                1, List.of(userId), List.of(), List.of());
+                workspaceId,
+                "updated name",
+                userId,
+                workspace.getExpiresAt(),
+                workspace.getCreatedAt(),
+                false,
+                1,
+                List.of(userId),
+                List.of(),
+                List.of(),
+                null,
+                null,
+                null,
+                null
+        );
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberService.convertToInfoDto(workspace)).willReturn(responseDto);
@@ -134,8 +160,15 @@ class WorkspaceServiceTest {
                 false,
                 2,
                 List.of(1L, 3L),
-                List.of("https://example.com/owner.png", "https://example.com/member.png"),
-                List.of(2L));
+                List.of(
+                        "https://example.com/owner.png",
+                        "https://example.com/member.png"
+                ),
+                List.of(2L),
+                "COMMENT",                //  recentActivityType
+                "member",                 //  recentActivityUserNickname
+                LocalDateTime.now().minusMinutes(5)
+        );
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberService.convertToInfoDto(workspace)).willReturn(responseDto);

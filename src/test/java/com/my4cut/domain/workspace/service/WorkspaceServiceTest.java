@@ -165,9 +165,8 @@ class WorkspaceServiceTest {
                         "https://example.com/member.png"
                 ),
                 List.of(2L),
-                List.of(3L),
-                "https://example.com/member.png",
-                "COMMENT",
+                "COMMENT",                //  recentActivityType
+                "member",                 //  recentActivityUserNickname
                 LocalDateTime.now().minusMinutes(5)
         );
 

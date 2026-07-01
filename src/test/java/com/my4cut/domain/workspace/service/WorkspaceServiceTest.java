@@ -165,7 +165,7 @@ class WorkspaceServiceTest {
                         "https://example.com/member.png"
                 ),
                 List.of(2L),
-                null,
+                List.of(3L),
                 "https://example.com/member.png",
                 "COMMENT",
                 LocalDateTime.now().minusMinutes(5)

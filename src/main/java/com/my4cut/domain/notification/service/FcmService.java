@@ -15,9 +15,21 @@ public class FcmService {
     @Value("${firebase.enabled:true}")
     private boolean firebaseEnabled;
 
-    public void sendPush(String fcmToken, String title, String body, String type, Long targetId) {
-        log.info("[FCM] 발송 로직 진입 - type={}, targetId={}, tokenExists={}",
-                type, targetId, fcmToken != null);
+    public void sendPush(String fcmToken,
+                         String title,
+                         String body,
+                         String type,
+                         Long notificationId,
+                         Long referenceId,
+                         Long workspaceId) {
+        log.info(
+                "[FCM] 발송 로직 진입 - type={}, notificationId={}, referenceId={}, workspaceId={}, tokenExists={}",
+                type,
+                notificationId,
+                referenceId,
+                workspaceId,
+                fcmToken != null
+        );
 
         if (!firebaseEnabled) {
             log.info("[FCM] 발송 중단 - Firebase disabled");
@@ -35,12 +47,27 @@ public class FcmService {
                         .setTitle(title)
                         .setBody(body)
                         .build())
+                .putData("title", title == null ? "" : title)
+                .putData("body", body == null ? "" : body)
                 .putData("type", type == null ? "" : type)
-                .putData("targetId", targetId == null ? "" : String.valueOf(targetId))
+                .putData("notificationId",
+                        notificationId == null ? "" : String.valueOf(notificationId))
+                .putData("referenceId",
+                        referenceId == null ? "" : String.valueOf(referenceId))
+                .putData("workspaceId",
+                        workspaceId == null ? "" : String.valueOf(workspaceId))
                 .build();
 
-        log.info("[FCM] payload 생성 완료 - title={}, body={}, type={}, targetId={}, token={}",
-                title, body, type, targetId, maskToken(fcmToken));
+        log.info(
+                "[FCM] payload 생성 완료 - title={}, body={}, type={}, notificationId={}, referenceId={}, workspaceId={}, token={}",
+                title,
+                body,
+                type,
+                notificationId,
+                referenceId,
+                workspaceId,
+                maskToken(fcmToken)
+        );
 
         try {
             String response = FirebaseMessaging.getInstance().send(message);

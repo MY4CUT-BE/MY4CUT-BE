@@ -3,6 +3,7 @@ package com.my4cut.domain.auth.service;
 import com.my4cut.domain.auth.dto.req.AuthReqDTO;
 import com.my4cut.domain.auth.dto.res.AuthResDTO;
 import com.my4cut.domain.auth.entity.RefreshToken;
+import com.my4cut.domain.auth.enums.EmailVerificationPurpose;
 import com.my4cut.domain.auth.jwt.JwtProvider;
 import com.my4cut.domain.auth.repository.RefreshTokenRepository;
 import com.my4cut.domain.image.ImageConstants;
@@ -50,7 +51,11 @@ public class AuthService {
     // 회원가입
     @Transactional
     public void signup(UserReqDTO.SignUpDTO request) {
-        if (!emailVerificationService.isVerified(request.email())) {
+        if (!emailVerificationService.isVerified(
+                request.email(),
+                EmailVerificationPurpose.SIGNUP,
+                request.verificationToken()
+        )) {
             throw new BusinessException(ErrorCode.AUTH_EMAIL_NOT_VERIFIED);
         }
 
@@ -70,7 +75,10 @@ public class AuthService {
             existingUser.updateNickname(request.nickname());
             existingUser.reactivate();
             refreshTokenRepository.deleteByUser(existingUser);
-            emailVerificationService.clearVerifiedAfterCommit(request.email());
+            emailVerificationService.clearVerifiedAfterCommit(
+                    request.email(),
+                    EmailVerificationPurpose.SIGNUP
+            );
             return;
         }
 
@@ -90,7 +98,10 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
-        emailVerificationService.clearVerifiedAfterCommit(request.email());
+        emailVerificationService.clearVerifiedAfterCommit(
+                request.email(),
+                EmailVerificationPurpose.SIGNUP
+        );
     }
 
     // 로그인
@@ -175,7 +186,12 @@ public class AuthService {
     //비밀번호 재설정
     @Transactional
     public void resetPassword(AuthReqDTO.ResetPasswordReqDto request) {
-        if (!emailVerificationService.isVerified(request.email())) {    //이메일 인증 확인
+        // 비밀번호 재설정 목적으로 완료한 이메일 인증인지 확인한다.
+        if (!emailVerificationService.isVerified(
+                request.email(),
+                EmailVerificationPurpose.PASSWORD_RESET,
+                request.verificationToken()
+        )) {
             throw new BusinessException(ErrorCode.AUTH_EMAIL_NOT_VERIFIED);
         }
 
@@ -183,7 +199,7 @@ public class AuthService {
             throw new BusinessException(ErrorCode.AUTH_PASSWORD_POLICY_VIOLATION);
         }
 
-        User user = userRepository.findByEmail(request.email()) //이메일로 유저 검증
+        User user = userRepository.findByEmail(request.email()) // 이메일로 사용자 검증
                 .orElseThrow(() -> new BusinessException(ErrorCode.AUTH_INVALID_CREDENTIALS));
 
         if (user.isDeleted()) { //탈퇴한 유저일 경우
@@ -200,7 +216,10 @@ public class AuthService {
 
         user.updatePassword(passwordEncoder.encode(request.newPassword())); //비밀번호 갱신
         refreshTokenRepository.deleteByUser(user);  //리프레시 토큰 제거(기존 로그인 상태 무효화)
-        emailVerificationService.clearVerifiedAfterCommit(request.email()); //
+        emailVerificationService.clearVerifiedAfterCommit(
+                request.email(),
+                EmailVerificationPurpose.PASSWORD_RESET
+        );
     }
 
     // 카카오 로그인

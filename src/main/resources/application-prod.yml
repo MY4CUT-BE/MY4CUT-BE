@@ -1,5 +1,6 @@
 server:
   port: 8080
+  # 앞단 프록시는 외부에서 전달된 Forwarded/X-Forwarded-* 헤더를 제거하고 새로 설정해야 한다.
   forward-headers-strategy: framework
 
 spring:

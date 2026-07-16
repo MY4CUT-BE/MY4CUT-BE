@@ -58,6 +58,18 @@ resend:
 mail:
   from: ${MAIL_FROM}
 
+email-verification:
+  rate-limit:
+    send-client:
+      max-attempts: ${EMAIL_VERIFICATION_SEND_CLIENT_MAX:20}
+      window: ${EMAIL_VERIFICATION_SEND_CLIENT_WINDOW:10m}
+    send-email:
+      max-attempts: ${EMAIL_VERIFICATION_SEND_EMAIL_MAX:5}
+      window: ${EMAIL_VERIFICATION_SEND_EMAIL_WINDOW:1h}
+    verify-client:
+      max-attempts: ${EMAIL_VERIFICATION_VERIFY_CLIENT_MAX:60}
+      window: ${EMAIL_VERIFICATION_VERIFY_CLIENT_WINDOW:10m}
+
 media:
   cleanup:
     pending-delete-fixed-delay-ms: 300000

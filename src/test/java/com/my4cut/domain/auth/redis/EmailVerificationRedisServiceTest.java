@@ -75,16 +75,24 @@ class EmailVerificationRedisServiceTest {
 
     @Test
     @DisplayName("인증 완료 여부는 저장된 토큰 해시와 전달된 해시가 일치할 때만 참이다")
-    void isVerified_RequiresMatchingTokenHash() {
+    void claimVerified_UsesPurposeKeysAndClaimId() {
         String email = "user@example.com";
-        String savedTokenHash = "saved-token-hash";
-        String key = "email:verify:signup:user@example.com:verified";
-        given(redisTemplate.opsForValue()).willReturn(valueOperations);
-        given(valueOperations.get(key)).willReturn(savedTokenHash);
+        String tokenHash = "saved-token-hash";
+        String claimId = "claim-id";
+        List<String> expectedKeys = List.of(
+                "email:verify:signup:user@example.com:verified",
+                "email:verify:signup:user@example.com:claim"
+        );
+        given(redisTemplate.execute(
+                any(org.springframework.data.redis.core.script.RedisScript.class),
+                eq(expectedKeys),
+                eq(tokenHash),
+                eq(claimId),
+                eq(Long.toString(Duration.ofMinutes(30).toMillis()))
+        )).willReturn(1L);
 
-        assertThat(redisService.isVerified(email, EmailVerificationPurpose.SIGNUP, savedTokenHash))
-                .isTrue();
-        assertThat(redisService.isVerified(email, EmailVerificationPurpose.SIGNUP, "other-token-hash"))
-                .isFalse();
+        assertThat(redisService.claimVerified(
+                email, EmailVerificationPurpose.SIGNUP, tokenHash, claimId
+        )).isTrue();
     }
 }

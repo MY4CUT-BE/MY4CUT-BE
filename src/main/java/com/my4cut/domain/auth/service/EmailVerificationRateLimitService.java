@@ -1,6 +1,7 @@
 package com.my4cut.domain.auth.service;
 
 import com.my4cut.domain.auth.config.EmailVerificationRateLimitProperties;
+import com.my4cut.domain.auth.enums.EmailVerificationPurpose;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -43,13 +44,20 @@ public class EmailVerificationRateLimitService {
     /**
      * 요청자별 단기 한도와 이메일별 시간당 한도를 모두 적용한다.
      */
-    public void checkSendAllowed(String email, String clientAddress) {
+    public void checkSendAllowed(
+            String email,
+            String clientAddress,
+            EmailVerificationPurpose purpose
+    ) {
         acquireOrThrow(
                 "email:verify:rate:send:client:" + hash(normalizeClientAddress(clientAddress)),
                 properties.getSendClient()
         );
         acquireOrThrow(
-                "email:verify:rate:send:target:" + hash(email.trim().toLowerCase(Locale.ROOT)),
+                "email:verify:rate:send:target:"
+                        + purpose.name().toLowerCase(Locale.ROOT)
+                        + ":"
+                        + hash(email.trim().toLowerCase(Locale.ROOT)),
                 properties.getSendEmail()
         );
     }

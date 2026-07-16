@@ -59,7 +59,7 @@ class AuthServiceTest {
         UserReqDTO.SignUpDTO request = new UserReqDTO.SignUpDTO(
                 email, VERIFICATION_TOKEN, "Password1!", "tester"
         );
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.SIGNUP, VERIFICATION_TOKEN
         )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.empty());
@@ -67,10 +67,6 @@ class AuthServiceTest {
         authService.signup(request);
 
         verify(userRepository).save(any(User.class));
-        verify(emailVerificationService).clearVerifiedAfterCommit(
-                email,
-                EmailVerificationPurpose.SIGNUP
-        );
     }
 
     @Test
@@ -80,7 +76,7 @@ class AuthServiceTest {
         UserReqDTO.SignUpDTO request = new UserReqDTO.SignUpDTO(
                 email, VERIFICATION_TOKEN, "Password1!", "tester"
         );
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.SIGNUP, VERIFICATION_TOKEN
         )).willReturn(false);
 
@@ -99,7 +95,7 @@ class AuthServiceTest {
         UserReqDTO.SignUpDTO request = new UserReqDTO.SignUpDTO(
                 email, VERIFICATION_TOKEN, "Password2!", "tester"
         );
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.SIGNUP, VERIFICATION_TOKEN
         )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(existingUser));
@@ -109,10 +105,6 @@ class AuthServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_DUPLICATE_EMAIL);
 
         verify(userRepository, never()).save(any(User.class));
-        verify(emailVerificationService, never()).clearVerifiedAfterCommit(
-                email,
-                EmailVerificationPurpose.SIGNUP
-        );
     }
 
     @Test
@@ -123,7 +115,7 @@ class AuthServiceTest {
         UserReqDTO.SignUpDTO request = new UserReqDTO.SignUpDTO(
                 email, VERIFICATION_TOKEN, "NewPassword1!", "new-name"
         );
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.SIGNUP, VERIFICATION_TOKEN
         )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(deletedUser));
@@ -134,10 +126,6 @@ class AuthServiceTest {
         assertThat(deletedUser.getNickname()).isEqualTo("new-name");
         verify(refreshTokenRepository).deleteByUser(deletedUser);
         verify(userRepository, never()).save(any(User.class));
-        verify(emailVerificationService).clearVerifiedAfterCommit(
-                email,
-                EmailVerificationPurpose.SIGNUP
-        );
     }
 
     @Test
@@ -150,7 +138,7 @@ class AuthServiceTest {
 
         User user = createEmailUser(email, passwordEncoder.encode(oldPassword), UserStatus.ACTIVE);
 
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
         )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
@@ -161,10 +149,6 @@ class AuthServiceTest {
         // Assert
         assertThat(passwordEncoder.matches(newPassword, user.getPassword())).isTrue();
         verify(refreshTokenRepository).deleteByUser(user);
-        verify(emailVerificationService).clearVerifiedAfterCommit(
-                email,
-                EmailVerificationPurpose.PASSWORD_RESET
-        );
     }
 
     @Test
@@ -176,7 +160,7 @@ class AuthServiceTest {
                 email, VERIFICATION_TOKEN, "NewPassw0rd!"
         );
 
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
         )).willReturn(false);
 
@@ -197,7 +181,7 @@ class AuthServiceTest {
                 email, VERIFICATION_TOKEN, "abcd1234"
         );
 
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
         )).willReturn(true);
 
@@ -218,7 +202,7 @@ class AuthServiceTest {
                 email, VERIFICATION_TOKEN, "New Passw0rd!"
         );
 
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
         )).willReturn(true);
 
@@ -238,7 +222,7 @@ class AuthServiceTest {
         String samePassword = "SamePassw0rd!";
         User user = createEmailUser(email, passwordEncoder.encode(samePassword), UserStatus.ACTIVE);
 
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
         )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
@@ -260,7 +244,7 @@ class AuthServiceTest {
         String email = "test@example.com";
         User user = createEmailUser(email, passwordEncoder.encode("OldPassw0rd!"), UserStatus.DELETED);
 
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
         )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
@@ -282,7 +266,7 @@ class AuthServiceTest {
                 email, VERIFICATION_TOKEN, "NewPassw0rd!"
         );
 
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
         )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.empty());
@@ -303,7 +287,7 @@ class AuthServiceTest {
         User user = createEmailUser(email, passwordEncoder.encode("OldPassw0rd!"), UserStatus.ACTIVE);
         ReflectionTestUtils.setField(user, "loginType", LoginType.KAKAO);
 
-        given(emailVerificationService.isVerified(
+        given(emailVerificationService.claimVerifiedForTransaction(
                 email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
         )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));

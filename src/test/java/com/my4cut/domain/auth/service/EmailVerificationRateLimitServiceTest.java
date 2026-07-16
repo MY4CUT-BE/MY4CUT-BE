@@ -1,6 +1,7 @@
 package com.my4cut.domain.auth.service;
 
 import com.my4cut.domain.auth.config.EmailVerificationRateLimitProperties;
+import com.my4cut.domain.auth.enums.EmailVerificationPurpose;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.response.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -38,7 +39,7 @@ class EmailVerificationRateLimitServiceTest {
         given(redisTemplate.execute(any(RedisScript.class), anyList(), any(), any()))
                 .willReturn(1L);
 
-        rateLimitService.checkSendAllowed(email, clientAddress);
+        rateLimitService.checkSendAllowed(email, clientAddress, EmailVerificationPurpose.SIGNUP);
 
         List<String> rateLimitKeys = mockingDetails(redisTemplate).getInvocations().stream()
                 .filter(invocation -> invocation.getMethod().getName().equals("execute"))
@@ -50,7 +51,7 @@ class EmailVerificationRateLimitServiceTest {
         assertThat(rateLimitKeys)
                 .allMatch(key -> !key.contains(email) && !key.contains(clientAddress))
                 .anyMatch(key -> key.startsWith("email:verify:rate:send:client:"))
-                .anyMatch(key -> key.startsWith("email:verify:rate:send:target:"));
+                .anyMatch(key -> key.startsWith("email:verify:rate:send:target:signup:"));
     }
 
     @Test
@@ -60,7 +61,11 @@ class EmailVerificationRateLimitServiceTest {
                 .willReturn(0L);
 
         assertThatThrownBy(() ->
-                rateLimitService.checkSendAllowed("user@example.com", "203.0.113.10")
+                rateLimitService.checkSendAllowed(
+                        "user@example.com",
+                        "203.0.113.10",
+                        EmailVerificationPurpose.PASSWORD_RESET
+                )
         )
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_EMAIL_RATE_LIMIT);

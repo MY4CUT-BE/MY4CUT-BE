@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.UUID;
+
 /*
  * 이메일 인증 비즈니스 로직을 담당한다.
  *
@@ -75,33 +77,63 @@ public class EmailVerificationService {
     /*
      * 회원가입 직전 등에 이메일 인증 완료 여부를 확인할 때 사용한다.
      */
-    public boolean isVerified(
+    public boolean claimVerifiedForTransaction(
             String email,
             EmailVerificationPurpose purpose,
             String verificationToken
     ) {
-        return redisService.isVerified(
+        String claimId = UUID.randomUUID().toString();
+        boolean claimed = redisService.claimVerified(
                 email,
                 purpose,
-                tokenGenerator.hash(verificationToken)
+                tokenGenerator.hash(verificationToken),
+                claimId
         );
+        if (!claimed) {
+            return false;
+        }
+
+        registerClaimSynchronization(email, purpose, claimId);
+        return true;
     }
 
     /*
      * DB 커밋 이후에만 verified 상태를 정리한다.
      */
-    public void clearVerifiedAfterCommit(String email, EmailVerificationPurpose purpose) {
+    private void registerClaimSynchronization(
+            String email,
+            EmailVerificationPurpose purpose,
+            String claimId
+    ) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            redisService.clearVerified(email, purpose);
-            return;
+            redisService.releaseClaim(email, purpose, claimId);
+            throw new IllegalStateException("이메일 인증 토큰은 트랜잭션 안에서만 사용할 수 있습니다.");
         }
 
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                redisService.clearVerified(email, purpose);
-            }
-        });
+        try {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(int status) {
+                    try {
+                        if (status == TransactionSynchronization.STATUS_COMMITTED) {
+                            redisService.completeClaim(email, purpose, claimId);
+                        } else {
+                            redisService.releaseClaim(email, purpose, claimId);
+                        }
+                    } catch (RuntimeException exception) {
+                        log.error(
+                                "이메일 인증 토큰 claim 정리 중 오류가 발생했습니다. purpose={}, committed={}",
+                                purpose,
+                                status == TransactionSynchronization.STATUS_COMMITTED,
+                                exception
+                        );
+                    }
+                }
+            });
+        } catch (RuntimeException exception) {
+            redisService.releaseClaim(email, purpose, claimId);
+            throw exception;
+        }
     }
 
     /**

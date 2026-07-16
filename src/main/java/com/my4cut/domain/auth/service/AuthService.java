@@ -51,7 +51,7 @@ public class AuthService {
     // 회원가입
     @Transactional
     public void signup(UserReqDTO.SignUpDTO request) {
-        if (!emailVerificationService.isVerified(
+        if (!emailVerificationService.claimVerifiedForTransaction(
                 request.email(),
                 EmailVerificationPurpose.SIGNUP,
                 request.verificationToken()
@@ -75,10 +75,6 @@ public class AuthService {
             existingUser.updateNickname(request.nickname());
             existingUser.reactivate();
             refreshTokenRepository.deleteByUser(existingUser);
-            emailVerificationService.clearVerifiedAfterCommit(
-                    request.email(),
-                    EmailVerificationPurpose.SIGNUP
-            );
             return;
         }
 
@@ -98,10 +94,6 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
-        emailVerificationService.clearVerifiedAfterCommit(
-                request.email(),
-                EmailVerificationPurpose.SIGNUP
-        );
     }
 
     // 로그인
@@ -187,7 +179,7 @@ public class AuthService {
     @Transactional
     public void resetPassword(AuthReqDTO.ResetPasswordReqDto request) {
         // 비밀번호 재설정 목적으로 완료한 이메일 인증인지 확인한다.
-        if (!emailVerificationService.isVerified(
+        if (!emailVerificationService.claimVerifiedForTransaction(
                 request.email(),
                 EmailVerificationPurpose.PASSWORD_RESET,
                 request.verificationToken()
@@ -216,10 +208,6 @@ public class AuthService {
 
         user.updatePassword(passwordEncoder.encode(request.newPassword())); //비밀번호 갱신
         refreshTokenRepository.deleteByUser(user);  //리프레시 토큰 제거(기존 로그인 상태 무효화)
-        emailVerificationService.clearVerifiedAfterCommit(
-                request.email(),
-                EmailVerificationPurpose.PASSWORD_RESET
-        );
     }
 
     // 카카오 로그인

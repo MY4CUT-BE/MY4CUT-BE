@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 
 import java.time.Duration;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.Locale;
 import java.util.List;
 
@@ -52,6 +50,63 @@ public class EmailVerificationRedisService {
             Long.class
     );
 
+    private static final DefaultRedisScript<Long> CLAIM_VERIFIED_SCRIPT = new DefaultRedisScript<>(
+            """
+                    local savedHash = redis.call('GET', KEYS[1])
+                    if not savedHash then
+                        return 0
+                    end
+
+                    local inputHash = ARGV[1]
+                    local different = 0
+                    if string.len(savedHash) ~= string.len(inputHash) then
+                        different = 1
+                    end
+
+                    local maxLength = math.max(string.len(savedHash), string.len(inputHash))
+                    for index = 1, maxLength do
+                        local savedByte = string.byte(savedHash, index) or 0
+                        local inputByte = string.byte(inputHash, index) or 0
+                        if savedByte ~= inputByte then
+                            different = 1
+                        end
+                    end
+
+                    if different ~= 0 then
+                        return 0
+                    end
+
+                    local claimed = redis.call('SET', KEYS[2], ARGV[2], 'PX', ARGV[3], 'NX')
+                    if not claimed then
+                        return 0
+                    end
+                    return 1
+                    """,
+            Long.class
+    );
+
+    private static final DefaultRedisScript<Long> COMPLETE_CLAIM_SCRIPT = new DefaultRedisScript<>(
+            """
+                    if redis.call('GET', KEYS[2]) ~= ARGV[1] then
+                        return 0
+                    end
+                    redis.call('DEL', KEYS[1], KEYS[2])
+                    return 1
+                    """,
+            Long.class
+    );
+
+    private static final DefaultRedisScript<Long> RELEASE_CLAIM_SCRIPT = new DefaultRedisScript<>(
+            """
+                    if redis.call('GET', KEYS[1]) ~= ARGV[1] then
+                        return 0
+                    end
+                    redis.call('DEL', KEYS[1])
+                    return 1
+                    """,
+            Long.class
+    );
+
     private static final Duration CODE_TTL = Duration.ofMinutes(5);
     private static final Duration COOLDOWN_TTL = Duration.ofMinutes(1);
     private static final Duration FAIL_TTL = Duration.ofMinutes(5);
@@ -85,24 +140,36 @@ public class EmailVerificationRedisService {
     /*
      * 인증 완료 상태는 30분 동안 유지한다.
      */
-    public boolean isVerified(
+    public boolean claimVerified(
             String email,
             EmailVerificationPurpose purpose,
-            String verificationTokenHash
+            String verificationTokenHash,
+            String claimId
     ) {
-        String savedTokenHash = redisTemplate.opsForValue().get(verifiedKey(email, purpose));
-        if (savedTokenHash == null) {
-            return false;
-        }
+        Long claimed = redisTemplate.execute(
+                CLAIM_VERIFIED_SCRIPT,
+                List.of(verifiedKey(email, purpose), claimKey(email, purpose)),
+                verificationTokenHash,
+                claimId,
+                Long.toString(VERIFIED_TTL.toMillis())
+        );
+        return Long.valueOf(1L).equals(claimed);
+    }
 
-        return MessageDigest.isEqual(
-                savedTokenHash.getBytes(StandardCharsets.UTF_8),
-                verificationTokenHash.getBytes(StandardCharsets.UTF_8)
+    public void completeClaim(String email, EmailVerificationPurpose purpose, String claimId) {
+        redisTemplate.execute(
+                COMPLETE_CLAIM_SCRIPT,
+                List.of(verifiedKey(email, purpose), claimKey(email, purpose)),
+                claimId
         );
     }
 
-    public void clearVerified(String email, EmailVerificationPurpose purpose) {
-        redisTemplate.delete(verifiedKey(email, purpose));
+    public void releaseClaim(String email, EmailVerificationPurpose purpose, String claimId) {
+        redisTemplate.execute(
+                RELEASE_CLAIM_SCRIPT,
+                List.of(claimKey(email, purpose)),
+                claimId
+        );
     }
 
     /*
@@ -164,6 +231,10 @@ public class EmailVerificationRedisService {
 
     private String verifiedKey(String email, EmailVerificationPurpose purpose) {
         return keyPrefix(email, purpose) + ":verified";
+    }
+
+    private String claimKey(String email, EmailVerificationPurpose purpose) {
+        return keyPrefix(email, purpose) + ":claim";
     }
 
     /**

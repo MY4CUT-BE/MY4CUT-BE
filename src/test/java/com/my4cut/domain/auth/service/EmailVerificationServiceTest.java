@@ -9,10 +9,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -181,5 +185,55 @@ class EmailVerificationServiceTest {
         assertThatThrownBy(() -> emailVerificationService.verifyCode(email, code, PURPOSE))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_EMAIL_VERIFY_FAIL_LIMIT);
+    }
+
+    @Test
+    @DisplayName("인증 토큰 claim은 DB 커밋 후 완료 처리한다")
+    void claimVerified_Commit_CompletesClaim() {
+        String email = "test@example.com";
+        String token = "verification-token";
+        String tokenHash = "verification-token-hash";
+        given(tokenGenerator.hash(token)).willReturn(tokenHash);
+        given(redisService.claimVerified(eq(email), eq(PURPOSE), eq(tokenHash), anyString()))
+                .willReturn(true);
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            assertThat(emailVerificationService.claimVerifiedForTransaction(email, PURPOSE, token))
+                    .isTrue();
+
+            TransactionSynchronizationManager.getSynchronizations().get(0)
+                    .afterCompletion(TransactionSynchronization.STATUS_COMMITTED);
+
+            verify(redisService).completeClaim(eq(email), eq(PURPOSE), anyString());
+            verify(redisService, never()).releaseClaim(eq(email), eq(PURPOSE), anyString());
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    @DisplayName("인증 토큰 claim은 DB 롤백 후 해제해 다시 사용할 수 있게 한다")
+    void claimVerified_Rollback_ReleasesClaim() {
+        String email = "test@example.com";
+        String token = "verification-token";
+        String tokenHash = "verification-token-hash";
+        given(tokenGenerator.hash(token)).willReturn(tokenHash);
+        given(redisService.claimVerified(eq(email), eq(PURPOSE), eq(tokenHash), anyString()))
+                .willReturn(true);
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            assertThat(emailVerificationService.claimVerifiedForTransaction(email, PURPOSE, token))
+                    .isTrue();
+
+            TransactionSynchronizationManager.getSynchronizations().get(0)
+                    .afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK);
+
+            verify(redisService).releaseClaim(eq(email), eq(PURPOSE), anyString());
+            verify(redisService, never()).completeClaim(eq(email), eq(PURPOSE), anyString());
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 }

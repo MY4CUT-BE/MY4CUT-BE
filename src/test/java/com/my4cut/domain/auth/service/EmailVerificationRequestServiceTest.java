@@ -14,6 +14,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,7 +39,11 @@ class EmailVerificationRequestServiceTest {
 
         requestService.sendSignupCode(email, CLIENT_ADDRESS);
 
-        verify(rateLimitService).checkSendAllowed(email, CLIENT_ADDRESS);
+        verify(rateLimitService).checkSendAllowed(
+                email,
+                CLIENT_ADDRESS,
+                EmailVerificationPurpose.SIGNUP
+        );
         verify(emailVerificationService).sendCode(email, EmailVerificationPurpose.SIGNUP);
     }
 
@@ -91,7 +96,11 @@ class EmailVerificationRequestServiceTest {
 
         requestService.sendPasswordResetCode(email, CLIENT_ADDRESS);
 
-        verify(rateLimitService).checkSendAllowed(email, CLIENT_ADDRESS);
+        verify(rateLimitService).checkSendAllowed(
+                email,
+                CLIENT_ADDRESS,
+                EmailVerificationPurpose.PASSWORD_RESET
+        );
         verify(emailVerificationService, never())
                 .sendCode(email, EmailVerificationPurpose.PASSWORD_RESET);
     }
@@ -120,6 +129,38 @@ class EmailVerificationRequestServiceTest {
 
         verify(emailVerificationService, never())
                 .sendCode(email, EmailVerificationPurpose.PASSWORD_RESET);
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 메일 발송 실패도 계정 존재 여부가 노출되지 않도록 성공 처리한다")
+    void sendPasswordResetCode_SendFailure_ReturnsSuccess() {
+        String email = "member@example.com";
+        User user = createUser(email, LoginType.EMAIL, UserStatus.ACTIVE);
+        given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
+        doThrow(new BusinessException(ErrorCode.AUTH_EMAIL_SEND_FAILED))
+                .when(emailVerificationService)
+                .sendCode(email, EmailVerificationPurpose.PASSWORD_RESET);
+
+        requestService.sendPasswordResetCode(email, CLIENT_ADDRESS);
+
+        verify(emailVerificationService)
+                .sendCode(email, EmailVerificationPurpose.PASSWORD_RESET);
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 인증 실패 응답은 코드 존재 여부와 무관하게 동일하다")
+    void verifyPasswordResetCode_NotFound_MapsToMismatch() {
+        String email = "unknown@example.com";
+        String code = "123456";
+        given(emailVerificationService.verifyCode(
+                email, code, EmailVerificationPurpose.PASSWORD_RESET
+        )).willThrow(new BusinessException(ErrorCode.AUTH_EMAIL_CODE_NOT_FOUND));
+
+        assertThatThrownBy(() ->
+                requestService.verifyPasswordResetCode(email, code, CLIENT_ADDRESS)
+        )
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_EMAIL_CODE_MISMATCH);
     }
 
     @Test

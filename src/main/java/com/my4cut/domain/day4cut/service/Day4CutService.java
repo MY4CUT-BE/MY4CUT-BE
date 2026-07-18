@@ -50,11 +50,6 @@ public class Day4CutService {
         // 이미지 검증
         validateImages(reqDto.images());
 
-        // 내용이 전달된 경우 검증
-        if (reqDto.content() != null) {
-            validateContent(reqDto.content());
-        }
-
         // 하루네컷 생성
         Day4Cut day4Cut = Day4Cut.builder()
                 .user(user)
@@ -101,9 +96,6 @@ public class Day4CutService {
 
         // 이미지 검증
         validateImages(reqDto.images());
-
-        // 내용 검증
-        validateContent(reqDto.content());
 
         // 하루네컷 정보 수정
         day4Cut.update(reqDto.content(), reqDto.emojiType());
@@ -167,15 +159,6 @@ public class Day4CutService {
 
         if (thumbnailCount != 1) {
             throw new Day4CutException(Day4CutErrorCode.DAY4CUT_INVALID_THUMBNAIL);
-        }
-    }
-
-    /**
-     * 내용을 검증한다.
-     */
-    private void validateContent(String content) {
-        if (content == null || content.isBlank()) {
-            throw new Day4CutException(Day4CutErrorCode.DAY4CUT_CONTENT_REQUIRED);
         }
     }
 

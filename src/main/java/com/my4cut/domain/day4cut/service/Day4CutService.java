@@ -174,7 +174,7 @@ public class Day4CutService {
      * 내용을 검증한다.
      */
     private void validateContent(String content) {
-        if (content == null || content.isBlank()) {
+        if (content == null && content.isBlank()) {
             throw new Day4CutException(Day4CutErrorCode.DAY4CUT_CONTENT_REQUIRED);
         }
     }

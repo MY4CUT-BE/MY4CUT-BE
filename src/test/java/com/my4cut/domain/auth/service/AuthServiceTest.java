@@ -1,8 +1,10 @@
 package com.my4cut.domain.auth.service;
 
 import com.my4cut.domain.auth.dto.req.AuthReqDTO;
+import com.my4cut.domain.auth.enums.EmailVerificationPurpose;
 import com.my4cut.domain.auth.repository.RefreshTokenRepository;
 import com.my4cut.domain.user.entity.User;
+import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.enums.LoginType;
 import com.my4cut.domain.user.enums.UserStatus;
 import com.my4cut.domain.user.repository.UserRepository;
@@ -23,11 +25,14 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
+
+    private static final String VERIFICATION_TOKEN = "verification-token";
 
     @Mock
     private UserRepository userRepository;
@@ -48,6 +53,82 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
+    @DisplayName("회원가입 성공: 회원가입 목적의 이메일 인증을 완료한 신규 사용자를 저장한다")
+    void signup_NewUser_Success() {
+        String email = "new@example.com";
+        UserReqDTO.SignUpDTO request = new UserReqDTO.SignUpDTO(
+                email, VERIFICATION_TOKEN, "Password1!", "tester"
+        );
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.SIGNUP, VERIFICATION_TOKEN
+        )).willReturn(true);
+        given(userRepository.findByEmail(email)).willReturn(Optional.empty());
+
+        authService.signup(request);
+
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패: 비밀번호 재설정 인증 상태는 회원가입에 사용할 수 없다")
+    void signup_PasswordResetVerification_Fail() {
+        String email = "new@example.com";
+        UserReqDTO.SignUpDTO request = new UserReqDTO.SignUpDTO(
+                email, VERIFICATION_TOKEN, "Password1!", "tester"
+        );
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.SIGNUP, VERIFICATION_TOKEN
+        )).willReturn(false);
+
+        assertThatThrownBy(() -> authService.signup(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_EMAIL_NOT_VERIFIED);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 실패: 발송 후 동일 이메일 계정이 생성됐으면 최종 단계에서 다시 차단한다")
+    void signup_DuplicateAfterVerification_Fail() {
+        String email = "member@example.com";
+        User existingUser = createEmailUser(email, passwordEncoder.encode("Password1!"), UserStatus.ACTIVE);
+        UserReqDTO.SignUpDTO request = new UserReqDTO.SignUpDTO(
+                email, VERIFICATION_TOKEN, "Password2!", "tester"
+        );
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.SIGNUP, VERIFICATION_TOKEN
+        )).willReturn(true);
+        given(userRepository.findByEmail(email)).willReturn(Optional.of(existingUser));
+
+        assertThatThrownBy(() -> authService.signup(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_DUPLICATE_EMAIL);
+
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("회원가입 성공: 탈퇴 계정은 재활성화하고 회원가입 인증 상태를 정리한다")
+    void signup_DeletedUser_Reactivates() {
+        String email = "deleted@example.com";
+        User deletedUser = createEmailUser(email, passwordEncoder.encode("OldPassword1!"), UserStatus.DELETED);
+        UserReqDTO.SignUpDTO request = new UserReqDTO.SignUpDTO(
+                email, VERIFICATION_TOKEN, "NewPassword1!", "new-name"
+        );
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.SIGNUP, VERIFICATION_TOKEN
+        )).willReturn(true);
+        given(userRepository.findByEmail(email)).willReturn(Optional.of(deletedUser));
+
+        authService.signup(request);
+
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
+        assertThat(deletedUser.getNickname()).isEqualTo("new-name");
+        verify(refreshTokenRepository).deleteByUser(deletedUser);
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
     @DisplayName("비밀번호 재설정 성공: 인증 완료 사용자의 비밀번호를 변경하고 리프레시 토큰을 삭제한다")
     void resetPassword_Success() {
         // Arrange
@@ -57,16 +138,17 @@ class AuthServiceTest {
 
         User user = createEmailUser(email, passwordEncoder.encode(oldPassword), UserStatus.ACTIVE);
 
-        given(emailVerificationService.isVerified(email)).willReturn(true);
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
+        )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
 
         // Act
-        authService.resetPassword(new AuthReqDTO.ResetPasswordReqDto(email, newPassword));
+        authService.resetPassword(new AuthReqDTO.ResetPasswordReqDto(email, VERIFICATION_TOKEN, newPassword));
 
         // Assert
         assertThat(passwordEncoder.matches(newPassword, user.getPassword())).isTrue();
         verify(refreshTokenRepository).deleteByUser(user);
-        verify(emailVerificationService).clearVerifiedAfterCommit(email);
     }
 
     @Test
@@ -74,9 +156,13 @@ class AuthServiceTest {
     void resetPassword_Fail_NotVerified() {
         // Arrange
         String email = "test@example.com";
-        AuthReqDTO.ResetPasswordReqDto request = new AuthReqDTO.ResetPasswordReqDto(email, "NewPassw0rd!");
+        AuthReqDTO.ResetPasswordReqDto request = new AuthReqDTO.ResetPasswordReqDto(
+                email, VERIFICATION_TOKEN, "NewPassw0rd!"
+        );
 
-        given(emailVerificationService.isVerified(email)).willReturn(false);
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
+        )).willReturn(false);
 
         // Act & Assert
         assertThatThrownBy(() -> authService.resetPassword(request))
@@ -91,9 +177,13 @@ class AuthServiceTest {
     void resetPassword_Fail_PolicyViolation() {
         // Arrange
         String email = "test@example.com";
-        AuthReqDTO.ResetPasswordReqDto request = new AuthReqDTO.ResetPasswordReqDto(email, "abcd1234");
+        AuthReqDTO.ResetPasswordReqDto request = new AuthReqDTO.ResetPasswordReqDto(
+                email, VERIFICATION_TOKEN, "abcd1234"
+        );
 
-        given(emailVerificationService.isVerified(email)).willReturn(true);
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
+        )).willReturn(true);
 
         // Act & Assert
         assertThatThrownBy(() -> authService.resetPassword(request))
@@ -108,9 +198,13 @@ class AuthServiceTest {
     void resetPassword_Fail_WhitespaceInPassword() {
         // Arrange
         String email = "test@example.com";
-        AuthReqDTO.ResetPasswordReqDto request = new AuthReqDTO.ResetPasswordReqDto(email, "New Passw0rd!");
+        AuthReqDTO.ResetPasswordReqDto request = new AuthReqDTO.ResetPasswordReqDto(
+                email, VERIFICATION_TOKEN, "New Passw0rd!"
+        );
 
-        given(emailVerificationService.isVerified(email)).willReturn(true);
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
+        )).willReturn(true);
 
         // Act & Assert
         assertThatThrownBy(() -> authService.resetPassword(request))
@@ -128,11 +222,15 @@ class AuthServiceTest {
         String samePassword = "SamePassw0rd!";
         User user = createEmailUser(email, passwordEncoder.encode(samePassword), UserStatus.ACTIVE);
 
-        given(emailVerificationService.isVerified(email)).willReturn(true);
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
+        )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
 
         // Act & Assert
-        assertThatThrownBy(() -> authService.resetPassword(new AuthReqDTO.ResetPasswordReqDto(email, samePassword)))
+        assertThatThrownBy(() -> authService.resetPassword(
+                new AuthReqDTO.ResetPasswordReqDto(email, VERIFICATION_TOKEN, samePassword)
+        ))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_PASSWORD_SAME_AS_OLD);
 
@@ -146,11 +244,15 @@ class AuthServiceTest {
         String email = "test@example.com";
         User user = createEmailUser(email, passwordEncoder.encode("OldPassw0rd!"), UserStatus.DELETED);
 
-        given(emailVerificationService.isVerified(email)).willReturn(true);
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
+        )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
 
         // Act & Assert
-        assertThatThrownBy(() -> authService.resetPassword(new AuthReqDTO.ResetPasswordReqDto(email, "NewPassw0rd!")))
+        assertThatThrownBy(() -> authService.resetPassword(
+                new AuthReqDTO.ResetPasswordReqDto(email, VERIFICATION_TOKEN, "NewPassw0rd!")
+        ))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_INVALID_CREDENTIALS);
     }
@@ -160,9 +262,13 @@ class AuthServiceTest {
     void resetPassword_Fail_UserNotFoundAfterVerified() {
         // Arrange
         String email = "test@example.com";
-        AuthReqDTO.ResetPasswordReqDto request = new AuthReqDTO.ResetPasswordReqDto(email, "NewPassw0rd!");
+        AuthReqDTO.ResetPasswordReqDto request = new AuthReqDTO.ResetPasswordReqDto(
+                email, VERIFICATION_TOKEN, "NewPassw0rd!"
+        );
 
-        given(emailVerificationService.isVerified(email)).willReturn(true);
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
+        )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.empty());
 
         // Act & Assert
@@ -181,11 +287,15 @@ class AuthServiceTest {
         User user = createEmailUser(email, passwordEncoder.encode("OldPassw0rd!"), UserStatus.ACTIVE);
         ReflectionTestUtils.setField(user, "loginType", LoginType.KAKAO);
 
-        given(emailVerificationService.isVerified(email)).willReturn(true);
+        given(emailVerificationService.claimVerifiedForTransaction(
+                email, EmailVerificationPurpose.PASSWORD_RESET, VERIFICATION_TOKEN
+        )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
 
         // Act & Assert
-        assertThatThrownBy(() -> authService.resetPassword(new AuthReqDTO.ResetPasswordReqDto(email, "NewPassw0rd!")))
+        assertThatThrownBy(() -> authService.resetPassword(
+                new AuthReqDTO.ResetPasswordReqDto(email, VERIFICATION_TOKEN, "NewPassw0rd!")
+        ))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_PASSWORD_RESET_NOT_ALLOWED);
     }

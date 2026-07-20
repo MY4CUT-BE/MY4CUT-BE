@@ -98,6 +98,10 @@ public class S3ImageStorageService implements ImageStorageService {
         }
 
         String key = extractKey(imagePathOrUrl);
+        if (key == null || key.isBlank()) {
+            log.warn("Failed to resolve S3 key for deletion: {}", imagePathOrUrl);
+            return false;
+        }
 
         try {
             s3Client.deleteObject(
@@ -141,10 +145,16 @@ public class S3ImageStorageService implements ImageStorageService {
                 URI uri = URI.create(imagePathOrUrl);
                 String path = uri.getPath();
                 if (path != null && path.startsWith("/")) {
-                    return path.substring(1);
+                    String key = path.substring(1);
+                    String pathStyleBucketPrefix = bucket + "/";
+                    if (key.startsWith(pathStyleBucketPrefix)) {
+                        return key.substring(pathStyleBucketPrefix.length());
+                    }
+                    return key;
                 }
             } catch (Exception e) {
                 log.warn("Failed to parse image URL: {}", imagePathOrUrl, e);
+                return null;
             }
         }
         return imagePathOrUrl;

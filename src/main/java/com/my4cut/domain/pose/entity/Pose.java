@@ -36,4 +36,17 @@ public class Pose extends BaseEntity {
         this.imageUrl = imageUrl;
         this.peopleCount = peopleCount;
     }
+
+    public void update(String title, Integer peopleCount) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (peopleCount != null) {
+            this.peopleCount = peopleCount;
+        }
+    }
+
+    public void updateImage(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }

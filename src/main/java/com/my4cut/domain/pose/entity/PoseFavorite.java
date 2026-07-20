@@ -7,13 +7,21 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 /**
  * 사용자가 즐겨찾기한 포즈 정보를 저장하는 엔티티이다.
  * 사용자와 포즈 간의 즐겨찾기 관계를 관리한다.
  */
 @Entity
-@Table(name = "pose_favorites")
+@Table(
+        name = "pose_favorites",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_pose_favorites_user_pose",
+                columnNames = {"user_id", "pose_id"}
+        )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PoseFavorite extends BaseEntity {
@@ -28,6 +36,7 @@ public class PoseFavorite extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pose_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Pose pose;
 
     @Builder

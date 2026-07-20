@@ -45,6 +45,9 @@ jwt:
   token:
     secretKey: ${JWT_SECRET_KEY}
 
+admin:
+  user-ids: ${ADMIN_USER_IDS:}
+
 cloud:
   aws:
     s3:

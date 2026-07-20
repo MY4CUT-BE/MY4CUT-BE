@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MY4CUT 포즈 관리</title>
+    <link rel="stylesheet" href="/admin-ui/admin.css">
+</head>
+<body>
+<main class="shell">
+    <section id="login-panel" class="panel login-panel">
+        <p class="eyebrow">MY4CUT ADMIN</p>
+        <h1>포즈 관리</h1>
+        <p class="muted">관리자 계정으로 로그인해 주세요.</p>
+        <form id="login-form" class="form-stack">
+            <label>
+                이메일
+                <input id="email" type="email" autocomplete="username" required>
+            </label>
+            <label>
+                비밀번호
+                <input id="password" type="password" autocomplete="current-password" required>
+            </label>
+            <button type="submit">로그인</button>
+        </form>
+        <p id="login-message" class="message" aria-live="polite"></p>
+    </section>
+
+    <section id="admin-panel" class="hidden">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">MY4CUT ADMIN</p>
+                <h1>포즈 관리</h1>
+            </div>
+            <button id="logout-button" class="button-secondary" type="button">로그아웃</button>
+        </header>
+
+        <p id="page-message" class="message" aria-live="polite"></p>
+
+        <section class="panel">
+            <h2>새 포즈 등록</h2>
+            <form id="create-form" class="form-grid">
+                <label>
+                    제목
+                    <input id="create-title" maxlength="255" required>
+                </label>
+                <label>
+                    인원수
+                    <input id="create-people-count" type="number" min="1" max="10" required>
+                </label>
+                <label class="file-field">
+                    이미지
+                    <input id="create-image" type="file" accept="image/jpeg,image/png,image/webp" required>
+                </label>
+                <button type="submit">등록</button>
+            </form>
+        </section>
+
+        <section class="list-section">
+            <div class="list-heading">
+                <div>
+                    <h2>포즈 목록</h2>
+                    <p id="pose-count" class="muted"></p>
+                </div>
+                <label class="filter">
+                    인원수
+                    <select id="people-filter">
+                        <option value="">전체</option>
+                        <option value="1">1명</option>
+                        <option value="2">2명</option>
+                        <option value="3">3명</option>
+                        <option value="4">4명</option>
+                        <option value="5">5명</option>
+                        <option value="6">6명</option>
+                        <option value="7">7명</option>
+                        <option value="8">8명</option>
+                        <option value="9">9명</option>
+                        <option value="10">10명</option>
+                    </select>
+                </label>
+            </div>
+            <div id="pose-list" class="pose-grid"></div>
+        </section>
+    </section>
+</main>
+
+<dialog id="edit-dialog">
+    <form id="edit-form" class="form-stack">
+        <div class="dialog-heading">
+            <h2>포즈 수정</h2>
+            <button id="close-dialog" class="icon-button" type="button" aria-label="닫기">×</button>
+        </div>
+        <input id="edit-id" type="hidden">
+        <label>
+            제목
+            <input id="edit-title" maxlength="255" required>
+        </label>
+        <label>
+            인원수
+            <input id="edit-people-count" type="number" min="1" max="10" required>
+        </label>
+        <label>
+            새 이미지 <span class="muted">(선택)</span>
+            <input id="edit-image" type="file" accept="image/jpeg,image/png,image/webp">
+        </label>
+        <button type="submit">저장</button>
+    </form>
+</dialog>
+
+<template id="pose-card-template">
+    <article class="pose-card">
+        <img class="pose-image" alt="">
+        <div class="pose-body">
+            <div>
+                <h3 class="pose-title"></h3>
+                <p class="pose-people muted"></p>
+            </div>
+            <div class="card-actions">
+                <button class="edit-button button-secondary" type="button">수정</button>
+                <button class="delete-button button-danger" type="button">삭제</button>
+            </div>
+        </div>
+    </article>
+</template>
+
+<script src="/admin-ui/admin.js" defer></script>
+</body>
+</html>

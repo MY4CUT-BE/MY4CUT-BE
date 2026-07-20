@@ -2,6 +2,8 @@ package com.my4cut.global.config;
 
 import com.my4cut.domain.auth.jwt.JwtAuthenticationFilter;
 import com.my4cut.domain.auth.jwt.JwtAuthenticationEntryPoint;
+import com.my4cut.global.security.AdminAuthorizationManager;
+import com.my4cut.global.security.RestAccessDeniedHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +22,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final AdminAuthorizationManager adminAuthorizationManager;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -31,6 +35,7 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/auth/password/reset").permitAll()
@@ -43,9 +48,14 @@ public class SecurityConfig {
                                 "/auth/signup",
                                 "/auth/refresh",
                                 "/auth/email/**",
+                                "/admin-ui",
+                                "/admin-ui/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
+
+                        // 관리자 전용 API
+                        .requestMatchers("/admin/**").access(adminAuthorizationManager)
 
                         // 인증 필요
                         .requestMatchers(

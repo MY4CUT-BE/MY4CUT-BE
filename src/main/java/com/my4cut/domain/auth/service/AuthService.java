@@ -13,6 +13,7 @@ import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.enums.LoginType;
 import com.my4cut.domain.user.enums.UserStatus;
 import com.my4cut.domain.user.repository.UserRepository;
+import com.my4cut.domain.workspace.service.WorkspaceService;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
+    private final WorkspaceService workspaceService;
 
     @Transactional(readOnly = true)
     public AuthResDTO.CheckEmailResDto checkEmailDuplicate(String email) {
@@ -93,7 +95,8 @@ public class AuthService {
                 .status(UserStatus.ACTIVE)
                 .build();
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        workspaceService.createDefaultWorkspace(savedUser);
     }
 
     // 로그인
@@ -292,7 +295,9 @@ public class AuthService {
                 .status(UserStatus.ACTIVE)
                 .build();
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        workspaceService.createDefaultWorkspace(savedUser);
+        return savedUser;
     }
 
 

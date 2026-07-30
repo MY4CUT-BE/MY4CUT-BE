@@ -1,6 +1,7 @@
 package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.image.service.ProfileImageUrlService;
+import com.my4cut.domain.media.repository.MediaCommentRepository;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
@@ -38,6 +39,7 @@ class WorkspaceMemberServiceTest {
     @Mock private WorkspaceRepository workspaceRepository;
     @Mock private UserRepository userRepository;
     @Mock private MediaFileRepository mediaFileRepository;
+    @Mock private MediaCommentRepository mediaCommentRepository;
     @Mock private WorkspaceInvitationRepository workspaceInvitationRepository;
     @Mock private ProfileImageUrlService profileImageUrlService;
 

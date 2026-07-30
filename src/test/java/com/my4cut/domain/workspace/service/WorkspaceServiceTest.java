@@ -13,6 +13,7 @@ import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -68,6 +69,8 @@ class WorkspaceServiceTest {
         );
 
         given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(workspaceRepository.save(any(Workspace.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
         given(workspaceMemberService.convertToInfoDto(any(Workspace.class))).willReturn(responseDto);
 
         WorkspaceInfoResponseDto result = workspaceService.createWorkspace(requestDto, userId);
@@ -75,6 +78,28 @@ class WorkspaceServiceTest {
         assertThat(result.name()).isEqualTo("new workspace");
         verify(workspaceRepository, times(1)).save(any(Workspace.class));
         verify(workspaceMemberService, times(1)).addMember(any(Workspace.class), any(User.class));
+    }
+
+    @Test
+    @DisplayName("create default workspace success")
+    void createDefaultWorkspace_Success() {
+        User owner = createUser(1L, "owner");
+        LocalDateTime beforeCreation = LocalDateTime.now();
+        given(workspaceRepository.save(any(Workspace.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        workspaceService.createDefaultWorkspace(owner);
+
+        LocalDateTime afterCreation = LocalDateTime.now();
+        ArgumentCaptor<Workspace> workspaceCaptor = ArgumentCaptor.forClass(Workspace.class);
+        verify(workspaceRepository).save(workspaceCaptor.capture());
+
+        Workspace workspace = workspaceCaptor.getValue();
+        assertThat(workspace.getName()).isEqualTo("포토리의 스페이스");
+        assertThat(workspace.getOwner()).isSameAs(owner);
+        assertThat(workspace.getExpiresAt())
+                .isBetween(beforeCreation.plusDays(7), afterCreation.plusDays(7));
+        verify(workspaceMemberService).addMember(workspace, owner);
     }
 
     @Test

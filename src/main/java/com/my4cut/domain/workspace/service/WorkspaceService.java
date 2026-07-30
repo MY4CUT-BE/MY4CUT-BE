@@ -28,6 +28,9 @@ import java.util.Objects;
 @Transactional(readOnly = true)
 public class WorkspaceService {
 
+        private static final String DEFAULT_WORKSPACE_NAME = "포토리의 스페이스";
+        private static final long WORKSPACE_EXPIRATION_DAYS = 7L;
+
         private final WorkspaceRepository workspaceRepository;
         private final WorkspaceMemberService workspaceMemberService;
         private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경
@@ -43,18 +46,19 @@ public class WorkspaceService {
                 User owner = userRepository.findById(ownerId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND)); // 공통 유저 예외 적용 필요
 
-                Workspace workspace = Workspace.builder()
-                                .name(dto.name())
-                                .owner(owner)
-                                .expiresAt(LocalDateTime.now().plusDays(7))
-                                .build();
-
-                workspaceRepository.save(workspace);
-
-                // 생성자를 첫 번째 멤버로 추가
-                workspaceMemberService.addMember(workspace, owner);
+                Workspace workspace = createWorkspaceWithOwner(dto.name(), owner);
 
                 return workspaceMemberService.convertToInfoDto(workspace);
+        }
+
+        /**
+         * 신규 가입자를 위한 기본 튜토리얼 워크스페이스를 생성합니다.
+         *
+         * @param owner 신규 가입 사용자
+         */
+        @Transactional
+        public void createDefaultWorkspace(User owner) {
+                createWorkspaceWithOwner(DEFAULT_WORKSPACE_NAME, owner);
         }
 
         /**
@@ -131,6 +135,18 @@ public class WorkspaceService {
                 if (workspace.isExpired()) {
                         throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_EXPIRED);
                 }
+        }
+
+        private Workspace createWorkspaceWithOwner(String name, User owner) {
+                Workspace workspace = Workspace.builder()
+                                .name(name)
+                                .owner(owner)
+                                .expiresAt(LocalDateTime.now().plusDays(WORKSPACE_EXPIRATION_DAYS))
+                                .build();
+
+                Workspace savedWorkspace = workspaceRepository.save(workspace);
+                workspaceMemberService.addMember(savedWorkspace, owner);
+                return savedWorkspace;
         }
 
 }

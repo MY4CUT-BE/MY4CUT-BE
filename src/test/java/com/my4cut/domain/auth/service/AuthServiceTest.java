@@ -1,6 +1,7 @@
 package com.my4cut.domain.auth.service;
 
 import com.my4cut.domain.auth.dto.req.AuthReqDTO;
+import com.my4cut.domain.auth.dto.res.AuthResDTO;
 import com.my4cut.domain.auth.enums.EmailVerificationPurpose;
 import com.my4cut.domain.auth.repository.RefreshTokenRepository;
 import com.my4cut.domain.user.entity.User;
@@ -8,6 +9,7 @@ import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.enums.LoginType;
 import com.my4cut.domain.user.enums.UserStatus;
 import com.my4cut.domain.user.repository.UserRepository;
+import com.my4cut.domain.workspace.service.WorkspaceService;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.response.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +50,9 @@ class AuthServiceTest {
     @Mock
     private EmailVerificationService emailVerificationService;
 
+    @Mock
+    private WorkspaceService workspaceService;
+
     @Spy
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -63,10 +70,13 @@ class AuthServiceTest {
                 email, EmailVerificationPurpose.SIGNUP, VERIFICATION_TOKEN
         )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.empty());
+        given(userRepository.save(any(User.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
 
         authService.signup(request);
 
         verify(userRepository).save(any(User.class));
+        verify(workspaceService).createDefaultWorkspace(any(User.class));
     }
 
     @Test
@@ -85,6 +95,7 @@ class AuthServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_EMAIL_NOT_VERIFIED);
 
         verify(userRepository, never()).save(any(User.class));
+        verify(workspaceService, never()).createDefaultWorkspace(any(User.class));
     }
 
     @Test
@@ -105,6 +116,7 @@ class AuthServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.AUTH_DUPLICATE_EMAIL);
 
         verify(userRepository, never()).save(any(User.class));
+        verify(workspaceService, never()).createDefaultWorkspace(any(User.class));
     }
 
     @Test
@@ -126,6 +138,50 @@ class AuthServiceTest {
         assertThat(deletedUser.getNickname()).isEqualTo("new-name");
         verify(refreshTokenRepository).deleteByUser(deletedUser);
         verify(userRepository, never()).save(any(User.class));
+        verify(workspaceService, never()).createDefaultWorkspace(any(User.class));
+    }
+
+    @Test
+    @DisplayName("카카오 최초 가입 성공: 신규 사용자에게 기본 워크스페이스를 생성한다")
+    void kakaoLogin_NewUser_CreatesDefaultWorkspace() {
+        String accessToken = "kakao-access-token";
+        String oauthId = "123456";
+        AuthService spyAuthService = spy(authService);
+        doReturn(new AuthResDTO.KakaoUserResDto(Long.valueOf(oauthId)))
+                .when(spyAuthService).getKakaoUser(accessToken);
+        given(userRepository.findByLoginTypeAndOauthId(LoginType.KAKAO, oauthId))
+                .willReturn(Optional.empty());
+        given(userRepository.save(any(User.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        spyAuthService.kakaoLogin(accessToken);
+
+        verify(userRepository).save(any(User.class));
+        verify(workspaceService).createDefaultWorkspace(any(User.class));
+    }
+
+    @Test
+    @DisplayName("카카오 기존 사용자 로그인 성공: 기본 워크스페이스를 추가로 생성하지 않는다")
+    void kakaoLogin_ExistingUser_DoesNotCreateDefaultWorkspace() {
+        String accessToken = "kakao-access-token";
+        String oauthId = "123456";
+        User existingUser = User.builder()
+                .loginType(LoginType.KAKAO)
+                .oauthId(oauthId)
+                .nickname("kakao-user")
+                .friendCode("ABC123")
+                .status(UserStatus.ACTIVE)
+                .build();
+        AuthService spyAuthService = spy(authService);
+        doReturn(new AuthResDTO.KakaoUserResDto(Long.valueOf(oauthId)))
+                .when(spyAuthService).getKakaoUser(accessToken);
+        given(userRepository.findByLoginTypeAndOauthId(LoginType.KAKAO, oauthId))
+                .willReturn(Optional.of(existingUser));
+
+        spyAuthService.kakaoLogin(accessToken);
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(workspaceService, never()).createDefaultWorkspace(any(User.class));
     }
 
     @Test

@@ -92,7 +92,8 @@ public class NotificationService {
                 NotificationType.FRIEND_REQUEST.name(),
                 notification.getId(),   // notificationId
                 friendRequestId,             // referenceId
-                null                         // workspaceId
+                null,                         // workspaceId
+                null                          //mediaId
         );
     }
 
@@ -117,6 +118,7 @@ public class NotificationService {
                 fromUser.getNickname() + "님이 친구 요청을 수락했습니다.",
                 NotificationType.FRIEND_ACCEPTED.name(),
                 notification.getId(),
+                null,
                 null,
                 null
         );
@@ -150,7 +152,39 @@ public class NotificationService {
                 NotificationType.WORKSPACE_INVITE.name(),
                 notification.getId(),   // notificationId
                 invitationId,                // referenceId
-                workspace.getId()            // workspaceId
+                workspace.getId(),            // workspaceId
+                null                          // mediaId
+        );
+    }
+
+    // 워크스페이스 초대 수락 알림 생성 + FCM 발송
+    @Transactional
+    public void sendWorkspaceAcceptedNotification(
+            User inviter,
+            User accepter,
+            Workspace workspace,
+            Long invitationId
+    ) {
+        Notification notification = Notification.builder()
+                .user(inviter)
+                .type(NotificationType.WORKSPACE_ACCEPTED)
+                .senderId(accepter.getId())
+                .workspaceId(workspace.getId())
+                .referenceId(invitationId)
+                .isRead(false)
+                .build();
+
+        notificationRepository.save(notification);
+
+        sendPushToUserTokens(
+                inviter,
+                "워크스페이스 초대 수락",
+                accepter.getNickname() + "님이 " + workspace.getName() + " 워크스페이스 초대를 수락했습니다.",
+                NotificationType.WORKSPACE_ACCEPTED.name(),
+                notification.getId(),   // notificationId
+                invitationId,           // referenceId
+                workspace.getId(),      // workspaceId
+                null                    // mediaId - 필요 없음
         );
     }
 
@@ -160,6 +194,7 @@ public class NotificationService {
             User owner,
             User commenter,
             Long workspaceId,
+            Long mediaId,
             Long commentId
     ) {
         Notification notification = Notification.builder()
@@ -180,7 +215,8 @@ public class NotificationService {
                 NotificationType.MEDIA_COMMENT.name(),
                 notification.getId(),
                 commentId,
-                workspaceId
+                workspaceId,
+                mediaId
         );
     }
 
@@ -210,7 +246,8 @@ public class NotificationService {
                 NotificationType.MEDIA_UPLOADED.name(),
                 notification.getId(),
                 mediaId,
-                workspaceId
+                workspaceId,
+                mediaId
         );
     }
 
@@ -344,7 +381,8 @@ public class NotificationService {
             String type,
             Long notificationId,
             Long referenceId,
-            Long workspaceId
+            Long workspaceId,
+            Long mediaId
     ) {
         if (!firebaseEnabled) {
             log.info("[FCM] 발송 생략 - Firebase disabled, userId={}", user.getId());
@@ -362,7 +400,8 @@ public class NotificationService {
                     type,
                     notificationId,
                     referenceId,
-                    workspaceId
+                    workspaceId,
+                    mediaId
             );
         }
     }

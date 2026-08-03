@@ -122,6 +122,14 @@ public class WorkspaceInvitationService {
 
         // 초대 수락 후에는 해당 초대 알림을 제거해 처리 완료 알림이 알림창에 남지 않게 한다.
         notificationService.deleteWorkspaceInviteNotification(invitation.getInvitee(), invitation.getId());
+
+        // 초대자에게 "수락됨" 알림 발송
+        notificationService.sendWorkspaceAcceptedNotification(
+                invitation.getInviter(),
+                invitation.getInvitee(),
+                invitation.getWorkspace(),
+                invitation.getId()
+        );
     }
 
     /**

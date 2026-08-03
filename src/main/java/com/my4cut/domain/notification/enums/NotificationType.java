@@ -8,6 +8,7 @@ public enum NotificationType {
     FRIEND_REQUEST,
     FRIEND_ACCEPTED,
     WORKSPACE_INVITE,
+    WORKSPACE_ACCEPTED,
     MEDIA_UPLOADED,
     MEDIA_COMMENT
 }

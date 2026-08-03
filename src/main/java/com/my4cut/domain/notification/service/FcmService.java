@@ -21,7 +21,8 @@ public class FcmService {
                          String type,
                          Long notificationId,
                          Long referenceId,
-                         Long workspaceId) {
+                         Long workspaceId,
+                         Long mediaId) {
         log.info(
                 "[FCM] 발송 로직 진입 - type={}, notificationId={}, referenceId={}, workspaceId={}, tokenExists={}",
                 type,
@@ -56,6 +57,8 @@ public class FcmService {
                         referenceId == null ? "" : String.valueOf(referenceId))
                 .putData("workspaceId",
                         workspaceId == null ? "" : String.valueOf(workspaceId))
+                .putData("mediaId",
+                        mediaId == null ? "" : String.valueOf(mediaId))
                 .build();
 
         log.info(

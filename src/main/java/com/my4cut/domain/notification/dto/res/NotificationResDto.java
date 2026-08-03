@@ -63,6 +63,8 @@ public record NotificationResDto() {
                         senderNickname + "님이 친구 요청을 수락했습니다.";
                 case WORKSPACE_INVITE ->
                         senderNickname + "님이 " + workspaceName + "스페이스에 초대했습니다.";
+                case WORKSPACE_ACCEPTED ->
+                        senderNickname + "님이 " + workspaceName + " 워크스페이스 초대를 수락했습니다.";
                 case MEDIA_COMMENT ->
                         senderNickname + "님이 " + workspaceName + "스페이스에 댓글을 남겼습니다.";
                 case MEDIA_UPLOADED ->

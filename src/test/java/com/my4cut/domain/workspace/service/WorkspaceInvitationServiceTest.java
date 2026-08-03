@@ -98,6 +98,7 @@ class WorkspaceInvitationServiceTest {
         // Arrange
         Long invitationId = 1L;
         Long userId = 2L;
+        User inviter = createUser(1L, "주인");
         User invitee = createUser(userId, "피초대자");
         Workspace workspace = createWorkspace(10L, "워크스페이스", createUser(1L, "주인"));
         WorkspaceInvitation invitation = WorkspaceInvitation.builder()
@@ -115,6 +116,10 @@ class WorkspaceInvitationServiceTest {
         // Assert
         assertThat(invitation.getStatus()).isEqualTo(InvitationStatus.ACCEPTED);
         verify(workspaceMemberService, times(1)).addMember(workspace, invitee);
+        verify(notificationService, times(1))
+                .deleteWorkspaceInviteNotification(invitee, invitation.getId());
+        verify(notificationService, times(1))
+                .sendWorkspaceAcceptedNotification(inviter, invitee, workspace, invitation.getId());
     }
 
     @Test

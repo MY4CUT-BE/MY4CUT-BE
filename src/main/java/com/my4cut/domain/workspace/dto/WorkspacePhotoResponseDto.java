@@ -26,6 +26,8 @@ public record WorkspacePhotoResponseDto(
 
         @Schema(description = "업로더 닉네임") String uploaderNickname,
 
-        @Schema(description = "업로더 프로필 이미지 URL") String uploaderProfileImageUrl
+        @Schema(description = "업로더 프로필 이미지 URL") String uploaderProfileImageUrl,
+
+        @Schema(description = "댓글 수", example = "3") long commentCount
 ) {
 }

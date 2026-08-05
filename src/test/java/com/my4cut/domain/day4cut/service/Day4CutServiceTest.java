@@ -2,6 +2,8 @@ package com.my4cut.domain.day4cut.service;
 
 import com.my4cut.domain.day4cut.dto.req.Day4CutReqDto;
 import com.my4cut.domain.day4cut.entity.Day4Cut;
+import com.my4cut.domain.day4cut.entity.Day4CutImage;
+import com.my4cut.domain.day4cut.dto.res.Day4CutResDto;
 import com.my4cut.domain.day4cut.repository.Day4CutRepository;
 import com.my4cut.domain.image.service.ImageStorageService;
 import com.my4cut.domain.media.entity.MediaFile;
@@ -78,5 +80,38 @@ class Day4CutServiceTest {
         assertThat(savedDay4Cut.getEmojiType()).isNull();
         assertThat(savedDay4Cut.getImages()).hasSize(1);
         assertThat(savedDay4Cut.getImages().get(0).getIsThumbnail()).isTrue();
+    }
+
+    @Test
+    @DisplayName("하루네컷 조회 응답은 사진 URL과 같은 순서의 미디어 ID를 포함한다")
+    void 하루네컷_조회_응답에_미디어_ID를_포함한다() {
+        Long userId = 1L;
+        LocalDate date = LocalDate.of(2026, 8, 5);
+        User user = org.mockito.Mockito.mock(User.class);
+        MediaFile first = org.mockito.Mockito.mock(MediaFile.class);
+        MediaFile second = org.mockito.Mockito.mock(MediaFile.class);
+        Day4Cut day4Cut = Day4Cut.builder().user(user).date(date).content("기록").build();
+        day4Cut.addImage(Day4CutImage.builder().mediaFile(first).isThumbnail(true).build());
+        day4Cut.addImage(Day4CutImage.builder().mediaFile(second).isThumbnail(false).build());
+
+        given(user.getStatus()).willReturn(UserStatus.ACTIVE);
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(day4CutRepository.findByUserAndDate(user, date)).willReturn(Optional.of(day4Cut));
+        given(first.getId()).willReturn(10L);
+        given(second.getId()).willReturn(20L);
+        given(first.getFileUrl()).willReturn("day4cut/first.jpg");
+        given(second.getFileUrl()).willReturn("day4cut/second.jpg");
+        given(imageStorageService.generatePresignedGetUrl("day4cut/first.jpg"))
+                .willReturn("https://example.com/first.jpg");
+        given(imageStorageService.generatePresignedGetUrl("day4cut/second.jpg"))
+                .willReturn("https://example.com/second.jpg");
+
+        Day4CutResDto.DetailResDto result = day4CutService.getDay4Cut(userId, date);
+
+        assertThat(result.viewUrls()).containsExactly(
+                "https://example.com/first.jpg",
+                "https://example.com/second.jpg"
+        );
+        assertThat(result.mediaIds()).containsExactly(10L, 20L);
     }
 }

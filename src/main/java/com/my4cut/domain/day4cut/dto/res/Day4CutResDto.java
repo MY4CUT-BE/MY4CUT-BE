@@ -28,6 +28,7 @@ public class Day4CutResDto {
     public record DetailResDto(
             Long id,
             List<String> viewUrls,
+            List<Long> mediaIds,
             String content,
             EmojiType emojiType
     ) {
@@ -35,6 +36,9 @@ public class Day4CutResDto {
             return new DetailResDto(
                     day4Cut.getId(),
                     viewUrls,
+                    day4Cut.getImages().stream()
+                            .map(image -> image.getMediaFile().getId())
+                            .toList(),
                     day4Cut.getContent(),
                     day4Cut.getEmojiType()
             );

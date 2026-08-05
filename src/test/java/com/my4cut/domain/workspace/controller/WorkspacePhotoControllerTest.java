@@ -68,7 +68,8 @@ class WorkspacePhotoControllerTest {
                 LocalDateTime.now(),
                 1L,
                 "닉네임",
-                "https://example.com/profile.jpg"
+                "https://example.com/profile.jpg",
+                0L
         );
         
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
@@ -101,7 +102,8 @@ class WorkspacePhotoControllerTest {
                 LocalDateTime.now(),
                 1L,
                 "닉네임",
-                "https://example.com/profile.jpg"
+                "https://example.com/profile.jpg",
+                3L
         );
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspacePhotoService.getPhotos(any(), any(), any())).willReturn(List.of(responseDto));
@@ -112,7 +114,8 @@ class WorkspacePhotoControllerTest {
                         .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").exists())
-                .andExpect(jsonPath("$.data[0].mediaId").value(10L));
+                .andExpect(jsonPath("$.data[0].mediaId").value(10L))
+                .andExpect(jsonPath("$.data[0].commentCount").value(3L));
     }
 
     @Test

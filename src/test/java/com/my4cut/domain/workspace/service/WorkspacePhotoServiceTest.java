@@ -27,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -100,6 +101,44 @@ class WorkspacePhotoServiceTest {
         assertThatThrownBy(() -> workspacePhotoService.uploadPhotos(workspaceId, requestDto, userId))
                 .isInstanceOf(WorkspaceException.class)
                 .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.WORKSPACE_EXPIRED);
+    }
+
+    @Test
+    @DisplayName("사진 목록 조회 성공: 사진별 댓글 수를 함께 반환한다")
+    void getPhotos_IncludesCommentCount() {
+        // Arrange
+        Long workspaceId = 1L;
+        Long photoId = 10L;
+        Long userId = 1L;
+        User user = createUser(userId, "유저");
+        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
+        MediaFile photo = createMediaFile(user, workspace);
+        ReflectionTestUtils.setField(photo, "id", photoId);
+        MediaCommentRepository.MediaCommentCount commentCount =
+                mock(MediaCommentRepository.MediaCommentCount.class);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId))
+                .willReturn(Optional.of(workspace));
+        given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user))
+                .willReturn(Optional.of(WorkspaceMember.builder().build()));
+        given(mediaFileRepository.findAllByWorkspaceIdAndMediaType(
+                eq(workspaceId), eq(MediaType.PHOTO), any(Sort.class)))
+                .willReturn(List.of(photo));
+        given(mediaCommentRepository.countByMediaFileIds(List.of(photoId)))
+                .willReturn(List.of(commentCount));
+        given(commentCount.getMediaId()).willReturn(photoId);
+        given(commentCount.getCommentCount()).willReturn(3L);
+
+        // Act
+        List<WorkspacePhotoResponseDto> result =
+                workspacePhotoService.getPhotos(workspaceId, "latest", userId);
+
+        // Assert
+        assertThat(result).singleElement()
+                .extracting(WorkspacePhotoResponseDto::commentCount)
+                .isEqualTo(3L);
+        verify(mediaCommentRepository).countByMediaFileIds(List.of(photoId));
     }
 
     @Test

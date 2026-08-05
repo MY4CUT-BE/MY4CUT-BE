@@ -9,6 +9,7 @@ import com.my4cut.domain.album.repository.AlbumRepository;
 import com.my4cut.domain.image.service.ImageStorageService;
 import com.my4cut.domain.image.service.ProfileImageUrlService;
 import com.my4cut.domain.media.entity.MediaFile;
+import com.my4cut.domain.media.repository.MediaCommentRepository;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +34,7 @@ public class AlbumService {
 
     private final AlbumRepository albumRepository;
     private final MediaFileRepository mediaFileRepository;
+    private final MediaCommentRepository mediaCommentRepository;
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
     private final ProfileImageUrlService profileImageUrlService;
@@ -76,8 +79,21 @@ public class AlbumService {
     public AlbumResponseDto.Detail getAlbumDetail(Long albumId, Long userId) {
         Album album = validateAlbumOwner(albumId, userId);
 
-        List<WorkspacePhotoResponseDto> mediaList = album.getMediaFiles().stream()
-                .map(this::mapToMediaDto)
+        List<MediaFile> mediaFiles = album.getMediaFiles();
+        Map<Long, Long> commentCounts = mediaFiles.isEmpty()
+                ? Map.of()
+                : mediaCommentRepository.countByMediaFileIds(
+                                mediaFiles.stream().map(MediaFile::getId).toList()
+                        ).stream()
+                        .collect(Collectors.toMap(
+                                MediaCommentRepository.MediaCommentCount::getMediaId,
+                                MediaCommentRepository.MediaCommentCount::getCommentCount
+                        ));
+        List<WorkspacePhotoResponseDto> mediaList = mediaFiles.stream()
+                .map(file -> mapToMediaDto(
+                        file,
+                        commentCounts.getOrDefault(file.getId(), 0L)
+                ))
                 .collect(Collectors.toList());
 
         return new AlbumResponseDto.Detail(
@@ -189,7 +205,7 @@ public class AlbumService {
         );
     }
 
-    private WorkspacePhotoResponseDto mapToMediaDto(MediaFile file) {
+    private WorkspacePhotoResponseDto mapToMediaDto(MediaFile file, long commentCount) {
         return new WorkspacePhotoResponseDto(
                 file.getId(),
                 file.getFileUrl(),
@@ -202,7 +218,8 @@ public class AlbumService {
                 file.getUploader().getNickname(),
                 profileImageUrlService.toResponseUrl(
                         file.getUploader().getProfileImageUrl()
-                )
+                ),
+                commentCount
         );
     }
 }

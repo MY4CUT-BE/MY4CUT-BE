@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -89,7 +90,8 @@ public class WorkspacePhotoService {
                         file.getUploader().getNickname(),
                         profileImageUrlService.toResponseUrl(
                                 file.getUploader().getProfileImageUrl()
-                        ) // 프로필 이미지 URL 추가
+                        ), // 프로필 이미지 URL 추가
+                        0L
                 ))
                 .collect(Collectors.toList());
     }
@@ -154,6 +156,15 @@ public class WorkspacePhotoService {
                 : Sort.by(Sort.Direction.DESC, "takenDate", "createdAt");
 
         List<MediaFile> photos = mediaFileRepository.findAllByWorkspaceIdAndMediaType(workspaceId, MediaType.PHOTO, sorting);
+        Map<Long, Long> commentCounts = photos.isEmpty()
+                ? Map.of()
+                : mediaCommentRepository.countByMediaFileIds(
+                                photos.stream().map(MediaFile::getId).toList()
+                        ).stream()
+                        .collect(Collectors.toMap(
+                                MediaCommentRepository.MediaCommentCount::getMediaId,
+                                MediaCommentRepository.MediaCommentCount::getCommentCount
+                        ));
 
         return photos.stream()
                 .map(photo -> new WorkspacePhotoResponseDto(
@@ -168,7 +179,8 @@ public class WorkspacePhotoService {
                         photo.getUploader().getNickname(),
                         profileImageUrlService.toResponseUrl(
                                 photo.getUploader().getProfileImageUrl()
-                        )
+                        ),
+                        commentCounts.getOrDefault(photo.getId(), 0L)
                 ))
                 .collect(Collectors.toList());
     }

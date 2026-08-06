@@ -1,21 +1,25 @@
 package com.my4cut.domain.notification.service;
 
-import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FcmService {
+
+    private final FcmClient fcmClient;
 
     @Value("${firebase.enabled:true}")
     private boolean firebaseEnabled;
 
-    public void sendPush(String fcmToken,
+    public FcmSendResult sendPush(String fcmToken,
                          String title,
                          String body,
                          String type,
@@ -34,12 +38,12 @@ public class FcmService {
 
         if (!firebaseEnabled) {
             log.info("[FCM] 발송 중단 - Firebase disabled");
-            return;
+            return FcmSendResult.SKIPPED;
         }
 
         if (fcmToken == null || fcmToken.isBlank()) {
             log.warn("[FCM] 발송 중단 - FCM token 없음");
-            return;
+            return FcmSendResult.SKIPPED;
         }
 
         Message message = Message.builder()
@@ -73,14 +77,22 @@ public class FcmService {
         );
 
         try {
-            String response = FirebaseMessaging.getInstance().send(message);
+            String response = fcmClient.send(message);
             log.info("[FCM] 발송 성공 - response={}", response);
+            return FcmSendResult.SUCCESS;
         } catch (FirebaseMessagingException e) {
             log.error("[FCM] 발송 실패 - errorCode={}, messagingErrorCode={}, message={}",
                     e.getErrorCode(),
                     e.getMessagingErrorCode(),
                     e.getMessage(),
                     e);
+            if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
+                return FcmSendResult.INVALID_TOKEN;
+            }
+            return FcmSendResult.FAILED;
+        } catch (RuntimeException e) {
+            log.error("[FCM] 예기치 않은 발송 실패 - message={}", e.getMessage(), e);
+            return FcmSendResult.FAILED;
         }
     }
 

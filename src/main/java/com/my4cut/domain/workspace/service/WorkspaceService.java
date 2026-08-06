@@ -30,7 +30,7 @@ import com.my4cut.domain.workspace.repository.WorkspaceInvitationRepository;
 @Transactional(readOnly = true)
 public class WorkspaceService {
 
-        private static final String DEFAULT_WORKSPACE_NAME = "포토리의 스페이스";
+        private static final String DEFAULT_WORKSPACE_NAME = "포토리의스페이스";
         private static final long WORKSPACE_EXPIRATION_DAYS = 7L;
 
         private final WorkspaceRepository workspaceRepository;
@@ -139,6 +139,7 @@ public class WorkspaceService {
         private Workspace createWorkspaceWithCreator(String name, User creator) {
                 Workspace workspace = Workspace.builder()
                                 .name(name)
+                                .creator(creator)
                                 .expiresAt(LocalDateTime.now().plusDays(WORKSPACE_EXPIRATION_DAYS))
                                 .build();
 

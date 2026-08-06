@@ -103,7 +103,8 @@ class WorkspaceServiceTest {
         verify(workspaceRepository).save(workspaceCaptor.capture());
 
         Workspace workspace = workspaceCaptor.getValue();
-        assertThat(workspace.getName()).isEqualTo("포토리의 스페이스");
+        assertThat(workspace.getName()).isEqualTo("포토리의스페이스");
+        assertThat(workspace.getName()).matches("^[가-힣a-zA-Z0-9]{1,15}$");
         assertThat(workspace.getExpiresAt())
                 .isBetween(beforeCreation.plusDays(7), afterCreation.plusDays(7));
         verify(workspaceMemberService).addMember(workspace, owner);

@@ -41,6 +41,7 @@ class WorkspaceRepositoryTest {
         // Active workspace
         Workspace active = Workspace.builder()
                 .name("Active Workspace")
+                .creator(owner)
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .build();
         em.persist(active);
@@ -48,6 +49,7 @@ class WorkspaceRepositoryTest {
         // Expired workspace
         Workspace expired = Workspace.builder()
                 .name("Expired Workspace")
+                .creator(owner)
                 .expiresAt(LocalDateTime.now().minusDays(1))
                 .build();
         em.persist(expired);
@@ -55,6 +57,7 @@ class WorkspaceRepositoryTest {
         // Deleted workspace
         Workspace deleted = Workspace.builder()
                 .name("Deleted Workspace")
+                .creator(owner)
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .build();
         deleted.setDeletedAt(LocalDateTime.now());

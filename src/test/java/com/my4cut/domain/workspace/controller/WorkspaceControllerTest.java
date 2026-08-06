@@ -9,6 +9,8 @@ import com.my4cut.domain.workspace.service.WorkspaceService;
 import com.my4cut.global.config.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -83,18 +85,34 @@ class WorkspaceControllerTest {
                 .andExpect(jsonPath("$.data.ownerId").doesNotExist());
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = {"", " ", "스페이스 이름", "스페이스!", "1234567890123456"})
     @WithMockUser
-    @DisplayName("워크스페이스 생성 API는 허용되지 않은 이름을 거절한다")
-    void createWorkspace_RejectsInvalidName() throws Exception {
+    @DisplayName("워크스페이스 생성 API는 빈 값, 공백, 특수문자, 16자 이상 이름을 거절한다")
+    void createWorkspace_RejectsInvalidName(String invalidName) throws Exception {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
 
         mockMvc.perform(post("/workspaces")
                         .with(csrf())
                         .with(authentication(auth))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new WorkspaceCreateRequestDto("스페이스!"))))
+                        .content(objectMapper.writeValueAsString(new WorkspaceCreateRequestDto(invalidName))))
                 .andExpect(status().isBadRequest());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"한글이름", "EnglishName", "123456789012345", "한글English123"})
+    @WithMockUser
+    @DisplayName("워크스페이스 생성 API는 한글, 영문, 숫자와 15자 경계를 허용한다")
+    void createWorkspace_AcceptsValidName(String validName) throws Exception {
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
+
+        mockMvc.perform(post("/workspaces")
+                        .with(csrf())
+                        .with(authentication(auth))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceCreateRequestDto(validName))))
+                .andExpect(status().isOk());
     }
 
     @Test

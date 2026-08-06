@@ -8,6 +8,7 @@ import com.my4cut.domain.media.enums.MediaType;
 import com.my4cut.domain.media.repository.MediaCommentRepository;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.media.service.MediaFileLifecycleService;
+import com.my4cut.domain.notification.service.NotificationService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspacePhotoCommentRequestDto;
@@ -42,6 +43,7 @@ public class WorkspacePhotoService {
     private final ImageStorageService imageStorageService;
     private final MediaFileLifecycleService mediaFileLifecycleService;
     private final ProfileImageUrlService profileImageUrlService;
+    private final NotificationService notificationService;
 
     @Transactional
     public List<WorkspacePhotoResponseDto> uploadPhotos(
@@ -75,6 +77,22 @@ public class WorkspacePhotoService {
 
             mediaFile.assignToWorkspace(workspace);
             updatedMediaFiles.add(mediaFile);
+        }
+
+        List<User> notificationTargets = workspaceMemberRepository.findAllByWorkspaceId(workspaceId).stream()
+                .map(member -> member.getUser())
+                .filter(member -> !member.getId().equals(userId))
+                .toList();
+
+        for (MediaFile mediaFile : updatedMediaFiles) {
+            for (User target : notificationTargets) {
+                notificationService.sendMediaUploadedNotification(
+                        target,
+                        mediaFile.getUploader(),
+                        workspaceId,
+                        mediaFile.getId()
+                );
+            }
         }
 
         return updatedMediaFiles.stream()
@@ -244,7 +262,18 @@ public class WorkspacePhotoService {
                 .content(dto.content())
                 .build();
 
-        mediaCommentRepository.save(comment);
+        MediaComment savedComment = mediaCommentRepository.save(comment);
+
+        User photoOwner = mediaFile.getUploader();
+        if (!photoOwner.getId().equals(userId)) {
+            notificationService.sendMediaCommentNotification(
+                    photoOwner,
+                    user,
+                    workspaceId,
+                    mediaFile.getId(),
+                    savedComment.getId()
+            );
+        }
     }
 
     private Workspace validateMembership(Long workspaceId, Long userId) {

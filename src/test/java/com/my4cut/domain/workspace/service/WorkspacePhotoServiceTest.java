@@ -10,6 +10,7 @@ import com.my4cut.domain.media.enums.MediaType;
 import com.my4cut.domain.media.repository.MediaCommentRepository;
 import com.my4cut.domain.media.repository.MediaFileRepository;
 import com.my4cut.domain.media.service.MediaFileLifecycleService;
+import com.my4cut.domain.notification.service.NotificationService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import com.my4cut.domain.workspace.dto.WorkspacePhotoCommentRequestDto;
@@ -51,6 +52,7 @@ class WorkspacePhotoServiceTest {
     @Mock private ImageStorageService imageStorageService;
     @Mock private MediaFileLifecycleService mediaFileLifecycleService;
     @Mock private ProfileImageUrlService profileImageUrlService;
+    @Mock private NotificationService notificationService;
 
     @InjectMocks
     private WorkspacePhotoService workspacePhotoService;
@@ -81,6 +83,39 @@ class WorkspacePhotoServiceTest {
         // Assert
         assertThat(result).hasSize(1);
         assertThat(mediaFile.getWorkspace()).isEqualTo(workspace);
+    }
+
+    @Test
+    @DisplayName("사진 업로드 성공: 업로더를 제외한 워크스페이스 멤버에게 알림을 발송한다")
+    void uploadPhotos_NotifiesMembersExceptUploader() {
+        Long workspaceId = 1L;
+        Long uploaderId = 1L;
+        Long mediaId = 10L;
+        User uploader = createUser(uploaderId, "업로더");
+        User member = createUser(2L, "멤버");
+        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", uploader);
+        MediaFile mediaFile = createMediaFile(uploader, null);
+        ReflectionTestUtils.setField(mediaFile, "id", mediaId);
+
+        given(userRepository.findById(uploaderId)).willReturn(Optional.of(uploader));
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, uploader))
+                .willReturn(Optional.of(WorkspaceMember.builder().workspace(workspace).user(uploader).build()));
+        given(workspaceMemberRepository.findAllByWorkspaceId(workspaceId)).willReturn(List.of(
+                WorkspaceMember.builder().workspace(workspace).user(uploader).build(),
+                WorkspaceMember.builder().workspace(workspace).user(member).build()
+        ));
+        given(mediaFileRepository.findById(mediaId)).willReturn(Optional.of(mediaFile));
+
+        workspacePhotoService.uploadPhotos(
+                workspaceId,
+                new WorkspacePhotoUploadRequestDto(List.of(mediaId)),
+                uploaderId
+        );
+
+        verify(notificationService).sendMediaUploadedNotification(member, uploader, workspaceId, mediaId);
+        verify(notificationService, never())
+                .sendMediaUploadedNotification(uploader, uploader, workspaceId, mediaId);
     }
 
     @Test
@@ -333,6 +368,67 @@ class WorkspacePhotoServiceTest {
 
         // Assert
         verify(mediaCommentRepository, times(1)).save(any(MediaComment.class));
+    }
+
+    @Test
+    @DisplayName("댓글 등록 성공: 사진 소유자에게 알림을 발송한다")
+    void createComment_NotifiesPhotoOwner() {
+        Long workspaceId = 1L;
+        Long photoId = 10L;
+        Long commenterId = 2L;
+        User owner = createUser(1L, "소유자");
+        User commenter = createUser(commenterId, "댓글작성자");
+        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", owner);
+        MediaFile photo = createMediaFile(owner, workspace);
+        ReflectionTestUtils.setField(photo, "id", photoId);
+
+        given(userRepository.findById(commenterId)).willReturn(Optional.of(commenter));
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, commenter))
+                .willReturn(Optional.of(WorkspaceMember.builder().workspace(workspace).user(commenter).build()));
+        given(mediaFileRepository.findById(photoId)).willReturn(Optional.of(photo));
+        given(mediaCommentRepository.save(any(MediaComment.class))).willAnswer(invocation -> {
+            MediaComment saved = invocation.getArgument(0);
+            ReflectionTestUtils.setField(saved, "id", 100L);
+            return saved;
+        });
+
+        workspacePhotoService.createComment(
+                workspaceId,
+                photoId,
+                new WorkspacePhotoCommentRequestDto("댓글 내용"),
+                commenterId
+        );
+
+        verify(notificationService)
+                .sendMediaCommentNotification(owner, commenter, workspaceId, photoId, 100L);
+    }
+
+    @Test
+    @DisplayName("댓글 등록 성공: 자신의 사진에 댓글을 달면 알림을 발송하지 않는다")
+    void createComment_DoesNotNotifySelf() {
+        Long workspaceId = 1L;
+        Long photoId = 10L;
+        Long userId = 1L;
+        User user = createUser(userId, "소유자");
+        Workspace workspace = createWorkspace(workspaceId, "워크스페이스", user);
+        MediaFile photo = createMediaFile(user, workspace);
+        ReflectionTestUtils.setField(photo, "id", photoId);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, user))
+                .willReturn(Optional.of(WorkspaceMember.builder().workspace(workspace).user(user).build()));
+        given(mediaFileRepository.findById(photoId)).willReturn(Optional.of(photo));
+
+        workspacePhotoService.createComment(
+                workspaceId,
+                photoId,
+                new WorkspacePhotoCommentRequestDto("댓글 내용"),
+                userId
+        );
+
+        verifyNoInteractions(notificationService);
     }
 
     @Test

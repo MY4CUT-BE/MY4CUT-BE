@@ -61,6 +61,10 @@ resend:
 mail:
   from: ${MAIL_FROM}
 
+firebase:
+  enabled: ${FIREBASE_ENABLED:false}
+  config-path: ${FIREBASE_CONFIG_PATH:}
+
 email-verification:
   rate-limit:
     send-client:

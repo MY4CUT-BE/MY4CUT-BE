@@ -7,6 +7,7 @@ import com.my4cut.global.response.ApiResponse;
 import com.my4cut.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,7 +32,7 @@ public class NotificationController {
     @PostMapping("/token")
     public ApiResponse<NotificationResDto.RegisterTokenResDto> registerToken(
             @AuthenticationPrincipal Long userId,
-            @RequestBody NotificationReqDto.RegisterTokenDto request
+            @Valid @RequestBody NotificationReqDto.RegisterTokenDto request
     ) {
         return ApiResponse.onSuccess(
                 SuccessCode.OK,

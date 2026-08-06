@@ -100,11 +100,11 @@ class WorkspaceInvitationServiceTest {
         Long userId = 2L;
         User inviter = createUser(1L, "주인");
         User invitee = createUser(userId, "피초대자");
-        Workspace workspace = createWorkspace(10L, "워크스페이스", createUser(1L, "주인"));
+        Workspace workspace = createWorkspace(10L, "워크스페이스", inviter);
         WorkspaceInvitation invitation = WorkspaceInvitation.builder()
                 .workspace(workspace)
                 .invitee(invitee)
-                .inviter(createUser(1L, "주인"))
+                .inviter(inviter)
                 .build();
         ReflectionTestUtils.setField(invitation, "status", InvitationStatus.PENDING);
 

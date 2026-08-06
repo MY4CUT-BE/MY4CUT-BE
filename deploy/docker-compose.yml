@@ -14,7 +14,10 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}
-      FIREBASE_ENABLED: ${FIREBASE_ENABLED:-false}
+      FIREBASE_ENABLED: ${FIREBASE_ENABLED:-true}
+      FIREBASE_CONFIG_PATH: /run/secrets/firebase-service-account.json
+    volumes:
+      - ${FIREBASE_CONFIG_FILE:-./secrets/firebase-service-account.json}:/run/secrets/firebase-service-account.json:ro
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
@@ -60,4 +63,3 @@ services:
 volumes:
   mysql_data:
   redis_data:
-

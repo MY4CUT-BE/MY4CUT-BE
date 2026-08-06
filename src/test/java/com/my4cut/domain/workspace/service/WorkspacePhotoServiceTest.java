@@ -341,7 +341,7 @@ class WorkspacePhotoServiceTest {
     }
 
     private Workspace createWorkspace(Long id, String name, User owner) {
-        Workspace workspace = Workspace.builder().name(name).owner(owner).build();
+        Workspace workspace = Workspace.builder().name(name).build();
         ReflectionTestUtils.setField(workspace, "id", id);
         return workspace;
     }

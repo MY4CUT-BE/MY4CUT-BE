@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
 import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
+import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
 import com.my4cut.domain.workspace.service.WorkspaceService;
 import com.my4cut.global.config.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
@@ -52,11 +53,10 @@ class WorkspaceControllerTest {
     @DisplayName("워크스페이스 생성 API 테스트")
     void createWorkspace_Test() throws Exception {
         // Arrange
-        WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("새 워크스페이스");
+        WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("새스페이스");
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
                 1L,
-                "새 워크스페이스",
-                1L,
+                "새스페이스",
                 LocalDateTime.now(),
                 LocalDateTime.now(),
                 false,
@@ -64,7 +64,6 @@ class WorkspaceControllerTest {
                 List.of(1L),
                 List.of(),
                 List.of(),
-                null,
                 null,
                 null,
                 null);
@@ -80,7 +79,36 @@ class WorkspaceControllerTest {
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").exists())
-                .andExpect(jsonPath("$.data.name").value("새 워크스페이스"));
+                .andExpect(jsonPath("$.data.name").value("새스페이스"))
+                .andExpect(jsonPath("$.data.ownerId").doesNotExist());
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("워크스페이스 생성 API는 허용되지 않은 이름을 거절한다")
+    void createWorkspace_RejectsInvalidName() throws Exception {
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
+
+        mockMvc.perform(post("/workspaces")
+                        .with(csrf())
+                        .with(authentication(auth))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceCreateRequestDto("스페이스!"))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser
+    @DisplayName("워크스페이스 수정 API는 15자를 초과하는 이름을 거절한다")
+    void updateWorkspace_RejectsTooLongName() throws Exception {
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
+
+        mockMvc.perform(patch("/workspaces/{workspaceId}", 1L)
+                        .with(csrf())
+                        .with(authentication(auth))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new WorkspaceUpdateRequestDto("1234567890123456"))))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -91,7 +119,6 @@ class WorkspaceControllerTest {
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
                 1L,
                 "내 워크스페이스",
-                1L,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
                 false,
@@ -99,7 +126,7 @@ class WorkspaceControllerTest {
                 List.of(1L),
                 List.of(),
                 List.of(2L),
-                "https://example.com/profile.png",
+                null,
                 "PHOTO",
                 LocalDateTime.now().minusMinutes(5));
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
@@ -113,7 +140,7 @@ class WorkspaceControllerTest {
                 .andExpect(jsonPath("$.data[0].name").value("내 워크스페이스"))
                 .andExpect(jsonPath("$.data[0].memberIds[0]").value(1L))
                 .andExpect(jsonPath("$.data[0].pendingInvitationUserIds[0]").value(2L))
-                .andExpect(jsonPath("$.data[0].alreadyInvitedFriendIds[0]").value(2L));
+                .andExpect(jsonPath("$.data[0].alreadyInvitedFriendIds[0]").value(1L));
     }
 
     @Test
@@ -123,7 +150,6 @@ class WorkspaceControllerTest {
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
                 1L,
                 "조회용 워크스페이스",
-                1L,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
                 false,
@@ -134,7 +160,7 @@ class WorkspaceControllerTest {
                         "https://example.com/member.png"
                 ),
                 List.of(2L),
-                "https://example.com/member.png",
+                null,
                 "COMMENT",
                 LocalDateTime.now().minusHours(1));
 
@@ -149,15 +175,16 @@ class WorkspaceControllerTest {
                 .andExpect(jsonPath("$.data.memberIds[0]").value(1L))
                 .andExpect(jsonPath("$.data.memberIds[1]").value(3L))
                 .andExpect(jsonPath("$.data.pendingInvitationUserIds[0]").value(2L))
-                .andExpect(jsonPath("$.data.alreadyInvitedFriendIds[0]").value(3L))
-                .andExpect(jsonPath("$.data.alreadyInvitedFriendIds[1]").value(2L));
+                .andExpect(jsonPath("$.data.alreadyInvitedFriendIds[0]").value(1L))
+                .andExpect(jsonPath("$.data.alreadyInvitedFriendIds[1]").value(3L))
+                .andExpect(jsonPath("$.data.alreadyInvitedFriendIds[2]").value(2L));
     }
 
     @Test
     @WithMockUser
     @DisplayName("워크스페이스 삭제 API 테스트")
     void deleteWorkspace_Test() throws Exception {
-        WorkspaceDeleteResponseDto responseDto = new WorkspaceDeleteResponseDto(1L);
+        WorkspaceDeleteResponseDto responseDto = new WorkspaceDeleteResponseDto();
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceService.deleteWorkspace(anyLong(), nullable(Long.class))).willReturn(responseDto);
 
@@ -166,6 +193,6 @@ class WorkspaceControllerTest {
                         .with(authentication(auth)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").exists())
-                .andExpect(jsonPath("$.data.ownerId").value(1L));
+                .andExpect(jsonPath("$.data").exists());
     }
 }

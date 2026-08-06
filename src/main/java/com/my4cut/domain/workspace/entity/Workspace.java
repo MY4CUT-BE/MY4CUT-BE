@@ -1,7 +1,6 @@
 package com.my4cut.domain.workspace.entity;
 
 import com.my4cut.domain.common.BaseEntity;
-import com.my4cut.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,10 +24,6 @@ public class Workspace extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
-
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
@@ -36,9 +31,8 @@ public class Workspace extends BaseEntity {
     private LocalDateTime deletedAt;
 
     @Builder
-    public Workspace(String name, User owner, LocalDateTime expiresAt) {
+    public Workspace(String name, LocalDateTime expiresAt) {
         this.name = name;
-        this.owner = owner;
         this.expiresAt = expiresAt;
     }
 

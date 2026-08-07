@@ -98,14 +98,12 @@ class WorkspaceMemberServiceTest {
 
         Workspace activeWorkspace = Workspace.builder()
                 .name("활동 중")
-                .owner(user)
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .build();
         ReflectionTestUtils.setField(activeWorkspace, "id", 10L);
 
         Workspace expiredWorkspace = Workspace.builder()
                 .name("만료됨")
-                .owner(user)
                 .expiresAt(LocalDateTime.now().minusDays(1))
                 .build();
         ReflectionTestUtils.setField(expiredWorkspace, "id", 20L);
@@ -134,7 +132,7 @@ class WorkspaceMemberServiceTest {
         // Assert
         assertThat(result).hasSize(1);
         assertThat(result.get(0).pendingInvitationUserIds()).containsExactly(2L);
-        assertThat(result.get(0).alreadyInvitedFriendIds()).containsExactly(2L);
+        assertThat(result.get(0).alreadyInvitedFriendIds()).containsExactly(1L, 2L);
         assertThat(result.get(0).name()).isEqualTo("활동 중");
     }
 
@@ -165,8 +163,8 @@ class WorkspaceMemberServiceTest {
         return user;
     }
 
-    private Workspace createWorkspace(Long id, String name, User owner) {
-        Workspace workspace = Workspace.builder().name(name).owner(owner).build();
+    private Workspace createWorkspace(Long id, String name, User ignoredCreator) {
+        Workspace workspace = Workspace.builder().name(name).build();
         ReflectionTestUtils.setField(workspace, "id", id);
         return workspace;
     }

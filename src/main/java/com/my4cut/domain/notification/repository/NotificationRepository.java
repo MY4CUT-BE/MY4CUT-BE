@@ -19,6 +19,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     void deleteAllByUser(User user);
     List<Notification> findAllByIdInAndUser(List<Long> ids, User user);
     void deleteByUserAndTypeAndReferenceId(User user, NotificationType type, Long referenceId);
+    void deleteAllByWorkspaceIdAndType(Long workspaceId, NotificationType type);
 
     /*
      * 친구 요청/스페이스 초대 알림은 원본 요청이 아직 PENDING일 때만 노출한다.

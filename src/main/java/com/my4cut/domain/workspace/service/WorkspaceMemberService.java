@@ -74,10 +74,6 @@ public class WorkspaceMemberService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND));
 
-        if (workspace.getOwner().getId().equals(userId)) {
-            throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
-        }
-
         WorkspaceMember member = workspaceMemberRepository.findByWorkspaceAndUser(workspace, user)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.MEMBER_NOT_FOUND));
 
@@ -150,7 +146,6 @@ public class WorkspaceMemberService {
         return new WorkspaceInfoResponseDto(
                 workspace.getId(),
                 workspace.getName(),
-                workspace.getOwner().getId(),
                 workspace.getExpiresAt(),
                 workspace.getCreatedAt(),
                 mediaFileRepository.existsByWorkspaceIdAndIsFinalTrue(workspace.getId()),

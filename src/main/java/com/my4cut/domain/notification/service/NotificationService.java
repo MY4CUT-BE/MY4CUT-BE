@@ -348,6 +348,14 @@ public class NotificationService {
         );
     }
 
+    @Transactional
+    public void deleteWorkspaceInviteNotifications(Long workspaceId) {
+        notificationRepository.deleteAllByWorkspaceIdAndType(
+                workspaceId,
+                NotificationType.WORKSPACE_INVITE
+        );
+    }
+
     // 알림 전체 삭제
     @Transactional
     public void deleteAllNotifications(Long userId) {

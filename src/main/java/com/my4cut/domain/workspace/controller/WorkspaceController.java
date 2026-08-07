@@ -11,6 +11,7 @@ import com.my4cut.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ public class WorkspaceController {
     @Operation(summary = "워크스페이스 생성", description = "새로운 워크스페이스를 생성합니다.")
     @PostMapping
     public ApiResponse<WorkspaceInfoResponseDto> createWorkspace(
-            @RequestBody WorkspaceCreateRequestDto dto,
+            @Valid @RequestBody WorkspaceCreateRequestDto dto,
             @AuthenticationPrincipal Long userId) {
         WorkspaceInfoResponseDto result = workspaceService.createWorkspace(dto, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_CREATED, result);
@@ -55,7 +56,7 @@ public class WorkspaceController {
     @PatchMapping("/{workspaceId}")
     public ApiResponse<WorkspaceInfoResponseDto> updateWorkspace(
             @PathVariable Long workspaceId,
-            @RequestBody WorkspaceUpdateRequestDto dto,
+            @Valid @RequestBody WorkspaceUpdateRequestDto dto,
             @AuthenticationPrincipal Long userId) {
         WorkspaceInfoResponseDto result = workspaceService.updateWorkspace(workspaceId, dto, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_MODIFIED, result);

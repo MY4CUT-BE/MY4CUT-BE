@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
+import com.my4cut.domain.notification.service.NotificationService;
+import com.my4cut.domain.workspace.enums.InvitationStatus;
+import com.my4cut.domain.workspace.repository.WorkspaceInvitationRepository;
 
 /**
  * 워크스페이스 관련 비즈니스 로직을 처리하는 서비스 클래스.
@@ -28,25 +30,27 @@ import java.util.Objects;
 @Transactional(readOnly = true)
 public class WorkspaceService {
 
-        private static final String DEFAULT_WORKSPACE_NAME = "포토리의 스페이스";
+        private static final String DEFAULT_WORKSPACE_NAME = "포토리의스페이스";
         private static final long WORKSPACE_EXPIRATION_DAYS = 7L;
 
         private final WorkspaceRepository workspaceRepository;
         private final WorkspaceMemberService workspaceMemberService;
         private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경
+        private final WorkspaceInvitationRepository workspaceInvitationRepository;
+        private final NotificationService notificationService;
 
         /**
          * 새로운 워크스페이스를 생성하고 생성자를 멤버로 등록합니다.
          * @param dto 워크스페이스 생성 정보 DTO
-         * @param ownerId 소유자(생성자) ID
+         * @param creatorId 생성자 ID
          * @return 생성된 워크스페이스 정보 DTO
          */
         @Transactional
-        public WorkspaceInfoResponseDto createWorkspace(WorkspaceCreateRequestDto dto, Long ownerId) {
-                User owner = userRepository.findById(ownerId)
+        public WorkspaceInfoResponseDto createWorkspace(WorkspaceCreateRequestDto dto, Long creatorId) {
+                User creator = userRepository.findById(creatorId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND)); // 공통 유저 예외 적용 필요
 
-                Workspace workspace = createWorkspaceWithOwner(dto.name(), owner);
+                Workspace workspace = createWorkspaceWithCreator(dto.name(), creator);
 
                 return workspaceMemberService.convertToInfoDto(workspace);
         }
@@ -54,15 +58,15 @@ public class WorkspaceService {
         /**
          * 신규 가입자를 위한 기본 튜토리얼 워크스페이스를 생성합니다.
          *
-         * @param owner 신규 가입 사용자
+         * @param creator 신규 가입 사용자
          */
         @Transactional
-        public void createDefaultWorkspace(User owner) {
-                createWorkspaceWithOwner(DEFAULT_WORKSPACE_NAME, owner);
+        public void createDefaultWorkspace(User creator) {
+                createWorkspaceWithCreator(DEFAULT_WORKSPACE_NAME, creator);
         }
 
         /**
-         * 워크스페이스 정보를 수정합니다. (소유자만 가능)
+         * 워크스페이스 정보를 수정합니다. (멤버만 가능)
          * @param workspaceId 워크스페이스 ID
          * @param dto 수정할 워크스페이스 정보 DTO
          * @param userId 유저 ID
@@ -75,9 +79,7 @@ public class WorkspaceService {
 
                 checkWorkspaceExpiration(workspace);
 
-                if (!workspace.getOwner().getId().equals(userId)) {
-                        throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
-                }
+                validateMembership(workspaceId, userId);
 
                 workspace.setName(dto.name());
                 return workspaceMemberService.convertToInfoDto(workspace);
@@ -94,16 +96,13 @@ public class WorkspaceService {
 
                 checkWorkspaceExpiration(workspace);
 
-                if (!Objects.equals(workspace.getOwner().getId(), userId)
-                                && !workspaceMemberService.isWorkspaceMember(workspaceId, userId)) {
-                        throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_MEMBER);
-                }
+                validateMembership(workspaceId, userId);
 
                 return workspaceMemberService.convertToInfoDto(workspace);
         }
 
         /**
-         * 워크스페이스를 삭제(Soft Delete)합니다. (소유자만 가능)
+         * 워크스페이스를 삭제(Soft Delete)합니다. (멤버만 가능)
          * @param workspaceId 워크스페이스 ID
          * @param userId 유저 ID
          */
@@ -114,12 +113,12 @@ public class WorkspaceService {
 
                 checkWorkspaceExpiration(workspace);
 
-                if (!workspace.getOwner().getId().equals(userId)) {
-                        throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
-                }
+                validateMembership(workspaceId, userId);
 
                 workspace.setDeletedAt(LocalDateTime.now());
-                return WorkspaceDeleteResponseDto.of(workspace.getOwner().getId());
+                workspaceInvitationRepository.deleteAllByWorkspaceIdAndStatus(workspaceId, InvitationStatus.PENDING);
+                notificationService.deleteWorkspaceInviteNotifications(workspaceId);
+                return new WorkspaceDeleteResponseDto();
         }
 
         /**
@@ -137,16 +136,22 @@ public class WorkspaceService {
                 }
         }
 
-        private Workspace createWorkspaceWithOwner(String name, User owner) {
+        private Workspace createWorkspaceWithCreator(String name, User creator) {
                 Workspace workspace = Workspace.builder()
                                 .name(name)
-                                .owner(owner)
+                                .creator(creator)
                                 .expiresAt(LocalDateTime.now().plusDays(WORKSPACE_EXPIRATION_DAYS))
                                 .build();
 
                 Workspace savedWorkspace = workspaceRepository.save(workspace);
-                workspaceMemberService.addMember(savedWorkspace, owner);
+                workspaceMemberService.addMember(savedWorkspace, creator);
                 return savedWorkspace;
+        }
+
+        private void validateMembership(Long workspaceId, Long userId) {
+                if (!workspaceMemberService.isWorkspaceMember(workspaceId, userId)) {
+                        throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_MEMBER);
+                }
         }
 
 }

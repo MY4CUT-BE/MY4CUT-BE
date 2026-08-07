@@ -170,7 +170,7 @@ class NotificationRepositoryTest {
     private WorkspaceInvitation persistWorkspaceInvitation(User inviter, User invitee) {
         Workspace workspace = Workspace.builder()
                 .name("visible-workspace")
-                .owner(inviter)
+                .creator(inviter)
                 .build();
         em.persist(workspace);
 

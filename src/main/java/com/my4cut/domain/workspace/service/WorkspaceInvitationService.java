@@ -50,8 +50,8 @@ public class WorkspaceInvitationService {
             throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_EXPIRED);
         }
 
-        if (!workspace.getOwner().getId().equals(inviterId)) {
-            throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
+        if (!workspaceMemberService.isWorkspaceMember(workspace.getId(), inviterId)) {
+            throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_MEMBER);
         }
 
         User inviter = userRepository.findById(inviterId)

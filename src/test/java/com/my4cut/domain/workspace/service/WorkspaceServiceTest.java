@@ -10,6 +10,9 @@ import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
+import com.my4cut.domain.workspace.repository.WorkspaceInvitationRepository;
+import com.my4cut.domain.notification.service.NotificationService;
+import com.my4cut.domain.workspace.enums.InvitationStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +45,12 @@ class WorkspaceServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private WorkspaceInvitationRepository workspaceInvitationRepository;
+
+    @Mock
+    private NotificationService notificationService;
+
     @InjectMocks
     private WorkspaceService workspaceService;
 
@@ -54,7 +63,6 @@ class WorkspaceServiceTest {
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
                 1L,
                 "new workspace",
-                userId,
                 LocalDateTime.now().plusDays(7),
                 LocalDateTime.now(),
                 false,
@@ -95,8 +103,8 @@ class WorkspaceServiceTest {
         verify(workspaceRepository).save(workspaceCaptor.capture());
 
         Workspace workspace = workspaceCaptor.getValue();
-        assertThat(workspace.getName()).isEqualTo("포토리의 스페이스");
-        assertThat(workspace.getOwner()).isSameAs(owner);
+        assertThat(workspace.getName()).isEqualTo("포토리의스페이스");
+        assertThat(workspace.getName()).matches("^[가-힣a-zA-Z0-9]{1,15}$");
         assertThat(workspace.getExpiresAt())
                 .isBetween(beforeCreation.plusDays(7), afterCreation.plusDays(7));
         verify(workspaceMemberService).addMember(workspace, owner);
@@ -113,7 +121,6 @@ class WorkspaceServiceTest {
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
                 workspaceId,
                 "updated name",
-                userId,
                 workspace.getExpiresAt(),
                 workspace.getCreatedAt(),
                 false,
@@ -128,6 +135,7 @@ class WorkspaceServiceTest {
         );
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberService.isWorkspaceMember(workspaceId, userId)).willReturn(true);
         given(workspaceMemberService.convertToInfoDto(workspace)).willReturn(responseDto);
 
         WorkspaceInfoResponseDto result = workspaceService.updateWorkspace(workspaceId, updateDto, userId);
@@ -137,20 +145,37 @@ class WorkspaceServiceTest {
     }
 
     @Test
-    @DisplayName("update workspace fails when user is not owner")
-    void updateWorkspace_Fail_NotOwner() {
+    @DisplayName("워크스페이스 멤버는 owner 여부와 관계없이 이름을 수정할 수 있다")
+    void updateWorkspace_Success_ForMember() {
         Long workspaceId = 1L;
-        Long ownerId = 1L;
+        Long creatorId = 1L;
+        Long memberId = 2L;
+        Workspace workspace = createWorkspace(workspaceId, "old name", createUser(creatorId, "creator"));
+        WorkspaceUpdateRequestDto updateDto = new WorkspaceUpdateRequestDto("updated name");
+
+        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberService.isWorkspaceMember(workspaceId, memberId)).willReturn(true);
+
+        workspaceService.updateWorkspace(workspaceId, updateDto, memberId);
+
+        assertThat(workspace.getName()).isEqualTo("updated name");
+    }
+
+    @Test
+    @DisplayName("update workspace fails when user is not a member")
+    void updateWorkspace_Fail_NotMember() {
+        Long workspaceId = 1L;
+        Long creatorId = 1L;
         Long otherUserId = 2L;
-        User owner = createUser(ownerId, "owner");
-        Workspace workspace = createWorkspace(workspaceId, "workspace", owner);
+        User creator = createUser(creatorId, "creator");
+        Workspace workspace = createWorkspace(workspaceId, "workspace", creator);
         WorkspaceUpdateRequestDto updateDto = new WorkspaceUpdateRequestDto("try update");
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
 
         assertThatThrownBy(() -> workspaceService.updateWorkspace(workspaceId, updateDto, otherUserId))
                 .isInstanceOf(WorkspaceException.class)
-                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.NOT_WORKSPACE_OWNER);
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.NOT_WORKSPACE_MEMBER);
     }
 
     @Test
@@ -179,7 +204,6 @@ class WorkspaceServiceTest {
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
                 workspaceId,
                 "workspace",
-                1L,
                 workspace.getExpiresAt(),
                 workspace.getCreatedAt(),
                 false,
@@ -196,6 +220,7 @@ class WorkspaceServiceTest {
         );
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberService.isWorkspaceMember(workspaceId, 1L)).willReturn(true);
         given(workspaceMemberService.convertToInfoDto(workspace)).willReturn(responseDto);
 
         WorkspaceInfoResponseDto result = workspaceService.getWorkspaceInfo(workspaceId, 1L);
@@ -205,7 +230,7 @@ class WorkspaceServiceTest {
         assertThat(result.isFinal()).isFalse();
         assertThat(result.memberIds()).containsExactly(1L, 3L);
         assertThat(result.pendingInvitationUserIds()).containsExactly(2L);
-        assertThat(result.alreadyInvitedFriendIds()).containsExactly(3L, 2L);
+        assertThat(result.alreadyInvitedFriendIds()).containsExactly(1L, 3L, 2L);
     }
 
     @Test
@@ -248,11 +273,14 @@ class WorkspaceServiceTest {
         Workspace workspace = createWorkspace(workspaceId, "workspace", owner);
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberService.isWorkspaceMember(workspaceId, userId)).willReturn(true);
 
         WorkspaceDeleteResponseDto result = workspaceService.deleteWorkspace(workspaceId, userId);
 
         assertThat(workspace.getDeletedAt()).isNotNull();
-        assertThat(result.ownerId()).isEqualTo(userId);
+        assertThat(result).isNotNull();
+        verify(workspaceInvitationRepository).deleteAllByWorkspaceIdAndStatus(workspaceId, InvitationStatus.PENDING);
+        verify(notificationService).deleteWorkspaceInviteNotifications(workspaceId);
     }
 
     @Test
@@ -277,8 +305,8 @@ class WorkspaceServiceTest {
         return user;
     }
 
-    private Workspace createWorkspace(Long id, String name, User owner) {
-        Workspace workspace = Workspace.builder().name(name).owner(owner).build();
+    private Workspace createWorkspace(Long id, String name, User ignoredCreator) {
+        Workspace workspace = Workspace.builder().name(name).build();
         ReflectionTestUtils.setField(workspace, "id", id);
         return workspace;
     }

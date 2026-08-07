@@ -44,7 +44,7 @@ class WorkspaceInvitationServiceTest {
     private WorkspaceInvitationService workspaceInvitationService;
 
     @Test
-    @DisplayName("멤버 초대 성공: 소유자가 멤버를 초대하면 초대장이 생성되고 알림이 발송된다")
+    @DisplayName("멤버 초대 성공: 워크스페이스 멤버가 초대하면 초대장이 생성되고 알림이 발송된다")
     void inviteMembers_Success() {
         // Arrange
         Long inviterId = 1L;
@@ -56,6 +56,7 @@ class WorkspaceInvitationServiceTest {
         WorkspaceInviteRequestDto requestDto = new WorkspaceInviteRequestDto(workspaceId, List.of(inviteeId));
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceMemberService.isWorkspaceMember(workspaceId, inviterId)).willReturn(true);
         given(userRepository.findById(inviterId)).willReturn(Optional.of(inviter));
         given(userRepository.findById(inviteeId)).willReturn(Optional.of(invitee));
         given(workspaceMemberRepository.findByWorkspaceAndUser(workspace, invitee)).willReturn(Optional.empty());
@@ -100,11 +101,11 @@ class WorkspaceInvitationServiceTest {
         Long userId = 2L;
         User inviter = createUser(1L, "주인");
         User invitee = createUser(userId, "피초대자");
-        Workspace workspace = createWorkspace(10L, "워크스페이스", createUser(1L, "주인"));
+        Workspace workspace = createWorkspace(10L, "워크스페이스", inviter);
         WorkspaceInvitation invitation = WorkspaceInvitation.builder()
                 .workspace(workspace)
                 .invitee(invitee)
-                .inviter(createUser(1L, "주인"))
+                .inviter(inviter)
                 .build();
         ReflectionTestUtils.setField(invitation, "status", InvitationStatus.PENDING);
 
@@ -173,8 +174,8 @@ class WorkspaceInvitationServiceTest {
         return user;
     }
 
-    private Workspace createWorkspace(Long id, String name, User owner) {
-        Workspace workspace = Workspace.builder().name(name).owner(owner).build();
+    private Workspace createWorkspace(Long id, String name, User ignoredCreator) {
+        Workspace workspace = Workspace.builder().name(name).build();
         ReflectionTestUtils.setField(workspace, "id", id);
         return workspace;
     }

@@ -25,9 +25,14 @@ public class Workspace extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
+    /**
+     * 기존 owner_id 스키마와의 배포 호환성을 위해 생성자 참조만 유지한다.
+     * 권한 판정이나 API 응답에는 사용하지 않는다.
+     */
+    @Getter(AccessLevel.NONE)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
-    private User owner;
+    private User creator;
 
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
@@ -36,9 +41,9 @@ public class Workspace extends BaseEntity {
     private LocalDateTime deletedAt;
 
     @Builder
-    public Workspace(String name, User owner, LocalDateTime expiresAt) {
+    public Workspace(String name, User creator, LocalDateTime expiresAt) {
         this.name = name;
-        this.owner = owner;
+        this.creator = creator;
         this.expiresAt = expiresAt;
     }
 

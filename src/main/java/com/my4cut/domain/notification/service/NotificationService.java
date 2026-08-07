@@ -47,7 +47,12 @@ public class NotificationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotificationException(NotificationErrorCode.USER_NOT_FOUND));
 
-        DeviceType deviceType = DeviceType.valueOf(request.device().toUpperCase());
+        DeviceType deviceType;
+        try {
+            deviceType = DeviceType.valueOf(request.device().toUpperCase());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            throw new NotificationException(NotificationErrorCode.INVALID_DEVICE_TYPE);
+        }
 
         UserFcmToken existingToken = userFcmTokenRepository
                 .findByUserAndDeviceType(user, deviceType)
@@ -343,6 +348,14 @@ public class NotificationService {
         );
     }
 
+    @Transactional
+    public void deleteWorkspaceInviteNotifications(Long workspaceId) {
+        notificationRepository.deleteAllByWorkspaceIdAndType(
+                workspaceId,
+                NotificationType.WORKSPACE_INVITE
+        );
+    }
+
     // 알림 전체 삭제
     @Transactional
     public void deleteAllNotifications(Long userId) {
@@ -393,7 +406,7 @@ public class NotificationService {
         log.info("[FCM] 대상 userId={}, tokenCount={}", user.getId(), tokens.size());
 
         for (UserFcmToken token : tokens) {
-            fcmService.sendPush(
+            FcmSendResult result = fcmService.sendPush(
                     token.getFcmToken(),
                     title,
                     body,
@@ -403,6 +416,10 @@ public class NotificationService {
                     workspaceId,
                     mediaId
             );
+            if (result == FcmSendResult.INVALID_TOKEN) {
+                userFcmTokenRepository.delete(token);
+                log.info("[FCM] 만료 토큰 제거 - tokenId={}, userId={}", token.getId(), user.getId());
+            }
         }
     }
 }

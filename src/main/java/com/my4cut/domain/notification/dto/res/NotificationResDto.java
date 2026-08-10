@@ -23,6 +23,7 @@ public record NotificationResDto() {
             String message,           // 최종 메시지
             Boolean isRead,
             Long referenceId,         // 친구요청 id (수락/거절용)
+            Long mediaId,
             Long senderId,
             String senderNickname,
             String senderProfileImageUrl,
@@ -42,6 +43,7 @@ public record NotificationResDto() {
                     generateMessage(notification, senderNickname, workspaceName),
                     notification.getIsRead(),
                     notification.getReferenceId(),
+                    notification.getMediaId(),
                     notification.getSenderId(),
                     senderNickname,
                     senderProfileImageUrl,

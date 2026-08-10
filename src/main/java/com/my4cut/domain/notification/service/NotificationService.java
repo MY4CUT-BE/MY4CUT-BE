@@ -208,6 +208,7 @@ public class NotificationService {
                 .senderId(commenter.getId())
                 .workspaceId(workspaceId)
                 .referenceId(commentId)
+                .mediaId(mediaId)
                 .isRead(false)
                 .build();
 
@@ -239,6 +240,7 @@ public class NotificationService {
                 .senderId(uploader.getId())
                 .workspaceId(workspaceId)
                 .referenceId(mediaId)
+                .mediaId(mediaId)
                 .isRead(false)
                 .build();
 

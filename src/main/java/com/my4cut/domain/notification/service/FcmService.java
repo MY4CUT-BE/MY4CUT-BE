@@ -3,7 +3,6 @@ package com.my4cut.domain.notification.service;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,10 +47,6 @@ public class FcmService {
 
         Message message = Message.builder()
                 .setToken(fcmToken)
-                .setNotification(Notification.builder()
-                        .setTitle(title)
-                        .setBody(body)
-                        .build())
                 .putData("title", title == null ? "" : title)
                 .putData("body", body == null ? "" : body)
                 .putData("type", type == null ? "" : type)

@@ -51,6 +51,10 @@ public class Notification extends BaseEntity {
     @Column(name = "is_read", nullable = false)
     private Boolean isRead;
 
+    // 사진(미디어) 관련 알림일 경우
+    @Column(name = "media_id")
+    private Long mediaId;
+
     @Builder
     public Notification(
             User user,
@@ -58,6 +62,7 @@ public class Notification extends BaseEntity {
             Long senderId,
             Long workspaceId,
             Long referenceId,
+            Long mediaId,
             Boolean isRead
     ) {
         this.user = user;
@@ -65,6 +70,7 @@ public class Notification extends BaseEntity {
         this.senderId = senderId;
         this.workspaceId = workspaceId;
         this.referenceId = referenceId;
+        this.mediaId = mediaId;
         this.isRead = isRead;
     }
 

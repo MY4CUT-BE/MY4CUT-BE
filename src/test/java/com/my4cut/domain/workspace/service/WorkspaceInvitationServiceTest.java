@@ -149,6 +149,34 @@ class WorkspaceInvitationServiceTest {
     }
 
     @Test
+    @DisplayName("초대 수락 실패: 워크스페이스가 삭제된 경우 예외 발생")
+    void acceptInvitation_Fail_Deleted() {
+        // Arrange
+        Long invitationId = 1L;
+        Long userId = 2L;
+        User invitee = createUser(userId, "피초대자");
+        Workspace workspace = createWorkspace(10L, "삭제됨", createUser(1L, "주인"));
+        workspace.setDeletedAt(LocalDateTime.now());
+
+        WorkspaceInvitation invitation = WorkspaceInvitation.builder()
+                .workspace(workspace)
+                .invitee(invitee)
+                .inviter(createUser(1L, "주인"))
+                .build();
+        ReflectionTestUtils.setField(invitation, "status", InvitationStatus.PENDING);
+
+        given(workspaceInvitationRepository.findByIdAndInviteeId(invitationId, userId)).willReturn(Optional.of(invitation));
+
+        // Act & Assert
+        assertThatThrownBy(() -> workspaceInvitationService.acceptInvitation(invitationId, userId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue("errorCode", WorkspaceErrorCode.WORKSPACE_NOT_FOUND);
+        assertThat(invitation.getStatus()).isEqualTo(InvitationStatus.PENDING);
+        verify(workspaceMemberService, never()).addMember(any(), any());
+        verify(notificationService, never()).deleteWorkspaceInviteNotification(any(), anyLong());
+    }
+
+    @Test
     @DisplayName("초대 수락 실패: 이미 처리된 초대인 경우 예외 발생")
     void acceptInvitation_Fail_AlreadyProcessed() {
         // Arrange

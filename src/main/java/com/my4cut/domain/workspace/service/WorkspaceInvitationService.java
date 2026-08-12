@@ -109,6 +109,10 @@ public class WorkspaceInvitationService {
         WorkspaceInvitation invitation = workspaceInvitationRepository.findByIdAndInviteeId(invitationId, userId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.INVITATION_NOT_FOUND));
 
+        if (invitation.getWorkspace().getDeletedAt() != null) {
+            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND);
+        }
+
         if (invitation.getWorkspace().isExpired()) {
             throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_EXPIRED);
         }

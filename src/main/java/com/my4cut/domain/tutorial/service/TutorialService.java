@@ -21,28 +21,31 @@ public class TutorialService {
 
     @Transactional
     public void initialize(User user) {
-        userTutorialRepository.findByUserId(user.getId())
-                .orElseGet(() -> userTutorialRepository.save(new UserTutorial(user)));
+        User lockedUser = getUserForUpdate(user.getId());
+        getOrCreate(lockedUser);
     }
 
     @Transactional
     public TutorialStatusResponseDto getStatus(Long userId) {
-        return TutorialStatusResponseDto.from(getOrCreate(userId));
+        User user = getUserForUpdate(userId);
+        return TutorialStatusResponseDto.from(getOrCreate(user));
     }
 
     @Transactional
     public TutorialStatusResponseDto complete(Long userId, TutorialType tutorialType) {
-        UserTutorial tutorial = getOrCreate(userId);
+        User user = getUserForUpdate(userId);
+        UserTutorial tutorial = getOrCreate(user);
         tutorial.complete(tutorialType);
         return TutorialStatusResponseDto.from(tutorial);
     }
 
-    private UserTutorial getOrCreate(Long userId) {
-        return userTutorialRepository.findByUserId(userId)
-                .orElseGet(() -> {
-                    User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-                    return userTutorialRepository.save(new UserTutorial(user));
-                });
+    private User getUserForUpdate(Long userId) {
+        return userRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    private UserTutorial getOrCreate(User user) {
+        return userTutorialRepository.findByUserId(user.getId())
+                .orElseGet(() -> userTutorialRepository.save(new UserTutorial(user)));
     }
 }

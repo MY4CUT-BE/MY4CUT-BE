@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -36,8 +37,8 @@ class TutorialServiceTest {
     void getStatus_createsDefaultStatusWhenMissing() {
         Long userId = 1L;
         User user = createUser();
+        given(userRepository.findByIdForUpdate(userId)).willReturn(Optional.of(user));
         given(userTutorialRepository.findByUserId(userId)).willReturn(Optional.empty());
-        given(userRepository.findById(userId)).willReturn(Optional.of(user));
         given(userTutorialRepository.save(any(UserTutorial.class)))
                 .willAnswer(invocation -> invocation.getArgument(0));
 
@@ -52,6 +53,7 @@ class TutorialServiceTest {
     void complete_updatesOnlyRequestedTutorialAndIsIdempotent() {
         Long userId = 1L;
         UserTutorial tutorial = new UserTutorial(createUser());
+        given(userRepository.findByIdForUpdate(userId)).willReturn(Optional.of(tutorial.getUser()));
         given(userTutorialRepository.findByUserId(userId)).willReturn(Optional.of(tutorial));
 
         tutorialService.complete(userId, TutorialType.HOME);
@@ -63,7 +65,7 @@ class TutorialServiceTest {
     }
 
     private User createUser() {
-        return User.builder()
+        User user = User.builder()
                 .email("user@example.com")
                 .password("encoded-password")
                 .nickname("user")
@@ -71,5 +73,7 @@ class TutorialServiceTest {
                 .friendCode("ABC123")
                 .status(UserStatus.ACTIVE)
                 .build();
+        ReflectionTestUtils.setField(user, "id", 1L);
+        return user;
     }
 }

@@ -68,6 +68,7 @@ public class SecurityConfig {
                                 "/day4cut/**",  // 하루네컷 API
                                 "/workspaces/**", // 워크스페이스 API
                                 "/albums/**",    // 앨범 API
+                                "/tutorials/**",
                                 "/api/v1/**",
                                 "/images/**"
 

@@ -113,9 +113,11 @@ class WorkspacePhotoServiceTest {
                 uploaderId
         );
 
-        verify(notificationService).sendMediaUploadedNotification(member, uploader, workspaceId, mediaId);
+        verify(notificationService).sendMediaUploadedNotification(
+                member, uploader, workspaceId, "워크스페이스", mediaId);
         verify(notificationService, never())
-                .sendMediaUploadedNotification(uploader, uploader, workspaceId, mediaId);
+                .sendMediaUploadedNotification(
+                        uploader, uploader, workspaceId, "워크스페이스", mediaId);
     }
 
     @Test
@@ -401,7 +403,8 @@ class WorkspacePhotoServiceTest {
         );
 
         verify(notificationService)
-                .sendMediaCommentNotification(owner, commenter, workspaceId, photoId, 100L);
+                .sendMediaCommentNotification(
+                        owner, commenter, workspaceId, "워크스페이스", photoId, 100L);
     }
 
     @Test

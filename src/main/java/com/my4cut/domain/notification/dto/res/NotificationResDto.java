@@ -1,6 +1,7 @@
 package com.my4cut.domain.notification.dto.res;
 
 import com.my4cut.domain.notification.entity.Notification;
+import com.my4cut.domain.notification.NotificationMessage;
 import com.my4cut.domain.notification.enums.NotificationType;
 
 import java.time.LocalDateTime;
@@ -58,20 +59,11 @@ public record NotificationResDto() {
                 String senderNickname,
                 String workspaceName
         ) {
-            return switch (notification.getType()) {
-                case FRIEND_REQUEST ->
-                        senderNickname + "님의 친구 요청";
-                case FRIEND_ACCEPTED ->
-                        senderNickname + "님이 친구 요청을 수락했습니다.";
-                case WORKSPACE_INVITE ->
-                        senderNickname + "님이 " + workspaceName + "스페이스에 초대했습니다.";
-                case WORKSPACE_ACCEPTED ->
-                        senderNickname + "님이 " + workspaceName + " 워크스페이스 초대를 수락했습니다.";
-                case MEDIA_COMMENT ->
-                        senderNickname + "님이 " + workspaceName + "스페이스에 댓글을 남겼습니다.";
-                case MEDIA_UPLOADED ->
-                        senderNickname + "님이 새로운 미디어를 업로드했습니다.";
-            };
+            return NotificationMessage.format(
+                    notification.getType(),
+                    senderNickname,
+                    workspaceName
+            );
         }
     }
 

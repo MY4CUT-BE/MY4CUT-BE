@@ -1,8 +1,12 @@
 package com.my4cut.domain.notification.service;
 
+import com.google.firebase.messaging.ApnsConfig;
+import com.google.firebase.messaging.Aps;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Message;
+import com.google.firebase.messaging.Notification;
+import com.my4cut.domain.user.enums.DeviceType;
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +23,7 @@ public class FcmService {
     private boolean firebaseEnabled;
 
     public FcmSendResult sendPush(String fcmToken,
+                         DeviceType deviceType,
                          String title,
                          String body,
                          String type,
@@ -45,7 +50,7 @@ public class FcmService {
             return FcmSendResult.SKIPPED;
         }
 
-        Message message = Message.builder()
+        Message.Builder messageBuilder = Message.builder()
                 .setToken(fcmToken)
                 .putData("title", title == null ? "" : title)
                 .putData("body", body == null ? "" : body)
@@ -57,8 +62,23 @@ public class FcmService {
                 .putData("workspaceId",
                         workspaceId == null ? "" : String.valueOf(workspaceId))
                 .putData("mediaId",
-                        mediaId == null ? "" : String.valueOf(mediaId))
-                .build();
+                        mediaId == null ? "" : String.valueOf(mediaId));
+
+        if (deviceType == DeviceType.IOS) {
+            messageBuilder
+                    .setNotification(Notification.builder()
+                            .setTitle(title)
+                            .setBody(body)
+                            .build())
+                    .setApnsConfig(ApnsConfig.builder()
+                            .putHeader("apns-priority", "10")
+                            .setAps(Aps.builder()
+                                    .setSound("default")
+                                    .build())
+                            .build());
+        }
+
+        Message message = messageBuilder.build();
 
         log.info(
                 "[FCM] payload 생성 완료 - title={}, body={}, type={}, notificationId={}, referenceId={}, workspaceId={}, token={}",

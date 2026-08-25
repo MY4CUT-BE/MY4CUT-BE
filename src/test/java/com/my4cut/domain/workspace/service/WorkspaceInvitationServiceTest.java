@@ -119,8 +119,7 @@ class WorkspaceInvitationServiceTest {
         verify(workspaceMemberService, times(1)).addMember(workspace, invitee);
         verify(notificationService, times(1))
                 .deleteWorkspaceInviteNotification(invitee, invitation.getId());
-        verify(notificationService, times(1))
-                .sendWorkspaceAcceptedNotification(inviter, invitee, workspace, invitation.getId());
+        verifyNoMoreInteractions(notificationService);
     }
 
     @Test

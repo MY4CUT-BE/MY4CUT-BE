@@ -30,6 +30,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     select n.*
                     from notifications n
                     where n.user_id = :userId
+                      and n.type in ('FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'WORKSPACE_INVITE', 'MEDIA_UPLOADED', 'MEDIA_COMMENT')
                       and (
                           n.type not in ('FRIEND_REQUEST', 'WORKSPACE_INVITE')
                           or (
@@ -57,6 +58,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     select count(*)
                     from notifications n
                     where n.user_id = :userId
+                      and n.type in ('FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'WORKSPACE_INVITE', 'MEDIA_UPLOADED', 'MEDIA_COMMENT')
                       and (
                           n.type not in ('FRIEND_REQUEST', 'WORKSPACE_INVITE')
                           or (
@@ -96,6 +98,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     from notifications n
                     where n.user_id = :userId
                       and n.is_read = false
+                      and n.type in ('FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'WORKSPACE_INVITE', 'MEDIA_UPLOADED', 'MEDIA_COMMENT')
                       and (
                           n.type not in ('FRIEND_REQUEST', 'WORKSPACE_INVITE')
                           or (

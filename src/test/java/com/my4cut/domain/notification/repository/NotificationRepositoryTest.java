@@ -83,6 +83,7 @@ class NotificationRepositoryTest {
         Notification pendingWorkspaceNotification = persistNotification(receiver, NotificationType.WORKSPACE_INVITE, pendingInvitation.getId());
         persistNotification(receiver, NotificationType.WORKSPACE_INVITE, acceptedInvitation.getId());
         Notification normalNotification = persistNotification(receiver, NotificationType.FRIEND_ACCEPTED, null);
+        persistNotification(receiver, NotificationType.WORKSPACE_ACCEPTED, acceptedInvitation.getId());
         em.flush();
 
         LocalDateTime sameCreatedAt = LocalDateTime.of(2026, 4, 19, 10, 0);
@@ -96,7 +97,7 @@ class NotificationRepositoryTest {
                 .findVisibleByUserIdOrderByCreatedAtDesc(receiver.getId(), PageRequest.of(0, 10))
                 .getContent();
 
-        // 원본 요청이 PENDING인 액션 알림과 일반 알림만 조회되어야 한다.
+        // 원본 요청이 PENDING인 액션 알림과 Figma가 정의한 5종 알림만 조회되어야 한다.
         assertThat(notifications)
                 .extracting(Notification::getId)
                 .containsExactly(

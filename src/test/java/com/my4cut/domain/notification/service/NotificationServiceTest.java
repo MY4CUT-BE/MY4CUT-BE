@@ -56,13 +56,13 @@ class NotificationServiceTest {
         User sender = user(2L, "sender");
         UserFcmToken token = token(receiver, "token");
         given(userFcmTokenRepository.findAllByUser(receiver)).willReturn(List.of(token));
-        given(fcmService.sendPush("token", "친구 요청", "sender님이 친구 요청을 보냈습니다.",
+        given(fcmService.sendPush("token", DeviceType.ANDROID, "친구 요청", "sender님이 회원님에게 친구 요청을 보냈습니다.",
                 "FRIEND_REQUEST", 100L, 10L, null, null)).willReturn(FcmSendResult.SUCCESS);
 
         notificationService.sendFriendRequestNotification(receiver, sender, 10L);
 
         verify(notificationRepository).save(any(Notification.class));
-        verify(fcmService).sendPush("token", "친구 요청", "sender님이 친구 요청을 보냈습니다.",
+        verify(fcmService).sendPush("token", DeviceType.ANDROID, "친구 요청", "sender님이 회원님에게 친구 요청을 보냈습니다.",
                 "FRIEND_REQUEST", 100L, 10L, null, null);
     }
 
@@ -71,12 +71,12 @@ class NotificationServiceTest {
         User receiver = user(1L, "receiver");
         User sender = user(2L, "sender");
         given(userFcmTokenRepository.findAllByUser(receiver)).willReturn(List.of(token(receiver, "token")));
-        given(fcmService.sendPush("token", "친구 요청 수락", "sender님이 친구 요청을 수락했습니다.",
+        given(fcmService.sendPush("token", DeviceType.ANDROID, "친구 요청 수락", "sender님이 친구 초대를 수락하였습니다.",
                 "FRIEND_ACCEPTED", 100L, null, null, null)).willReturn(FcmSendResult.SUCCESS);
 
         notificationService.sendFriendAcceptedNotification(receiver, sender);
 
-        verify(fcmService).sendPush("token", "친구 요청 수락", "sender님이 친구 요청을 수락했습니다.",
+        verify(fcmService).sendPush("token", DeviceType.ANDROID, "친구 요청 수락", "sender님이 친구 초대를 수락하였습니다.",
                 "FRIEND_ACCEPTED", 100L, null, null, null);
     }
 
@@ -87,12 +87,12 @@ class NotificationServiceTest {
         Workspace workspace = Workspace.builder().name("space").creator(sender).build();
         ReflectionTestUtils.setField(workspace, "id", 20L);
         given(userFcmTokenRepository.findAllByUser(receiver)).willReturn(List.of(token(receiver, "token")));
-        given(fcmService.sendPush("token", "워크스페이스 초대", "sender님이 space 워크스페이스에 초대했습니다.",
+        given(fcmService.sendPush("token", DeviceType.ANDROID, "워크스페이스 초대", "sender님이 space 스페이스에 회원님을 초대했습니다.",
                 "WORKSPACE_INVITE", 100L, 30L, 20L, null)).willReturn(FcmSendResult.SUCCESS);
 
         notificationService.sendWorkspaceInviteNotification(receiver, sender, workspace, 30L);
 
-        verify(fcmService).sendPush("token", "워크스페이스 초대", "sender님이 space 워크스페이스에 초대했습니다.",
+        verify(fcmService).sendPush("token", DeviceType.ANDROID, "워크스페이스 초대", "sender님이 space 스페이스에 회원님을 초대했습니다.",
                 "WORKSPACE_INVITE", 100L, 30L, 20L, null);
     }
 
@@ -102,12 +102,31 @@ class NotificationServiceTest {
         User sender = user(2L, "sender");
         UserFcmToken token = token(receiver, "expired-token");
         given(userFcmTokenRepository.findAllByUser(receiver)).willReturn(List.of(token));
-        given(fcmService.sendPush("expired-token", "친구 요청", "sender님이 친구 요청을 보냈습니다.",
+        given(fcmService.sendPush("expired-token", DeviceType.ANDROID, "친구 요청", "sender님이 회원님에게 친구 요청을 보냈습니다.",
                 "FRIEND_REQUEST", 100L, 10L, null, null)).willReturn(FcmSendResult.INVALID_TOKEN);
 
         notificationService.sendFriendRequestNotification(receiver, sender, 10L);
 
         verify(userFcmTokenRepository).delete(token);
+    }
+
+    @Test
+    void pushUsesEachRegisteredTokenDeviceType() {
+        User receiver = user(1L, "receiver");
+        User sender = user(2L, "sender");
+        UserFcmToken androidToken = token(receiver, "android-token", DeviceType.ANDROID);
+        UserFcmToken iosToken = token(receiver, "ios-token", DeviceType.IOS);
+        given(userFcmTokenRepository.findAllByUser(receiver))
+                .willReturn(List.of(androidToken, iosToken));
+
+        notificationService.sendFriendRequestNotification(receiver, sender, 10L);
+
+        verify(fcmService).sendPush("android-token", DeviceType.ANDROID,
+                "친구 요청", "sender님이 회원님에게 친구 요청을 보냈습니다.",
+                "FRIEND_REQUEST", 100L, 10L, null, null);
+        verify(fcmService).sendPush("ios-token", DeviceType.IOS,
+                "친구 요청", "sender님이 회원님에게 친구 요청을 보냈습니다.",
+                "FRIEND_REQUEST", 100L, 10L, null, null);
     }
 
     private User user(Long id, String nickname) {
@@ -117,10 +136,14 @@ class NotificationServiceTest {
     }
 
     private UserFcmToken token(User user, String value) {
+        return token(user, value, DeviceType.ANDROID);
+    }
+
+    private UserFcmToken token(User user, String value, DeviceType deviceType) {
         UserFcmToken token = UserFcmToken.builder()
                 .user(user)
                 .fcmToken(value)
-                .deviceType(DeviceType.ANDROID)
+                .deviceType(deviceType)
                 .build();
         ReflectionTestUtils.setField(token, "id", 50L);
         return token;

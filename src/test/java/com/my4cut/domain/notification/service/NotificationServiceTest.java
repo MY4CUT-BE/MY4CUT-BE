@@ -84,7 +84,7 @@ class NotificationServiceTest {
     void workspaceInvite_savesNotificationAndSendsPush() {
         User receiver = user(1L, "receiver");
         User sender = user(2L, "sender");
-        Workspace workspace = Workspace.builder().name("space").owner(sender).build();
+        Workspace workspace = Workspace.builder().name("space").creator(sender).build();
         ReflectionTestUtils.setField(workspace, "id", 20L);
         given(userFcmTokenRepository.findAllByUser(receiver)).willReturn(List.of(token(receiver, "token")));
         given(fcmService.sendPush("token", "워크스페이스 초대", "sender님이 space 워크스페이스에 초대했습니다.",

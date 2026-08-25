@@ -2,6 +2,7 @@ package com.my4cut.domain.notification.service;
 
 import com.my4cut.domain.notification.dto.req.NotificationReqDto;
 import com.my4cut.domain.notification.dto.res.NotificationResDto;
+import com.my4cut.domain.notification.NotificationMessage;
 import com.my4cut.domain.notification.entity.Notification;
 import com.my4cut.domain.notification.enums.NotificationType;
 import com.my4cut.domain.notification.exception.NotificationErrorCode;
@@ -93,7 +94,7 @@ public class NotificationService {
         sendPushToUserTokens(
                 toUser,
                 "친구 요청",
-                fromUser.getNickname() + "님이 친구 요청을 보냈습니다.",
+                NotificationMessage.format(NotificationType.FRIEND_REQUEST, fromUser.getNickname(), null),
                 NotificationType.FRIEND_REQUEST.name(),
                 notification.getId(),   // notificationId
                 friendRequestId,             // referenceId
@@ -120,7 +121,7 @@ public class NotificationService {
         sendPushToUserTokens(
                 toUser,
                 "친구 요청 수락",
-                fromUser.getNickname() + "님이 친구 요청을 수락했습니다.",
+                NotificationMessage.format(NotificationType.FRIEND_ACCEPTED, fromUser.getNickname(), null),
                 NotificationType.FRIEND_ACCEPTED.name(),
                 notification.getId(),
                 null,
@@ -151,45 +152,12 @@ public class NotificationService {
         sendPushToUserTokens(
                 invitee,
                 "워크스페이스 초대",
-                inviter.getNickname() + "님이 "
-                        + workspace.getName()
-                        + " 워크스페이스에 초대했습니다.",
+                NotificationMessage.format(NotificationType.WORKSPACE_INVITE, inviter.getNickname(), workspace.getName()),
                 NotificationType.WORKSPACE_INVITE.name(),
                 notification.getId(),   // notificationId
                 invitationId,                // referenceId
                 workspace.getId(),            // workspaceId
                 null                          // mediaId
-        );
-    }
-
-    // 워크스페이스 초대 수락 알림 생성 + FCM 발송
-    @Transactional
-    public void sendWorkspaceAcceptedNotification(
-            User inviter,
-            User accepter,
-            Workspace workspace,
-            Long invitationId
-    ) {
-        Notification notification = Notification.builder()
-                .user(inviter)
-                .type(NotificationType.WORKSPACE_ACCEPTED)
-                .senderId(accepter.getId())
-                .workspaceId(workspace.getId())
-                .referenceId(invitationId)
-                .isRead(false)
-                .build();
-
-        notificationRepository.save(notification);
-
-        sendPushToUserTokens(
-                inviter,
-                "워크스페이스 초대 수락",
-                accepter.getNickname() + "님이 " + workspace.getName() + " 워크스페이스 초대를 수락했습니다.",
-                NotificationType.WORKSPACE_ACCEPTED.name(),
-                notification.getId(),   // notificationId
-                invitationId,           // referenceId
-                workspace.getId(),      // workspaceId
-                null                    // mediaId - 필요 없음
         );
     }
 
@@ -199,6 +167,7 @@ public class NotificationService {
             User owner,
             User commenter,
             Long workspaceId,
+            String workspaceName,
             Long mediaId,
             Long commentId
     ) {
@@ -217,7 +186,7 @@ public class NotificationService {
         sendPushToUserTokens(
                 owner,
                 "새 댓글",
-                commenter.getNickname() + "님이 댓글을 남겼습니다.",
+                NotificationMessage.format(NotificationType.MEDIA_COMMENT, commenter.getNickname(), workspaceName),
                 NotificationType.MEDIA_COMMENT.name(),
                 notification.getId(),
                 commentId,
@@ -232,6 +201,7 @@ public class NotificationService {
             User targetUser,
             User uploader,
             Long workspaceId,
+            String workspaceName,
             Long mediaId
     ) {
         Notification notification = Notification.builder()
@@ -249,7 +219,7 @@ public class NotificationService {
         sendPushToUserTokens(
                 targetUser,
                 "새 사진 업로드",
-                uploader.getNickname() + "님이 사진을 업로드했습니다.",
+                NotificationMessage.format(NotificationType.MEDIA_UPLOADED, uploader.getNickname(), workspaceName),
                 NotificationType.MEDIA_UPLOADED.name(),
                 notification.getId(),
                 mediaId,
@@ -410,6 +380,7 @@ public class NotificationService {
         for (UserFcmToken token : tokens) {
             FcmSendResult result = fcmService.sendPush(
                     token.getFcmToken(),
+                    token.getDeviceType(),
                     title,
                     body,
                     type,

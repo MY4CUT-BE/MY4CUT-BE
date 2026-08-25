@@ -90,6 +90,7 @@ public class WorkspacePhotoService {
                         target,
                         mediaFile.getUploader(),
                         workspaceId,
+                        workspace.getName(),
                         mediaFile.getId()
                 );
             }
@@ -247,7 +248,7 @@ public class WorkspacePhotoService {
 
     @Transactional
     public void createComment(Long workspaceId, Long photoId, WorkspacePhotoCommentRequestDto dto, Long userId) {
-        workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+        Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
         validateMembership(workspaceId, userId);
@@ -270,6 +271,7 @@ public class WorkspacePhotoService {
                     photoOwner,
                     user,
                     workspaceId,
+                    workspace.getName(),
                     mediaFile.getId(),
                     savedComment.getId()
             );

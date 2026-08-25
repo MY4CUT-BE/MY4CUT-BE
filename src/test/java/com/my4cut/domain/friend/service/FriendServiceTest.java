@@ -4,6 +4,7 @@ import com.my4cut.domain.friend.dto.res.FriendResDto;
 import com.my4cut.domain.friend.entity.Friend;
 import com.my4cut.domain.friend.entity.FriendRequest;
 import com.my4cut.domain.friend.enums.FriendRequestStatus;
+import com.my4cut.domain.friend.event.FriendAcceptedEvent;
 import com.my4cut.domain.friend.repository.FriendRepository;
 import com.my4cut.domain.friend.repository.FriendRequestRepository;
 import com.my4cut.domain.image.service.ProfileImageUrlService;
@@ -16,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class FriendServiceTest {
@@ -32,6 +35,7 @@ class FriendServiceTest {
     @Mock private FriendRequestRepository friendRequestRepository;
     @Mock private NotificationService notificationService;
     @Mock private ProfileImageUrlService profileImageUrlService;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private FriendService friendService;
@@ -108,7 +112,7 @@ class FriendServiceTest {
     }
 
     @Test
-    void acceptFriendRequest_DeletesFriendRequestNotification() {
+    void acceptFriendRequest_DeletesRequestNotificationAndPublishesAcceptedEvent() {
         Long userId = 2L;
         Long requestId = 10L;
         User fromUser = createUser(1L, "sender", null);
@@ -120,6 +124,8 @@ class FriendServiceTest {
         friendService.acceptFriendRequest(userId, requestId);
 
         verify(notificationService).deleteFriendRequestNotification(toUser, requestId);
+        verify(eventPublisher).publishEvent(new FriendAcceptedEvent(1L, 2L));
+        verify(notificationService, never()).sendFriendAcceptedNotification(fromUser, toUser);
     }
 
     @Test

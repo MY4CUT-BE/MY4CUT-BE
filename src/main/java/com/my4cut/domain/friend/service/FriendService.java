@@ -5,6 +5,7 @@ import com.my4cut.domain.friend.dto.res.FriendResDto;
 import com.my4cut.domain.friend.entity.Friend;
 import com.my4cut.domain.friend.entity.FriendRequest;
 import com.my4cut.domain.friend.enums.FriendRequestStatus;
+import com.my4cut.domain.friend.event.FriendAcceptedEvent;
 import com.my4cut.domain.friend.exception.FriendErrorCode;
 import com.my4cut.domain.friend.exception.FriendException;
 import com.my4cut.domain.friend.repository.FriendRepository;
@@ -15,6 +16,7 @@ import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -28,6 +30,7 @@ public class FriendService {
     private final FriendRequestRepository friendRequestRepository;
     private final NotificationService notificationService;
     private final ProfileImageUrlService profileImageUrlService;
+    private final ApplicationEventPublisher eventPublisher;
 
     //친구 요청 보내기
     @Transactional
@@ -149,10 +152,10 @@ public class FriendService {
         // 요청을 처리했으므로 수신자의 친구 요청 알림을 삭제해 재진입 시 잔류하지 않게 한다.
         notificationService.deleteFriendRequestNotification(request.getToUser(), request.getId());
 
-        notificationService.sendFriendAcceptedNotification(
-                request.getFromUser(), // 요청 보낸 사람 (알림 받는 사람)
-                request.getToUser()    // 수락한 사람 (sender)
-        );
+        eventPublisher.publishEvent(new FriendAcceptedEvent(
+                request.getFromUser().getId(),
+                request.getToUser().getId()
+        ));
 
         return FriendRequestResDto.AcceptRequestResDto.of(request);
     }

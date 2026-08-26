@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Tutorial", description = "사용자별 홈, 워크스페이스, 사진 업로드 튜토리얼 진행 상태 관리 API")
+@Tag(name = "Tutorial", description = "사용자별 화면 단위 튜토리얼 진행 상태 관리 API")
 @RestController
 @RequestMapping("/tutorials")
 @RequiredArgsConstructor
@@ -27,8 +27,8 @@ public class TutorialController {
 
     @Operation(
             summary = "튜토리얼 상태 조회",
-            description = "로그인한 사용자의 홈, 워크스페이스, 사진 업로드 튜토리얼 완료 여부를 조회합니다. "
-                    + "상태 정보가 없는 기존 사용자는 모든 항목이 미완료(false)인 상태로 자동 생성됩니다."
+            description = "로그인한 사용자의 모든 튜토리얼 완료 여부를 조회합니다. "
+                    + "완료 기록이 없는 항목은 미완료(false)로 반환됩니다."
     )
     @GetMapping
     public ApiResponse<TutorialStatusResponseDto> getStatus(
@@ -51,7 +51,7 @@ public class TutorialController {
                     description = "완료할 튜토리얼 유형",
                     required = true,
                     example = "HOME",
-                    schema = @Schema(allowableValues = {"HOME", "WORKSPACE", "PHOTO_UPLOAD"})
+                    schema = @Schema(implementation = TutorialType.class)
             )
             @PathVariable String tutorialType
     ) {

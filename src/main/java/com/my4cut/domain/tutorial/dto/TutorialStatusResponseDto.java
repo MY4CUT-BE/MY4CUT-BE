@@ -1,22 +1,29 @@
 package com.my4cut.domain.tutorial.dto;
 
-import com.my4cut.domain.tutorial.entity.UserTutorial;
+import com.my4cut.domain.tutorial.enums.TutorialType;
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 @Schema(description = "사용자별 튜토리얼 완료 상태")
 public record TutorialStatusResponseDto(
-        @Schema(description = "홈 튜토리얼 완료 여부", example = "true")
-        boolean home,
-        @Schema(description = "워크스페이스 튜토리얼 완료 여부", example = "false")
-        boolean workspace,
-        @Schema(description = "사진 업로드 튜토리얼 완료 여부", example = "false")
-        boolean photoUpload
+        @Schema(description = "전체 튜토리얼 완료 상태")
+        List<TutorialStatus> tutorials
 ) {
-    public static TutorialStatusResponseDto from(UserTutorial tutorial) {
-        return new TutorialStatusResponseDto(
-                tutorial.isHomeCompleted(),
-                tutorial.isWorkspaceCompleted(),
-                tutorial.isPhotoUploadCompleted()
-        );
+    public static TutorialStatusResponseDto from(Set<TutorialType> completedTypes) {
+        List<TutorialStatus> statuses = Arrays.stream(TutorialType.values())
+                .map(type -> new TutorialStatus(type, completedTypes.contains(type)))
+                .toList();
+        return new TutorialStatusResponseDto(statuses);
+    }
+
+    public record TutorialStatus(
+            @Schema(description = "튜토리얼 유형", example = "HOME")
+            TutorialType type,
+            @Schema(description = "완료 여부", example = "true")
+            boolean completed
+    ) {
     }
 }

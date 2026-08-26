@@ -12,6 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
 @Service
 @RequiredArgsConstructor
 public class TutorialService {
@@ -19,24 +23,23 @@ public class TutorialService {
     private final UserTutorialRepository userTutorialRepository;
     private final UserRepository userRepository;
 
-    @Transactional
-    public void initialize(User user) {
-        User lockedUser = getUserForUpdate(user.getId());
-        getOrCreate(lockedUser);
-    }
-
-    @Transactional
+    @Transactional(readOnly = true)
     public TutorialStatusResponseDto getStatus(Long userId) {
-        User user = getUserForUpdate(userId);
-        return TutorialStatusResponseDto.from(getOrCreate(user));
+        userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return TutorialStatusResponseDto.from(getCompletedTypes(userId));
     }
 
     @Transactional
     public TutorialStatusResponseDto complete(Long userId, TutorialType tutorialType) {
         User user = getUserForUpdate(userId);
-        UserTutorial tutorial = getOrCreate(user);
-        tutorial.complete(tutorialType);
-        return TutorialStatusResponseDto.from(tutorial);
+        Set<TutorialType> completedTypes = getCompletedTypes(userId);
+
+        if (completedTypes.add(tutorialType)) {
+            userTutorialRepository.save(new UserTutorial(user, tutorialType));
+        }
+
+        return TutorialStatusResponseDto.from(completedTypes);
     }
 
     private User getUserForUpdate(Long userId) {
@@ -44,8 +47,12 @@ public class TutorialService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 
-    private UserTutorial getOrCreate(User user) {
-        return userTutorialRepository.findByUserId(user.getId())
-                .orElseGet(() -> userTutorialRepository.save(new UserTutorial(user)));
+    private Set<TutorialType> getCompletedTypes(Long userId) {
+        List<UserTutorial> completedTutorials = userTutorialRepository.findAllByUserId(userId);
+        EnumSet<TutorialType> completedTypes = EnumSet.noneOf(TutorialType.class);
+        completedTutorials.stream()
+                .map(UserTutorial::getTutorialType)
+                .forEach(completedTypes::add);
+        return completedTypes;
     }
 }

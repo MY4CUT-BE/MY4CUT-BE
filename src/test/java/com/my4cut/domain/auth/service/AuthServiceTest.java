@@ -4,7 +4,6 @@ import com.my4cut.domain.auth.dto.req.AuthReqDTO;
 import com.my4cut.domain.auth.dto.res.AuthResDTO;
 import com.my4cut.domain.auth.enums.EmailVerificationPurpose;
 import com.my4cut.domain.auth.repository.RefreshTokenRepository;
-import com.my4cut.domain.tutorial.service.TutorialService;
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.enums.LoginType;
@@ -53,9 +52,6 @@ class AuthServiceTest {
 
     @Mock
     private WorkspaceService workspaceService;
-
-    @Mock
-    private TutorialService tutorialService;
 
     @Spy
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();

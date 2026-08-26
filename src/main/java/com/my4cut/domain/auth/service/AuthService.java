@@ -7,7 +7,6 @@ import com.my4cut.domain.auth.enums.EmailVerificationPurpose;
 import com.my4cut.domain.auth.jwt.JwtProvider;
 import com.my4cut.domain.auth.repository.RefreshTokenRepository;
 import com.my4cut.domain.image.ImageConstants;
-import com.my4cut.domain.tutorial.service.TutorialService;
 import com.my4cut.domain.user.dto.UserReqDTO;
 import com.my4cut.domain.user.dto.UserResDTO;
 import com.my4cut.domain.user.entity.User;
@@ -43,7 +42,6 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
     private final WorkspaceService workspaceService;
-    private final TutorialService tutorialService;
 
     @Transactional(readOnly = true)
     public AuthResDTO.CheckEmailResDto checkEmailDuplicate(String email) {
@@ -99,7 +97,6 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
         workspaceService.createDefaultWorkspace(savedUser);
-        tutorialService.initialize(savedUser);
     }
 
     // 로그인
@@ -300,7 +297,6 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
         workspaceService.createDefaultWorkspace(savedUser);
-        tutorialService.initialize(savedUser);
         return savedUser;
     }
 

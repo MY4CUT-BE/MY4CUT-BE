@@ -45,7 +45,7 @@ class TutorialConcurrencyIntegrationTest {
     }
 
     @Test
-    void concurrentFirstRequests_createOnlyOneTutorialRow() throws Exception {
+    void concurrentStatusRequests_doNotCreateProgressRows() throws Exception {
         Long userId = createUser().getId();
 
         runConcurrently(
@@ -53,23 +53,42 @@ class TutorialConcurrencyIntegrationTest {
                 () -> tutorialService.getStatus(userId)
         );
 
-        assertThat(userTutorialRepository.findByUserId(userId)).isPresent();
+        assertThat(userTutorialRepository.findAllByUserId(userId)).isEmpty();
     }
 
     @Test
     void concurrentDifferentCompletions_preserveBothFlags() throws Exception {
         Long userId = createUser().getId();
-        tutorialService.getStatus(userId);
-
         runConcurrently(
                 () -> tutorialService.complete(userId, TutorialType.HOME),
-                () -> tutorialService.complete(userId, TutorialType.WORKSPACE)
+                () -> tutorialService.complete(userId, TutorialType.UPLOAD_DATE)
         );
 
         TutorialStatusResponseDto status = tutorialService.getStatus(userId);
-        assertThat(status.home()).isTrue();
-        assertThat(status.workspace()).isTrue();
-        assertThat(status.photoUpload()).isFalse();
+        assertThat(completed(status, TutorialType.HOME)).isTrue();
+        assertThat(completed(status, TutorialType.UPLOAD_DATE)).isTrue();
+        assertThat(completed(status, TutorialType.UPLOAD_CONTENT)).isFalse();
+        assertThat(userTutorialRepository.findAllByUserId(userId)).hasSize(2);
+    }
+
+    @Test
+    void concurrentSameCompletion_createsOnlyOneProgressRow() throws Exception {
+        Long userId = createUser().getId();
+
+        runConcurrently(
+                () -> tutorialService.complete(userId, TutorialType.HOME),
+                () -> tutorialService.complete(userId, TutorialType.HOME)
+        );
+
+        assertThat(userTutorialRepository.findAllByUserId(userId)).hasSize(1);
+    }
+
+    private boolean completed(TutorialStatusResponseDto response, TutorialType type) {
+        return response.tutorials().stream()
+                .filter(status -> status.type() == type)
+                .findFirst()
+                .orElseThrow()
+                .completed();
     }
 
     private User createUser() {

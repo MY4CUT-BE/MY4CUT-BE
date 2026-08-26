@@ -7,8 +7,12 @@ import java.util.Locale;
 
 public enum TutorialType {
     HOME,
-    WORKSPACE,
-    PHOTO_UPLOAD;
+    UPLOAD_DATE,
+    UPLOAD_CONTENT,
+    RETOUCH_MAIN,
+    RETOUCH_SPACE,
+    RETOUCH_PHOTO,
+    RETOUCH_DETAIL;
 
     public static TutorialType from(String value) {
         if (value == null || value.isBlank()) {

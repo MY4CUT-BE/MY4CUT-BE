@@ -43,6 +43,13 @@ public class WorkspaceInvitationService {
      */
     @Transactional
     public void inviteMembers(WorkspaceInviteRequestDto dto, Long inviterId) {
+
+        // 한 번에 최대 9명까지만 초대 가능
+        if (dto.userIds() == null || dto.userIds().size() > 9) {
+            throw new WorkspaceException(WorkspaceErrorCode.MAX_INVITE_USERS_EXCEEDED);
+        }
+
+
         Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(dto.workspaceId())
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 

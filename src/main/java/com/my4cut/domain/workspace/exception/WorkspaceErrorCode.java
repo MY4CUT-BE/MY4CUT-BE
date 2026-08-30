@@ -11,6 +11,7 @@ public enum WorkspaceErrorCode implements BaseCode {
 
     WORKSPACE_NOT_FOUND(HttpStatus.NOT_FOUND, "W4041", "존재하지 않는 워크스페이스입니다."),
     MAX_INVITE_USERS_EXCEEDED(HttpStatus.BAD_REQUEST, "W4003", "한 번에 최대 9명까지만 초대할 수 있습니다."),
+    WORKSPACE_FULL(HttpStatus.BAD_REQUEST, "W4004", "워크스페이스 정원이 가득 찼습니다."),
     NOT_WORKSPACE_MEMBER(HttpStatus.FORBIDDEN, "W4034", "해당 워크스페이스의 멤버가 아닙니다."),
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "W4042", "해당 워크스페이스 멤버를 찾을 수 없습니다."),
     PHOTO_NOT_FOUND(HttpStatus.NOT_FOUND, "W4043", "존재하지 않는 사진입니다."),

@@ -50,9 +50,13 @@ public class EmailVerificationRequestService {
         );
         User user = userRepository.findByEmail(email).orElse(null);
 
-        // 계정 존재 여부와 로그인 방식을 외부 응답으로 구분할 수 없도록 동일하게 성공 처리한다.
-        if (user == null || user.isDeleted() || user.getLoginType() != LoginType.EMAIL) {
-            return;
+        // 미가입 계정과 탈퇴 계정은 외부에서 구분할 수 없도록 동일한 오류를 반환한다.
+        if (user == null || user.isDeleted()) {
+            throw new BusinessException(ErrorCode.AUTH_PASSWORD_RESET_ACCOUNT_NOT_FOUND);
+        }
+
+        if (user.getLoginType() != LoginType.EMAIL) {
+            throw new BusinessException(ErrorCode.AUTH_PASSWORD_RESET_NOT_ALLOWED);
         }
 
         // 입력값이 아니라 계정에 저장된 주소로 발송해 등록 주소 외 수신 가능성을 차단한다.

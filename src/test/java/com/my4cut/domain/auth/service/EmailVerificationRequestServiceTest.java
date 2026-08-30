@@ -89,12 +89,17 @@ class EmailVerificationRequestServiceTest {
     }
 
     @Test
-    @DisplayName("비밀번호 재설정 인증코드 발송: 존재하지 않는 계정도 동일하게 성공 처리한다")
-    void sendPasswordResetCode_UserNotFound_ReturnsWithoutSending() {
+    @DisplayName("비밀번호 재설정 인증코드 발송 실패: 존재하지 않는 계정은 계정 없음 오류를 반환한다")
+    void sendPasswordResetCode_UserNotFound_ThrowsAccountNotFound() {
         String email = "unknown@example.com";
         given(userRepository.findByEmail(email)).willReturn(Optional.empty());
 
-        requestService.sendPasswordResetCode(email, CLIENT_ADDRESS);
+        assertThatThrownBy(() -> requestService.sendPasswordResetCode(email, CLIENT_ADDRESS))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue(
+                        "errorCode",
+                        ErrorCode.AUTH_PASSWORD_RESET_ACCOUNT_NOT_FOUND
+                );
 
         verify(rateLimitService).checkSendAllowed(
                 email,
@@ -106,26 +111,36 @@ class EmailVerificationRequestServiceTest {
     }
 
     @Test
-    @DisplayName("비밀번호 재설정 인증코드 발송: 탈퇴 계정도 동일하게 성공 처리한다")
-    void sendPasswordResetCode_DeletedUser_ReturnsWithoutSending() {
+    @DisplayName("비밀번호 재설정 인증코드 발송 실패: 탈퇴 계정은 계정 없음 오류를 반환한다")
+    void sendPasswordResetCode_DeletedUser_ThrowsAccountNotFound() {
         String email = "deleted@example.com";
         User user = createUser(email, LoginType.EMAIL, UserStatus.DELETED);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
 
-        requestService.sendPasswordResetCode(email, CLIENT_ADDRESS);
+        assertThatThrownBy(() -> requestService.sendPasswordResetCode(email, CLIENT_ADDRESS))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue(
+                        "errorCode",
+                        ErrorCode.AUTH_PASSWORD_RESET_ACCOUNT_NOT_FOUND
+                );
 
         verify(emailVerificationService, never())
                 .sendCode(email, EmailVerificationPurpose.PASSWORD_RESET);
     }
 
     @Test
-    @DisplayName("비밀번호 재설정 인증코드 발송: 소셜 계정도 동일하게 성공 처리한다")
-    void sendPasswordResetCode_SocialUser_ReturnsWithoutSending() {
+    @DisplayName("비밀번호 재설정 인증코드 발송 실패: 소셜 계정은 재설정 불가 오류를 반환한다")
+    void sendPasswordResetCode_SocialUser_ThrowsNotAllowed() {
         String email = "social@example.com";
         User user = createUser(email, LoginType.KAKAO, UserStatus.ACTIVE);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
 
-        requestService.sendPasswordResetCode(email, CLIENT_ADDRESS);
+        assertThatThrownBy(() -> requestService.sendPasswordResetCode(email, CLIENT_ADDRESS))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue(
+                        "errorCode",
+                        ErrorCode.AUTH_PASSWORD_RESET_NOT_ALLOWED
+                );
 
         verify(emailVerificationService, never())
                 .sendCode(email, EmailVerificationPurpose.PASSWORD_RESET);

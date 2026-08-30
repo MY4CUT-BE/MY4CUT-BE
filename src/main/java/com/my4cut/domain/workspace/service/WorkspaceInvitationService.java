@@ -116,6 +116,8 @@ public class WorkspaceInvitationService {
         WorkspaceInvitation invitation = workspaceInvitationRepository.findByIdAndInviteeId(invitationId, userId)
                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.INVITATION_NOT_FOUND));
 
+        Workspace workspace = invitation.getWorkspace();
+
         if (invitation.getWorkspace().getDeletedAt() != null) {
             throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND);
         }
@@ -126,6 +128,11 @@ public class WorkspaceInvitationService {
 
         if (invitation.getStatus() != InvitationStatus.PENDING) {
             throw new WorkspaceException(WorkspaceErrorCode.INVITATION_ALREADY_PROCESSED);
+        }
+
+        // 스페이스 정원 확인
+        if (workspaceMemberRepository.countByWorkspace(workspace) >= 10) {
+            throw new WorkspaceException(WorkspaceErrorCode.WORKSPACE_FULL);
         }
 
         invitation.accept();

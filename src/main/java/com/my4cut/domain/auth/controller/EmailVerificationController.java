@@ -62,7 +62,7 @@ public class EmailVerificationController {
 
     @Operation(
             summary = "비밀번호 재설정 이메일 인증코드 발송",
-            description = "요청을 항상 동일하게 접수하며, 비밀번호 재설정이 가능한 이메일 계정에만 6자리 인증코드를 발송합니다."
+            description = "가입된 이메일 로그인 계정에만 비밀번호 재설정용 6자리 인증코드를 발송합니다."
     )
     @PostMapping("/password-reset/send")
     public ApiResponse<Void> sendPasswordResetCode(

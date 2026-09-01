@@ -4,6 +4,9 @@ import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.entity.WorkspaceMember;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -27,4 +30,8 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
     long countByWorkspace(Workspace workspace);
 
     boolean existsByWorkspaceIdAndUserId(Long workspaceId, Long userId);
+
+    @Modifying
+    @Query("delete from WorkspaceMember member where member.user = :user")
+    int deleteAllByUser(@Param("user") User user);
 }

@@ -35,6 +35,7 @@ import java.util.UUID;
 public class AuthService {
     private static final Pattern PASSWORD_POLICY_PATTERN =
             Pattern.compile("^(?=\\S{8,64}$)(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z\\d\\s]).*$");
+    private static final String WITHDRAWN_FRIEND_CODE_PREFIX = "DELETED_";
 
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -42,6 +43,7 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final EmailVerificationService emailVerificationService;
     private final WorkspaceService workspaceService;
+    private final AccountWithdrawalCleanupService accountWithdrawalCleanupService;
 
     @Transactional(readOnly = true)
     public AuthResDTO.CheckEmailResDto checkEmailDuplicate(String email) {
@@ -63,22 +65,15 @@ public class AuthService {
 
         User existingUser = userRepository.findByEmail(request.email()).orElse(null);
 
-        //현재 있는 유저인지 조회
-        if (existingUser != null && !existingUser.isDeleted()) {
-            throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
+        if (existingUser != null) {
+            if (!existingUser.isDeleted()) {
+                throw new BusinessException(ErrorCode.AUTH_DUPLICATE_EMAIL);
+            }
+
+            prepareDeletedAccountForRejoin(existingUser);
         }
 
         String encodedPassword = passwordEncoder.encode(request.password());
-
-        //재가입시
-        if (existingUser != null) {
-            existingUser.activateEmailLogin(request.email());
-            existingUser.updatePassword(encodedPassword);
-            existingUser.updateNickname(request.nickname());
-            existingUser.reactivate();
-            refreshTokenRepository.deleteByUser(existingUser);
-            return;
-        }
 
         String friendCode = UUID.randomUUID()
                 .toString()
@@ -171,11 +166,11 @@ public class AuthService {
             throw new BusinessException(ErrorCode.USER_DELETED);
         }
 
-        // RefreshToken 삭제
+        // 로그인 세션과 활성 관계를 먼저 정리한 뒤 계정 식별정보를 익명화한다.
         refreshTokenRepository.deleteByUser(user);
+        accountWithdrawalCleanupService.cleanup(user);
 
-        // Soft delete
-        user.withdraw();
+        user.withdraw(createWithdrawnFriendCode(user));
     }
 
     //비밀번호 재설정
@@ -221,17 +216,19 @@ public class AuthService {
         AuthResDTO.KakaoUserResDto kakaoUser = getKakaoUser(accessToken);
         String oauthId = kakaoUser.id().toString();
 
-        // 유저 조회 or 생성
-        User user = userRepository
+        User existingUser = userRepository
                 .findByLoginTypeAndOauthId(LoginType.KAKAO, oauthId)
-                .map(existingUser -> {
-                    if (existingUser.isDeleted()) {
-                        existingUser.reactivate();
-                        refreshTokenRepository.deleteByUser(existingUser);
-                    }
-                    return existingUser;
-                })
-                .orElseGet(() -> createKakaoUser(oauthId));
+                .orElse(null);
+
+        User user;
+        if (existingUser == null) {
+            user = createKakaoUser(oauthId);
+        } else if (existingUser.isDeleted()) {
+            prepareDeletedAccountForRejoin(existingUser);
+            user = createKakaoUser(oauthId);
+        } else {
+            user = existingUser;
+        }
 
         // JWT 발급 (EMAIL 로그인과 동일)
         String accessTokenJwt = jwtProvider.createAccessToken(user);
@@ -298,6 +295,22 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         workspaceService.createDefaultWorkspace(savedUser);
         return savedUser;
+    }
+
+    private void prepareDeletedAccountForRejoin(User deletedUser) {
+        refreshTokenRepository.deleteByUser(deletedUser);
+        accountWithdrawalCleanupService.cleanup(deletedUser);
+        deletedUser.anonymizeDeletedAccount(createWithdrawnFriendCode(deletedUser));
+
+        // 기존 식별자의 UNIQUE 제약을 먼저 해제한 뒤 신규 사용자 INSERT가 실행되게 한다.
+        userRepository.flush();
+    }
+
+    private String createWithdrawnFriendCode(User user) {
+        return WITHDRAWN_FRIEND_CODE_PREFIX
+                + user.getId()
+                + "_"
+                + UUID.randomUUID().toString().replace("-", "");
     }
 
 

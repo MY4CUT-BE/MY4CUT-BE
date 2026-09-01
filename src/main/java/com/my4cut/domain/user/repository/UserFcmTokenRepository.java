@@ -4,6 +4,9 @@ import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.entity.UserFcmToken;
 import com.my4cut.domain.user.enums.DeviceType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,4 +15,8 @@ public interface UserFcmTokenRepository extends JpaRepository<UserFcmToken, Long
 
     Optional<UserFcmToken> findByUserAndDeviceType(User user, DeviceType deviceType);
     List<UserFcmToken> findAllByUser(User user);
+
+    @Modifying
+    @Query("delete from UserFcmToken token where token.user = :user")
+    int deleteAllByUser(@Param("user") User user);
 }

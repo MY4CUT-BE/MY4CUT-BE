@@ -53,6 +53,9 @@ class AuthServiceTest {
     @Mock
     private WorkspaceService workspaceService;
 
+    @Mock
+    private AccountWithdrawalCleanupService accountWithdrawalCleanupService;
+
     @Spy
     private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -120,8 +123,8 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("회원가입 성공: 탈퇴 계정은 재활성화하고 회원가입 인증 상태를 정리한다")
-    void signup_DeletedUser_Reactivates() {
+    @DisplayName("회원가입 성공: 기존 탈퇴 계정을 익명화하고 신규 사용자로 가입한다")
+    void signup_DeletedUser_CreatesNewAccount() {
         String email = "deleted@example.com";
         User deletedUser = createEmailUser(email, passwordEncoder.encode("OldPassword1!"), UserStatus.DELETED);
         UserReqDTO.SignUpDTO request = new UserReqDTO.SignUpDTO(
@@ -131,14 +134,25 @@ class AuthServiceTest {
                 email, EmailVerificationPurpose.SIGNUP, VERIFICATION_TOKEN
         )).willReturn(true);
         given(userRepository.findByEmail(email)).willReturn(Optional.of(deletedUser));
+        given(userRepository.save(any(User.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
 
         authService.signup(request);
 
-        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.ACTIVE);
-        assertThat(deletedUser.getNickname()).isEqualTo("new-name");
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(deletedUser.getEmail()).isNull();
+        assertThat(deletedUser.getPassword()).isNull();
+        assertThat(deletedUser.getNickname()).isEqualTo("탈퇴한 사용자");
+        assertThat(deletedUser.getFriendCode()).startsWith("DELETED_1_");
         verify(refreshTokenRepository).deleteByUser(deletedUser);
-        verify(userRepository, never()).save(any(User.class));
-        verify(workspaceService, never()).createDefaultWorkspace(any(User.class));
+        verify(accountWithdrawalCleanupService).cleanup(deletedUser);
+        verify(userRepository).flush();
+        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(newUser ->
+                newUser != deletedUser
+                        && email.equals(newUser.getEmail())
+                        && newUser.getStatus() == UserStatus.ACTIVE
+        ));
+        verify(workspaceService).createDefaultWorkspace(any(User.class));
     }
 
     @Test
@@ -182,6 +196,67 @@ class AuthServiceTest {
 
         verify(userRepository, never()).save(any(User.class));
         verify(workspaceService, never()).createDefaultWorkspace(any(User.class));
+    }
+
+    @Test
+    @DisplayName("카카오 재가입 성공: 기존 탈퇴 계정을 익명화하고 신규 사용자로 가입한다")
+    void kakaoLogin_DeletedUser_CreatesNewAccount() {
+        String accessToken = "kakao-access-token";
+        String oauthId = "123456";
+        User deletedUser = User.builder()
+                .loginType(LoginType.KAKAO)
+                .oauthId(oauthId)
+                .nickname("old-kakao-user")
+                .friendCode("OLD123")
+                .status(UserStatus.DELETED)
+                .build();
+        ReflectionTestUtils.setField(deletedUser, "id", 2L);
+        AuthService spyAuthService = spy(authService);
+        doReturn(new AuthResDTO.KakaoUserResDto(Long.valueOf(oauthId)))
+                .when(spyAuthService).getKakaoUser(accessToken);
+        given(userRepository.findByLoginTypeAndOauthId(LoginType.KAKAO, oauthId))
+                .willReturn(Optional.of(deletedUser));
+        given(userRepository.save(any(User.class)))
+                .willAnswer(invocation -> invocation.getArgument(0));
+
+        spyAuthService.kakaoLogin(accessToken);
+
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(deletedUser.getOauthId()).isNull();
+        assertThat(deletedUser.getNickname()).isEqualTo("탈퇴한 사용자");
+        assertThat(deletedUser.getFriendCode()).startsWith("DELETED_2_");
+        verify(refreshTokenRepository).deleteByUser(deletedUser);
+        verify(accountWithdrawalCleanupService).cleanup(deletedUser);
+        verify(userRepository).flush();
+        verify(userRepository).save(org.mockito.ArgumentMatchers.argThat(newUser ->
+                newUser != deletedUser
+                        && newUser.getLoginType() == LoginType.KAKAO
+                        && oauthId.equals(newUser.getOauthId())
+                        && newUser.getStatus() == UserStatus.ACTIVE
+        ));
+        verify(workspaceService).createDefaultWorkspace(any(User.class));
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴 성공: 인증정보와 활성 관계를 정리하고 계정을 익명화한다")
+    void withdraw_Success_AnonymizesAccount() {
+        User user = createEmailUser(
+                "member@example.com",
+                passwordEncoder.encode("Password1!"),
+                UserStatus.ACTIVE
+        );
+        given(userRepository.findById(user.getId())).willReturn(Optional.of(user));
+
+        authService.withdraw(user.getId());
+
+        assertThat(user.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(user.getDeletedAt()).isNotNull();
+        assertThat(user.getEmail()).isNull();
+        assertThat(user.getPassword()).isNull();
+        assertThat(user.getNickname()).isEqualTo("탈퇴한 사용자");
+        assertThat(user.getFriendCode()).startsWith("DELETED_1_");
+        verify(refreshTokenRepository).deleteByUser(user);
+        verify(accountWithdrawalCleanupService).cleanup(user);
     }
 
     @Test

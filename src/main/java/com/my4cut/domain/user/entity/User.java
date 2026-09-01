@@ -89,9 +89,10 @@ public class User extends BaseEntity {
         this.status = status;
     }
 
-    public void withdraw() {
+    public void withdraw(String withdrawnFriendCode) {
         this.status = UserStatus.DELETED;
         this.deletedAt = LocalDateTime.now();
+        anonymizeDeletedAccount(withdrawnFriendCode);
     }
 
     public void updateNickname(String nickname) {
@@ -106,18 +107,21 @@ public class User extends BaseEntity {
         this.password = password;
     }
 
-    public void activateEmailLogin(String email) {
-        this.loginType = LoginType.EMAIL;
+    public void anonymizeDeletedAccount(String withdrawnFriendCode) {
+        if (!isDeleted()) {
+            throw new IllegalStateException("탈퇴한 사용자만 익명화할 수 있습니다.");
+        }
+
+        this.email = null;
+        this.password = null;
         this.oauthId = null;
-        this.email = email;
+        this.friendCode = withdrawnFriendCode;
+        this.nickname = "탈퇴한 사용자";
+        this.profileImageUrl = com.my4cut.domain.image.ImageConstants.DEFAULT_PROFILE_IMAGE_URL;
     }
 
     public boolean isDeleted() {
         return this.status == UserStatus.DELETED;
     }
 
-    public void reactivate() {
-        this.status = UserStatus.ACTIVE;
-        this.deletedAt = null;
-    }
 }

@@ -4,6 +4,9 @@ import com.my4cut.domain.friend.entity.FriendRequest;
 import com.my4cut.domain.friend.enums.FriendRequestStatus;
 import com.my4cut.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,5 +27,16 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
     Optional<FriendRequest> findByIdAndToUser(Long id, User toUser);
 
     Optional<FriendRequest> findByIdAndFromUser(Long id, User fromUser);
+
+    @Modifying
+    @Query("""
+            delete from FriendRequest request
+            where request.status = :status
+              and (request.fromUser = :user or request.toUser = :user)
+            """)
+    int deleteAllPendingInvolvingUser(
+            @Param("user") User user,
+            @Param("status") FriendRequestStatus status
+    );
 }
 

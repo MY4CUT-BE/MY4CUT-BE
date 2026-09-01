@@ -3,6 +3,9 @@ package com.my4cut.domain.friend.repository;
 import com.my4cut.domain.friend.entity.Friend;
 import com.my4cut.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,4 +19,8 @@ public interface FriendRepository extends JpaRepository<Friend, Long> {
     List<Friend> findAllByUser(User user);
 
     void deleteByUserAndFriendUser(User user, User friendUser);
+
+    @Modifying
+    @Query("delete from Friend friend where friend.user = :user or friend.friendUser = :user")
+    int deleteAllInvolvingUser(@Param("user") User user);
 }

@@ -27,12 +27,13 @@ public class PoseController {
     )
     @GetMapping
     public ApiResponse<List<PoseResDto.PoseListResDto>> getPoseList(
+            @AuthenticationPrincipal Long userId,
             @Parameter(description = "정렬 기준") @RequestParam(required = false) String sort,
             @Parameter(description = "인원수 필터") @RequestParam(required = false) Integer peopleCount
     ) {
         return ApiResponse.onSuccess(
                 SuccessCode.OK,
-                poseService.getPoseList(sort, peopleCount)
+                poseService.getPoseList(userId, sort, peopleCount)
         );
     }
 
@@ -42,11 +43,12 @@ public class PoseController {
     )
     @GetMapping("/{poseId}")
     public ApiResponse<PoseResDto.PoseDetailResDto> getPoseDetail(
+            @AuthenticationPrincipal Long userId,
             @Parameter(description = "포즈 ID") @PathVariable Long poseId
     ) {
         return ApiResponse.onSuccess(
                 SuccessCode.OK,
-                poseService.getPoseDetail(poseId)
+                poseService.getPoseDetail(userId, poseId)
         );
     }
 

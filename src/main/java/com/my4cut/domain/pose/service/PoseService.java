@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 포즈 추천 관련 비즈니스 로직을 처리하는 서비스 클래스.
@@ -33,12 +34,13 @@ public class PoseService {
 
     /**
      * 포즈 목록을 조회합니다.
+     * @param userId 즐겨찾기 상태를 조회할 유저 ID
      * @param sort 정렬 기준 (title, peopleCount 등)
      * @param peopleCount 필터링할 인원수 (선택)
      * @return 포즈 목록 DTO 리스트
      */
     @Transactional(readOnly = true)
-    public List<PoseResDto.PoseListResDto> getPoseList(String sort, Integer peopleCount) {
+    public List<PoseResDto.PoseListResDto> getPoseList(Long userId, String sort, Integer peopleCount) {
         List<Pose> poses;
 
         Sort sortOrder = Sort.by(Sort.Direction.DESC, "createdAt");
@@ -54,28 +56,46 @@ public class PoseService {
             poses = poseRepository.findAll(sortOrder);
         }
 
+        Set<Long> favoritePoseIds = getFavoritePoseIds(userId, poses);
+
         return poses.stream()
                 .map(pose -> PoseResDto.PoseListResDto.of(
                         pose,
-                        imageStorageService.generatePresignedGetUrl(pose.getImageUrl())
+                        imageStorageService.generatePresignedGetUrl(pose.getImageUrl()),
+                        favoritePoseIds.contains(pose.getId())
                 ))
                 .toList();
     }
 
     /**
      * 특정 포즈의 상세 정보를 조회합니다.
+     * @param userId 즐겨찾기 상태를 조회할 유저 ID
      * @param poseId 조회할 포즈 ID
      * @return 포즈 상세 정보 DTO
      */
     @Transactional(readOnly = true)
-    public PoseResDto.PoseDetailResDto getPoseDetail(Long poseId) {
+    public PoseResDto.PoseDetailResDto getPoseDetail(Long userId, Long poseId) {
         Pose pose = poseRepository.findById(poseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        boolean bookmarked = poseFavoriteRepository.existsByUserIdAndPoseId(userId, poseId);
 
         return PoseResDto.PoseDetailResDto.of(
                 pose,
-                imageStorageService.generatePresignedGetUrl(pose.getImageUrl())
+                imageStorageService.generatePresignedGetUrl(pose.getImageUrl()),
+                bookmarked
         );
+    }
+
+    private Set<Long> getFavoritePoseIds(Long userId, List<Pose> poses) {
+        if (poses.isEmpty()) {
+            return Set.of();
+        }
+
+        List<Long> poseIds = poses.stream()
+                .map(Pose::getId)
+                .toList();
+
+        return Set.copyOf(poseFavoriteRepository.findFavoritePoseIds(userId, poseIds));
     }
 
     /**

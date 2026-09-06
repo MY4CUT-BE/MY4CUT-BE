@@ -26,13 +26,17 @@ public class PoseResDto {
         @Schema(description = "추천 인원수", example = "2")
         private Integer peopleCount;
 
-        public static PoseListResDto of(Pose pose, String viewUrl) {
+        @Schema(description = "현재 사용자의 즐겨찾기 여부", example = "true")
+        private Boolean bookmarked;
+
+        public static PoseListResDto of(Pose pose, String viewUrl, boolean bookmarked) {
             return PoseListResDto.builder()
                     .poseId(pose.getId())
                     .title(pose.getTitle())
                     .fileKey(pose.getImageUrl())
                     .viewUrl(viewUrl)
                     .peopleCount(pose.getPeopleCount())
+                    .bookmarked(bookmarked)
                     .build();
         }
     }
@@ -56,13 +60,17 @@ public class PoseResDto {
         @Schema(description = "추천 인원수", example = "2")
         private Integer peopleCount;
 
-        public static PoseDetailResDto of(Pose pose, String viewUrl) {
+        @Schema(description = "현재 사용자의 즐겨찾기 여부", example = "true")
+        private Boolean bookmarked;
+
+        public static PoseDetailResDto of(Pose pose, String viewUrl, boolean bookmarked) {
             return PoseDetailResDto.builder()
                     .poseId(pose.getId())
                     .title(pose.getTitle())
                     .fileKey(pose.getImageUrl())
                     .viewUrl(viewUrl)
                     .peopleCount(pose.getPeopleCount())
+                    .bookmarked(bookmarked)
                     .build();
         }
     }

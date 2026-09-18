@@ -17,20 +17,53 @@ import java.util.List;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
     void deleteAllByUser(User user);
+
     List<Notification> findAllByIdInAndUser(List<Long> ids, User user);
-    void deleteByUserAndTypeAndReferenceId(User user, NotificationType type, Long referenceId);
-    void deleteAllByWorkspaceIdAndType(Long workspaceId, NotificationType type);
+
+    void deleteByUserAndTypeAndReferenceId(
+            User user,
+            NotificationType type,
+            Long referenceId
+    );
+
+    void deleteAllByWorkspaceIdAndType(
+            Long workspaceId,
+            NotificationType type
+    );
 
     /*
      * 친구 요청/스페이스 초대 알림은 원본 요청이 아직 PENDING일 때만 노출한다.
      * 수락/거절 후 DB에 남아 있는 과거 알림까지 조회 단계에서 제외해 알림창 잔류를 방지한다.
+     *
+     * 스페이스 활동 알림(MEDIA_UPLOADED, MEDIA_COMMENT)은
+     * 현재 사용자가 해당 스페이스의 멤버인 경우에만 노출한다.
+     * 따라서 스페이스에서 나간 경우 기존에 저장된 해당 스페이스 알림도 조회되지 않는다.
      */
     @Query(
             value = """
                     select n.*
                     from notifications n
                     where n.user_id = :userId
-                      and n.type in ('FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'WORKSPACE_INVITE', 'MEDIA_UPLOADED', 'MEDIA_COMMENT')
+                      and n.type in (
+                          'FRIEND_REQUEST',
+                          'FRIEND_ACCEPTED',
+                          'WORKSPACE_INVITE',
+                          'MEDIA_UPLOADED',
+                          'MEDIA_COMMENT'
+                      )
+
+                      -- 스페이스 활동 알림은 현재 스페이스 멤버인 경우에만 조회
+                      and (
+                          n.type not in ('MEDIA_UPLOADED', 'MEDIA_COMMENT')
+                          or exists (
+                              select 1
+                              from workspace_members wm
+                              where wm.workspace_id = n.workspace_id
+                                and wm.user_id = :userId
+                          )
+                      )
+
+                      -- 친구 요청/스페이스 초대는 원본 요청이 PENDING일 때만 조회
                       and (
                           n.type not in ('FRIEND_REQUEST', 'WORKSPACE_INVITE')
                           or (
@@ -52,13 +85,34 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                               )
                           )
                       )
+
                     order by n.created_at desc, n.id desc
                     """,
+
             countQuery = """
                     select count(*)
                     from notifications n
                     where n.user_id = :userId
-                      and n.type in ('FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'WORKSPACE_INVITE', 'MEDIA_UPLOADED', 'MEDIA_COMMENT')
+                      and n.type in (
+                          'FRIEND_REQUEST',
+                          'FRIEND_ACCEPTED',
+                          'WORKSPACE_INVITE',
+                          'MEDIA_UPLOADED',
+                          'MEDIA_COMMENT'
+                      )
+
+                      -- 스페이스 활동 알림은 현재 스페이스 멤버인 경우에만 조회
+                      and (
+                          n.type not in ('MEDIA_UPLOADED', 'MEDIA_COMMENT')
+                          or exists (
+                              select 1
+                              from workspace_members wm
+                              where wm.workspace_id = n.workspace_id
+                                and wm.user_id = :userId
+                          )
+                      )
+
+                      -- 친구 요청/스페이스 초대는 원본 요청이 PENDING일 때만 조회
                       and (
                           n.type not in ('FRIEND_REQUEST', 'WORKSPACE_INVITE')
                           or (
@@ -81,6 +135,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                           )
                       )
                     """,
+
             nativeQuery = true
     )
     Page<Notification> findVisibleByUserIdOrderByCreatedAtDesc(
@@ -90,7 +145,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     /*
      * 읽지 않은 상태도 실제 표시 가능한 알림 기준으로 계산한다.
-     * 처리 완료된 요청 알림 때문에 알림 배지가 계속 켜지는 상황을 막는다.
+     * 처리 완료된 요청 알림 및 탈퇴한 스페이스의 활동 알림은
+     * 읽지 않은 알림 개수에서도 제외한다.
      */
     @Query(
             value = """
@@ -98,7 +154,26 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     from notifications n
                     where n.user_id = :userId
                       and n.is_read = false
-                      and n.type in ('FRIEND_REQUEST', 'FRIEND_ACCEPTED', 'WORKSPACE_INVITE', 'MEDIA_UPLOADED', 'MEDIA_COMMENT')
+                      and n.type in (
+                          'FRIEND_REQUEST',
+                          'FRIEND_ACCEPTED',
+                          'WORKSPACE_INVITE',
+                          'MEDIA_UPLOADED',
+                          'MEDIA_COMMENT'
+                      )
+
+                      -- 스페이스 활동 알림은 현재 스페이스 멤버인 경우에만 카운트
+                      and (
+                          n.type not in ('MEDIA_UPLOADED', 'MEDIA_COMMENT')
+                          or exists (
+                              select 1
+                              from workspace_members wm
+                              where wm.workspace_id = n.workspace_id
+                                and wm.user_id = :userId
+                          )
+                      )
+
+                      -- 친구 요청/스페이스 초대는 원본 요청이 PENDING일 때만 카운트
                       and (
                           n.type not in ('FRIEND_REQUEST', 'WORKSPACE_INVITE')
                           or (
@@ -123,7 +198,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                     """,
             nativeQuery = true
     )
-    long countVisibleUnreadByUserId(@Param("userId") Long userId);
+    long countVisibleUnreadByUserId(
+            @Param("userId") Long userId
+    );
 
     /*
      * 30일 초과 알림을 한 번에 모두 삭제하면 운영 DB에서 긴 트랜잭션과 row lock 부담이 커질 수 있다.

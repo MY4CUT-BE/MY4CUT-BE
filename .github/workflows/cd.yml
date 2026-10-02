@@ -55,7 +55,7 @@ jobs:
           command_timeout: 15m
           script: |
             set -eu
-            cd ~/deploy
+            cd ~/MY4CUT-BE/deploy
             export IMAGE_TAG="prod-$(printf '%.7s' '${{ github.sha }}')"
             echo '${{ secrets.DOCKER_ACCESS_TOKEN }}' | \
               docker login \

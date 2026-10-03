@@ -39,11 +39,11 @@ jobs:
 
       - name: Build & Push Docker Image
         run: |
-          docker build \
+          docker buildx build \
+            --platform linux/arm64 \
             -t "hilees/my4cut:prod-${SHA_SHORT}" \
-            -t hilees/my4cut:prod-latest .
-          docker push "hilees/my4cut:prod-${SHA_SHORT}"
-          docker push hilees/my4cut:prod-latest
+            -t hilees/my4cut:prod-latest \
+            --push .
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -55,7 +55,7 @@ jobs:
           command_timeout: 15m
           script: |
             set -eu
-            cd ~/deploy
+            cd ~/MY4CUT-BE/deploy
             export IMAGE_TAG="prod-$(printf '%.7s' '${{ github.sha }}')"
             echo '${{ secrets.DOCKER_ACCESS_TOKEN }}' | \
               docker login \

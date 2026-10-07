@@ -97,12 +97,19 @@ public class WorkspaceInvitationService {
      * @return 초대 정보 DTO 리스트
      */
     public List<WorkspaceInvitationResponseDto> getMyInvitations(Long userId) {
-        return workspaceInvitationRepository.findAllByInviteeIdAndStatus(userId, InvitationStatus.PENDING)
+        return workspaceInvitationRepository.findAllByInviteeIdAndStatusIn(
+                        userId,
+                        List.of(
+                                InvitationStatus.PENDING,
+                                InvitationStatus.REJECTED
+                        )
+                )
                 .stream()
                 .map(invitation -> new WorkspaceInvitationResponseDto(
                         invitation.getId(),
                         invitation.getWorkspace().getName(),
                         invitation.getInviter().getNickname(),
+                        invitation.getInviter().getProfileImageUrl(),
                         invitation.getStatus(),
                         invitation.getCreatedAt()))
                 .toList();
@@ -160,4 +167,26 @@ public class WorkspaceInvitationService {
         // 초대 거절 후에는 더 이상 응답할 수 없는 초대 알림을 즉시 제거한다.
         notificationService.deleteWorkspaceInviteNotification(invitation.getInvitee(), invitation.getId());
     }
+
+    @Transactional
+    public void cancelInvitation(Long invitationId, Long userId) {
+        WorkspaceInvitation invitation =
+                workspaceInvitationRepository.findByIdAndInviterId(invitationId, userId)
+                        .orElseThrow(() ->
+                                new WorkspaceException(WorkspaceErrorCode.INVITATION_NOT_FOUND));
+
+        if (invitation.getStatus() != InvitationStatus.PENDING) {
+            throw new WorkspaceException(WorkspaceErrorCode.INVITATION_ALREADY_PROCESSED);
+        }
+
+        // 초대 알림 삭제
+        notificationService.deleteWorkspaceInviteNotification(
+                invitation.getInvitee(),
+                invitation.getId()
+        );
+
+        // 초대 삭제
+        workspaceInvitationRepository.delete(invitation);
+    }
+
 }

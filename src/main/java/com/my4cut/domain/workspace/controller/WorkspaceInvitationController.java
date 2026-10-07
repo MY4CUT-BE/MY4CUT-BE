@@ -55,4 +55,15 @@ public class WorkspaceInvitationController {
         workspaceInvitationService.rejectInvitation(invitationId, userId);
         return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_INVITE_SUCCESS);
     }
+
+    @Operation(summary = "워크스페이스 초대 취소", description = "초대한 사람 본인이 보낸 워크스페이스 초대를 취소합니다.")
+    @DeleteMapping("/{invitationId}")
+    public ApiResponse<Void> cancelInvitation(
+            @PathVariable Long invitationId,
+            @AuthenticationPrincipal Long userId) {
+
+        workspaceInvitationService.cancelInvitation(invitationId, userId);
+
+        return ApiResponse.onSuccess(WorkspaceSuccessCode.WORKSPACE_INVITE_CANCEL_SUCCESS);
+    }
 }

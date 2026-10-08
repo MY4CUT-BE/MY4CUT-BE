@@ -98,7 +98,7 @@ public class WorkspaceService {
 
                 validateMembership(workspaceId, userId);
 
-                return workspaceMemberService.convertToInfoDto(workspace);
+            return workspaceMemberService.convertToInfoDto(workspace, userId);
         }
 
         /**
@@ -153,5 +153,4 @@ public class WorkspaceService {
                         throw new WorkspaceException(WorkspaceErrorCode.NOT_WORKSPACE_MEMBER);
                 }
         }
-
 }

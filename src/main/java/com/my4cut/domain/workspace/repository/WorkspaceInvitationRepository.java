@@ -16,6 +16,8 @@ import java.util.Optional;
 public interface WorkspaceInvitationRepository extends JpaRepository<WorkspaceInvitation, Long> {
     List<WorkspaceInvitation> findAllByWorkspaceIdAndStatus(Long workspaceId, InvitationStatus status);
 
+    List<WorkspaceInvitation> findAllByWorkspaceIdAndStatusIn(Long workspaceId, List<InvitationStatus> statuses);
+
     List<WorkspaceInvitation> findAllByInviteeIdAndStatus(Long inviteeId, InvitationStatus status);
 
     List<WorkspaceInvitation> findAllByInviteeIdAndStatusIn(Long inviteeId, List<InvitationStatus> statuses);

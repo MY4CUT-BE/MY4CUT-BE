@@ -28,6 +28,8 @@ public record WorkspaceInfoResponseDto(
     List<Long> pendingInvitationUserIds,
     @Schema(description = "이미 초대된 친구 userId 리스트 (수락 완료 멤버 + 대기 중인 초대)")
     List<Long> alreadyInvitedFriendIds,
+    @Schema(description = "워크스페이스 초대 사용자 정보")
+    List<WorkspaceInvitationUserResponseDto> invitationUsers,
     @Schema(description = "최근 활동 타입")
     String recentActivityType,
     @Schema(description = "최근 활동 유저 닉네임")
@@ -59,6 +61,7 @@ public record WorkspaceInfoResponseDto(
                 memberProfiles,
                 pendingInvitationUserIds,
                 buildAlreadyInvitedFriendIds(memberIds, pendingInvitationUserIds),
+                null,
                 recentActivityType,
                 recentActivityUserNickname,
                 recentActivityAt

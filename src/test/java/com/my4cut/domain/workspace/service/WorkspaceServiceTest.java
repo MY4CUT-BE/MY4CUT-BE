@@ -51,6 +51,9 @@ class WorkspaceServiceTest {
     @Mock
     private NotificationService notificationService;
 
+    @Mock
+    private TutorialWorkspacePhotoService tutorialWorkspacePhotoService;
+
     @InjectMocks
     private WorkspaceService workspaceService;
 
@@ -70,7 +73,6 @@ class WorkspaceServiceTest {
                 List.of(userId),
                 List.of(),
                 List.of(),
-                null,
                 null,
                 null,
                 null
@@ -108,6 +110,7 @@ class WorkspaceServiceTest {
         assertThat(workspace.getExpiresAt())
                 .isBetween(beforeCreation.plusDays(7), afterCreation.plusDays(7));
         verify(workspaceMemberService).addMember(workspace, owner);
+        verify(tutorialWorkspacePhotoService).createDefaultPhoto(owner, workspace);
     }
 
     @Test
@@ -128,7 +131,6 @@ class WorkspaceServiceTest {
                 List.of(userId),
                 List.of(),
                 List.of(),
-                null,
                 null,
                 null,
                 null
@@ -221,7 +223,7 @@ class WorkspaceServiceTest {
 
         given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberService.isWorkspaceMember(workspaceId, 1L)).willReturn(true);
-        given(workspaceMemberService.convertToInfoDto(workspace)).willReturn(responseDto);
+        given(workspaceMemberService.convertToInfoDto(workspace, 1L)).willReturn(responseDto);
 
         WorkspaceInfoResponseDto result = workspaceService.getWorkspaceInfo(workspaceId, 1L);
 

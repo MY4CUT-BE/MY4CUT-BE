@@ -1,7 +1,9 @@
 package com.my4cut.domain.image.service;
 
+import com.my4cut.domain.image.config.TutorialImageProperties;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.response.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -16,9 +18,13 @@ import java.util.UUID;
 @Service
 @Slf4j
 @Profile("local")
+@RequiredArgsConstructor
 public class LocalImageStorageService implements ImageStorageService {
 
     private static final String UPLOAD_ROOT = System.getProperty("user.dir") + "/uploads";
+    private static final String LOCAL_IMAGE_URL_PREFIX = "/images/";
+
+    private final TutorialImageProperties tutorialImageProperties;
 
     @Override
     public String upload(MultipartFile file) {
@@ -62,6 +68,9 @@ public class LocalImageStorageService implements ImageStorageService {
 
     @Override
     public String generatePresignedGetUrl(String fileKey) {
+        if (tutorialImageProperties.isProtected(fileKey)) {
+            return LOCAL_IMAGE_URL_PREFIX + fileKey;
+        }
         return fileKey;
     }
 
@@ -71,13 +80,20 @@ public class LocalImageStorageService implements ImageStorageService {
             return true;
         }
 
+        String storageKey = imagePathOrUrl.startsWith(LOCAL_IMAGE_URL_PREFIX)
+                ? imagePathOrUrl.substring(LOCAL_IMAGE_URL_PREFIX.length())
+                : imagePathOrUrl;
+        if (tutorialImageProperties.isProtected(storageKey)) {
+            return true;
+        }
+
         if (isUrl(imagePathOrUrl)) {
             return true;
         }
 
         try {
             String filePath = imagePathOrUrl;
-            if (filePath.startsWith("/images/")) {
+            if (filePath.startsWith(LOCAL_IMAGE_URL_PREFIX)) {
                 filePath = UPLOAD_ROOT + filePath.substring("/images".length());
             }
             Path path = Paths.get(filePath);

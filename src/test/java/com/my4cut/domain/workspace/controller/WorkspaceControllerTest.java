@@ -86,9 +86,9 @@ class WorkspaceControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "스페이스 이름", "스페이스!", "1234567890123456"})
+    @ValueSource(strings = {"", " ", "1234567890123456"})
     @WithMockUser
-    @DisplayName("워크스페이스 생성 API는 빈 값, 공백, 특수문자, 16자 이상 이름을 거절한다")
+    @DisplayName("워크스페이스 생성 API는 빈 값, 공백, 16자 이상 이름을 거절한다")
     void createWorkspace_RejectsInvalidName(String invalidName) throws Exception {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
 

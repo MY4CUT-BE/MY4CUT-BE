@@ -34,3 +34,7 @@ cloud:
   aws:
     s3:
       bucket: test-bucket
+
+tutorial:
+  workspace:
+    image-key: tutorial/retouch/default-photo.png

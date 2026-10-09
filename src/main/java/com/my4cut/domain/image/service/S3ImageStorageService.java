@@ -1,5 +1,6 @@
 package com.my4cut.domain.image.service;
 
+import com.my4cut.domain.image.config.TutorialImageProperties;
 import com.my4cut.global.exception.BusinessException;
 import com.my4cut.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class S3ImageStorageService implements ImageStorageService {
 
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
+    private final TutorialImageProperties tutorialImageProperties;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
@@ -101,6 +103,11 @@ public class S3ImageStorageService implements ImageStorageService {
         if (key == null || key.isBlank()) {
             log.warn("Failed to resolve S3 key for deletion: {}", imagePathOrUrl);
             return false;
+        }
+
+        if (tutorialImageProperties.isProtected(key)) {
+            log.debug("Skipping deletion of shared tutorial workspace image: {}", key);
+            return true;
         }
 
         try {

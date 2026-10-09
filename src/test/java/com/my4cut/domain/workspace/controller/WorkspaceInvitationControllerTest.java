@@ -69,7 +69,14 @@ class WorkspaceInvitationControllerTest {
     @DisplayName("내 초대 목록 조회 API 테스트")
     void getMyInvitations_Test() throws Exception {
         // Arrange
-        WorkspaceInvitationResponseDto responseDto = new WorkspaceInvitationResponseDto(100L, "워크스페이스", "초대자", InvitationStatus.PENDING, LocalDateTime.now());
+        WorkspaceInvitationResponseDto responseDto = new WorkspaceInvitationResponseDto(
+                100L,
+                "워크스페이스",
+                "초대자",
+                null,
+                InvitationStatus.PENDING,
+                LocalDateTime.now()
+        );
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(1L, null, List.of());
         given(workspaceInvitationService.getMyInvitations(any())).willReturn(List.of(responseDto));
 

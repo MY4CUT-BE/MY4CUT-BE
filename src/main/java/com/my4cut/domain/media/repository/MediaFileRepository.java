@@ -22,7 +22,16 @@ import java.util.Optional;
 public interface MediaFileRepository extends JpaRepository<MediaFile, Long> {
     List<MediaFile> findAllByWorkspaceIdAndMediaType(Long workspaceId, MediaType mediaType, Sort sort);
 
-    Page<MediaFile> findAllByUploader(User uploader, Pageable pageable);
+    @Query("""
+            select mediaFile from MediaFile mediaFile
+            where mediaFile.uploader = :uploader
+              and mediaFile.fileUrl not like concat(:excludedPrefix, '%')
+            """)
+    Page<MediaFile> findAllByUploaderExcludingFileUrlPrefix(
+            @Param("uploader") User uploader,
+            @Param("excludedPrefix") String excludedPrefix,
+            Pageable pageable
+    );
 
     boolean existsByWorkspaceIdAndIsFinalTrue(Long workspaceId);
 

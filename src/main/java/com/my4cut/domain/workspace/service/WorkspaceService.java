@@ -38,6 +38,7 @@ public class WorkspaceService {
         private final UserRepository userRepository; // TODO: UserService가 완성되면 UserService를 통해 유저를 조회하도록 변경
         private final WorkspaceInvitationRepository workspaceInvitationRepository;
         private final NotificationService notificationService;
+        private final TutorialWorkspacePhotoService tutorialWorkspacePhotoService;
 
         /**
          * 새로운 워크스페이스를 생성하고 생성자를 멤버로 등록합니다.
@@ -62,7 +63,8 @@ public class WorkspaceService {
          */
         @Transactional
         public void createDefaultWorkspace(User creator) {
-                createWorkspaceWithCreator(DEFAULT_WORKSPACE_NAME, creator);
+                Workspace workspace = createWorkspaceWithCreator(DEFAULT_WORKSPACE_NAME, creator);
+                tutorialWorkspacePhotoService.createDefaultPhoto(creator, workspace);
         }
 
         /**

@@ -1,5 +1,6 @@
 package com.my4cut.domain.media.service;
 
+import com.my4cut.domain.image.config.TutorialImageProperties;
 import com.my4cut.domain.image.service.ImageStorageService;
 import com.my4cut.domain.media.dto.res.MediaResDto;
 import com.my4cut.domain.media.entity.MediaFile;
@@ -33,6 +34,7 @@ public class MediaService {
     private final UserRepository userRepository;
     private final ImageStorageService imageStorageService;
     private final MediaFileLifecycleService mediaFileLifecycleService;
+    private final TutorialImageProperties tutorialImageProperties;
 
     @Transactional
     public MediaResDto.UploadResDto uploadMedia(Long userId, MultipartFile file) {
@@ -87,7 +89,11 @@ public class MediaService {
         User user = getUser(userId);
 
         Pageable pageable = PageRequest.of(page, 20, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<MediaFile> mediaFiles = mediaFileRepository.findAllByUploader(user, pageable);
+        Page<MediaFile> mediaFiles = mediaFileRepository.findAllByUploaderExcludingFileUrlPrefix(
+                user,
+                tutorialImageProperties.protectedPrefix(),
+                pageable
+        );
 
         return mediaFiles.getContent().stream()
                 .map(mediaFile -> MediaResDto.MediaListResDto.of(

@@ -53,6 +53,10 @@ cloud:
     s3:
       bucket: my4cut-image-bucket   # 실제 버킷명
 
+tutorial:
+  workspace:
+    image-key: ${TUTORIAL_WORKSPACE_IMAGE_KEY:tutorial/retouch/default-photo.png}
+
 resend:
   api-key: ${RESEND_API_KEY}
   connect-timeout: ${RESEND_CONNECT_TIMEOUT:3s}

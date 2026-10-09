@@ -29,7 +29,6 @@ public class Workspace extends BaseEntity {
      * 기존 owner_id 스키마와의 배포 호환성을 위해 생성자 참조만 유지한다.
      * 권한 판정이나 API 응답에는 사용하지 않는다.
      */
-    @Getter(AccessLevel.NONE)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User creator;

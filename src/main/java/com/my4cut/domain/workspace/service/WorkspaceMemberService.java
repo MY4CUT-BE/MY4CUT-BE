@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Comparator;
+import java.util.ArrayList;
 
 /**
  * 워크스페이스 멤버 관련 비즈니스 로직을 처리하는 서비스 클래스.
@@ -170,6 +171,9 @@ public class WorkspaceMemberService {
             Workspace workspace,
             Long userId) {
 
+        User creator = workspace.getCreator();
+        User currentUser = userRepository.getReferenceById(userId);
+
         List<WorkspaceInvitation> invitations =
                 workspaceInvitationRepository.findAllByWorkspaceIdAndStatusIn(
                         workspace.getId(),
@@ -180,15 +184,18 @@ public class WorkspaceMemberService {
                         )
                 );
 
-        List<WorkspaceInvitationUserResponseDto> invitationUsers =
+        List<WorkspaceInvitationUserResponseDto> sortedInvitationUsers =
                 invitations.stream()
+                        // 생성자가 초대 이력에도 있으면 중복 방지
+                        .filter(invitation ->
+                                !invitation.getInvitee().getId().equals(creator.getId()))
                         .map(invitation -> {
                             User invitee = invitation.getInvitee();
                             User inviter = invitation.getInviter();
 
                             boolean isFriend =
                                     friendRepository.existsByUserAndFriendUser(
-                                            userRepository.getReferenceById(userId),
+                                            currentUser,
                                             invitee
                                     );
 
@@ -212,32 +219,64 @@ public class WorkspaceMemberService {
                         .sorted(
                                 Comparator
                                         // 1차 정렬: A → B → C
-                                        .comparingInt((WorkspaceInvitationUserResponseDto invitation) -> {
-                                            if (invitation.isFriend() && invitation.isInviter()) {
-                                                return 0; // A: 내 친구 + 내가 초대
-                                            }
+                                        .comparingInt(
+                                                (WorkspaceInvitationUserResponseDto invitation) -> {
+                                                    if (invitation.isFriend()
+                                                            && invitation.isInviter()) {
+                                                        return 0;
+                                                    }
 
-                                            if (invitation.isFriend() && !invitation.isInviter()) {
-                                                return 1; // B: 내 친구 + 남이 초대
-                                            }
+                                                    if (invitation.isFriend()
+                                                            && !invitation.isInviter()) {
+                                                        return 1;
+                                                    }
 
-                                            if (!invitation.isFriend() && !invitation.isInviter()) {
-                                                return 2; // C: 비친구 + 남이 초대
-                                            }
+                                                    if (!invitation.isFriend()
+                                                            && !invitation.isInviter()) {
+                                                        return 2;
+                                                    }
 
-                                            return 3;
-                                        })
-
+                                                    return 3;
+                                                }
+                                        )
                                         // 2차 정렬: ACCEPTED → PENDING → REJECTED
-                                        .thenComparingInt(invitation -> {
-                                            return switch (invitation.status()) {
-                                                case ACCEPTED -> 0;
-                                                case PENDING -> 1;
-                                                case REJECTED -> 2;
-                                            };
-                                        })
+                                        .thenComparingInt(invitation ->
+                                                switch (invitation.status()) {
+                                                    case ACCEPTED -> 0;
+                                                    case PENDING -> 1;
+                                                    case REJECTED -> 2;
+                                                }
+                                        )
                         )
                         .toList();
+
+        // 생성자 정보 추가: 초대 이력이 없으므로 초대 관련 ID는 null
+        boolean creatorIsFriend =
+                friendRepository.existsByUserAndFriendUser(
+                        currentUser,
+                        creator
+                );
+
+        WorkspaceInvitationUserResponseDto creatorInfo =
+                new WorkspaceInvitationUserResponseDto(
+                        null,
+                        creator.getId(),
+                        creator.getNickname(),
+                        profileImageUrlService.toResponseUrl(
+                                creator.getProfileImageUrl()
+                        ),
+                        null,
+                        creator.getId(),
+                        InvitationStatus.ACCEPTED,
+                        creatorIsFriend,
+                        false
+                );
+
+        List<WorkspaceInvitationUserResponseDto> invitationUsers =
+                new ArrayList<>();
+
+        invitationUsers.add(creatorInfo);
+        invitationUsers.addAll(sortedInvitationUsers);
 
         WorkspaceInfoResponseDto baseDto = convertToInfoDto(workspace);
 

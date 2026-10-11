@@ -206,6 +206,7 @@ public class WorkspaceMemberService {
                                     invitation.getId(),
                                     invitee.getId(),
                                     invitee.getNickname(),
+                                    invitee.getFriendCode(),
                                     profileImageUrlService.toResponseUrl(
                                             invitee.getProfileImageUrl()
                                     ),
@@ -262,6 +263,7 @@ public class WorkspaceMemberService {
                         null,
                         creator.getId(),
                         creator.getNickname(),
+                        creator.getFriendCode(),
                         profileImageUrlService.toResponseUrl(
                                 creator.getProfileImageUrl()
                         ),

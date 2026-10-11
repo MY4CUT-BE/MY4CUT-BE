@@ -209,6 +209,7 @@ public class WorkspaceMemberService {
                                     profileImageUrlService.toResponseUrl(
                                             invitee.getProfileImageUrl()
                                     ),
+                                    invitee.getFriendCode(),
                                     inviter.getId(),
                                     invitee.getId(),
                                     invitation.getStatus(),
@@ -265,6 +266,7 @@ public class WorkspaceMemberService {
                         profileImageUrlService.toResponseUrl(
                                 creator.getProfileImageUrl()
                         ),
+                        creator.getFriendCode(),
                         null,
                         creator.getId(),
                         InvitationStatus.ACCEPTED,

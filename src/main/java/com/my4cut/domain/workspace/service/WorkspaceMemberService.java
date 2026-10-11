@@ -206,10 +206,10 @@ public class WorkspaceMemberService {
                                     invitation.getId(),
                                     invitee.getId(),
                                     invitee.getNickname(),
+                                    invitee.getFriendCode(),
                                     profileImageUrlService.toResponseUrl(
                                             invitee.getProfileImageUrl()
                                     ),
-                                    invitee.getFriendCode(),
                                     inviter.getId(),
                                     invitee.getId(),
                                     invitation.getStatus(),
@@ -263,10 +263,10 @@ public class WorkspaceMemberService {
                         null,
                         creator.getId(),
                         creator.getNickname(),
+                        creator.getFriendCode(),
                         profileImageUrlService.toResponseUrl(
                                 creator.getProfileImageUrl()
                         ),
-                        creator.getFriendCode(),
                         null,
                         creator.getId(),
                         InvitationStatus.ACCEPTED,

@@ -80,8 +80,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                               and exists (
                                   select 1
                                   from workspace_invitations wi
+                                  join workspaces w on w.id = wi.workspace_id
                                   where wi.id = n.reference_id
                                     and wi.status = 'PENDING'
+                                    and (w.expires_at is null or w.expires_at >= CURRENT_TIMESTAMP)
+                                    and w.deleted_at is null
                               )
                           )
                       )
@@ -129,8 +132,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                               and exists (
                                   select 1
                                   from workspace_invitations wi
+                                  join workspaces w on w.id = wi.workspace_id
                                   where wi.id = n.reference_id
                                     and wi.status = 'PENDING'
+                                    and (w.expires_at is null or w.expires_at >= CURRENT_TIMESTAMP)
+                                    and w.deleted_at is null
                               )
                           )
                       )
@@ -186,14 +192,17 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                               )
                           )
                           or (
-                              n.type = 'WORKSPACE_INVITE'
-                              and exists (
-                                  select 1
-                                  from workspace_invitations wi
-                                  where wi.id = n.reference_id
-                                    and wi.status = 'PENDING'
-                              )
-                          )
+                               n.type = 'WORKSPACE_INVITE'
+                               and exists (
+                                   select 1
+                                   from workspace_invitations wi
+                                   join workspaces w on w.id = wi.workspace_id
+                                   where wi.id = n.reference_id
+                                     and wi.status = 'PENDING'
+                                     and (w.expires_at is null or w.expires_at >= CURRENT_TIMESTAMP)
+                                     and w.deleted_at is null
+                               )
+                           )
                       )
                     """,
             nativeQuery = true

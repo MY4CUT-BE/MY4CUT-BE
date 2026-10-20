@@ -6,6 +6,7 @@ import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
 import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
 import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
+import com.my4cut.domain.workspace.dto.WorkspaceInviteRequestDto;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
@@ -39,6 +40,7 @@ public class WorkspaceService {
         private final WorkspaceInvitationRepository workspaceInvitationRepository;
         private final NotificationService notificationService;
         private final TutorialWorkspacePhotoService tutorialWorkspacePhotoService;
+        private final WorkspaceInvitationService workspaceInvitationService;
 
         /**
          * 새로운 워크스페이스를 생성하고 생성자를 멤버로 등록합니다.
@@ -48,12 +50,41 @@ public class WorkspaceService {
          */
         @Transactional
         public WorkspaceInfoResponseDto createWorkspace(WorkspaceCreateRequestDto dto, Long creatorId) {
-                User creator = userRepository.findById(creatorId)
-                                .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND)); // 공통 유저 예외 적용 필요
+            // 1. 워크스페이스를 생성하기 전에 초대 인원 검증
+            if (dto.userIds() != null && dto.userIds().size() > 9) {
+                throw new WorkspaceException(
+                        WorkspaceErrorCode.MAX_INVITE_USERS_EXCEEDED
+                );
+            }
 
-                Workspace workspace = createWorkspaceWithCreator(dto.name(), creator);
+            // 2. 생성자 조회
+            User creator = userRepository.findById(creatorId)
+                    .orElseThrow(() ->
+                            new WorkspaceException(WorkspaceErrorCode.USER_NOT_FOUND)
+                    );
 
-                return workspaceMemberService.convertToInfoDto(workspace);
+            // 3. 워크스페이스 생성 및 생성자 멤버 등록
+            Workspace workspace = createWorkspaceWithCreator(
+                    dto.name(),
+                    creator
+            );
+
+            // 4. 초대할 사용자가 있을 때만 초대 처리
+            if (dto.userIds() != null && !dto.userIds().isEmpty()) {
+                WorkspaceInviteRequestDto inviteRequest =
+                        new WorkspaceInviteRequestDto(
+                                workspace.getId(),
+                                dto.userIds()
+                        );
+
+                workspaceInvitationService.inviteMembers(
+                        inviteRequest,
+                        creatorId
+                );
+            }
+
+            // 5. 생성된 워크스페이스 정보 반환
+            return workspaceMemberService.convertToInfoDto(workspace);
         }
 
         /**

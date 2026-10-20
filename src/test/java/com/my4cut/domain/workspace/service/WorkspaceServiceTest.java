@@ -2,16 +2,14 @@ package com.my4cut.domain.workspace.service;
 
 import com.my4cut.domain.user.entity.User;
 import com.my4cut.domain.user.repository.UserRepository;
-import com.my4cut.domain.workspace.dto.WorkspaceCreateRequestDto;
-import com.my4cut.domain.workspace.dto.WorkspaceDeleteResponseDto;
-import com.my4cut.domain.workspace.dto.WorkspaceInfoResponseDto;
-import com.my4cut.domain.workspace.dto.WorkspaceUpdateRequestDto;
+import com.my4cut.domain.workspace.dto.*;
 import com.my4cut.domain.workspace.entity.Workspace;
 import com.my4cut.domain.workspace.exception.WorkspaceErrorCode;
 import com.my4cut.domain.workspace.exception.WorkspaceException;
 import com.my4cut.domain.workspace.repository.WorkspaceRepository;
 import com.my4cut.domain.workspace.repository.WorkspaceInvitationRepository;
 import com.my4cut.domain.notification.service.NotificationService;
+import com.my4cut.domain.workspace.service.WorkspaceInvitationService;
 import com.my4cut.domain.workspace.enums.InvitationStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +30,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class WorkspaceServiceTest {
@@ -57,12 +57,15 @@ class WorkspaceServiceTest {
     @InjectMocks
     private WorkspaceService workspaceService;
 
+    @Mock
+    private WorkspaceInvitationService workspaceInvitationService;
+
     @Test
     @DisplayName("create workspace success")
     void createWorkspace_Success() {
         Long userId = 1L;
         User user = createUser(userId, "owner");
-        WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("new workspace");
+        WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("new workspace", List.of());
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
                 1L,
                 "new workspace",
@@ -88,6 +91,24 @@ class WorkspaceServiceTest {
         assertThat(result.name()).isEqualTo("new workspace");
         verify(workspaceRepository, times(1)).save(any(Workspace.class));
         verify(workspaceMemberService, times(1)).addMember(any(Workspace.class), any(User.class));
+    }
+
+    @Test
+    @DisplayName("초대 인원이 10명을 초과하면 워크스페이스를 생성하지 않는다")
+    void createWorkspace_Fail_TooManyInvitees() {
+        Long userId = 1L;
+        List<Long> userIds = List.of(2L, 3L, 4L, 5L, 6L,
+                7L, 8L, 9L, 10L, 11L);
+        WorkspaceCreateRequestDto requestDto =
+                new WorkspaceCreateRequestDto("new workspace", userIds);
+
+        assertThatThrownBy(() -> workspaceService.createWorkspace(requestDto, userId))
+                .isInstanceOf(WorkspaceException.class)
+                .hasFieldOrPropertyWithValue(
+                        "errorCode", WorkspaceErrorCode.MAX_INVITE_USERS_EXCEEDED);
+
+        verify(workspaceRepository, never()).save(any(Workspace.class));
+        verifyNoInteractions(workspaceInvitationService);
     }
 
     @Test
@@ -283,6 +304,34 @@ class WorkspaceServiceTest {
         assertThat(result).isNotNull();
         verify(workspaceInvitationRepository).deleteAllByWorkspaceIdAndStatus(workspaceId, InvitationStatus.PENDING);
         verify(notificationService).deleteWorkspaceInviteNotifications(workspaceId);
+    }
+
+    @Test
+    @DisplayName("워크스페이스 생성 시 초대할 사용자 목록을 전달한다")
+    void createWorkspace_Success_WithInvitees() {
+        Long userId = 1L;
+        User owner = createUser(userId, "owner");
+        List<Long> userIds = List.of(2L, 3L);
+        WorkspaceCreateRequestDto requestDto =
+                new WorkspaceCreateRequestDto("new workspace", userIds);
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(owner));
+        given(workspaceRepository.save(any(Workspace.class)))
+                .willAnswer(invocation -> {
+                    Workspace workspace = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(workspace, "id", 100L);
+                    return workspace;
+                });
+        given(workspaceMemberService.convertToInfoDto(any(Workspace.class)))
+                .willReturn(null);
+
+        workspaceService.createWorkspace(requestDto, userId);
+
+        ArgumentCaptor<WorkspaceInviteRequestDto> captor =
+                ArgumentCaptor.forClass(WorkspaceInviteRequestDto.class);
+
+        verify(workspaceInvitationService).inviteMembers(captor.capture(), org.mockito.ArgumentMatchers.eq(userId));
+        assertThat(captor.getValue().userIds()).containsExactlyElementsOf(userIds);
     }
 
     @Test

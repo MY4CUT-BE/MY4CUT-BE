@@ -55,7 +55,7 @@ class WorkspaceControllerTest {
     @DisplayName("워크스페이스 생성 API 테스트")
     void createWorkspace_Test() throws Exception {
         // Arrange
-        WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("새스페이스");
+        WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("새스페이스", List.of());
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
                 1L,
                 "새스페이스",
@@ -96,7 +96,8 @@ class WorkspaceControllerTest {
                         .with(csrf())
                         .with(authentication(auth))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new WorkspaceCreateRequestDto(invalidName))))
+                        .content(objectMapper.writeValueAsString(
+                                new WorkspaceCreateRequestDto(invalidName, List.of()))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -111,7 +112,8 @@ class WorkspaceControllerTest {
                         .with(csrf())
                         .with(authentication(auth))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(new WorkspaceCreateRequestDto(validName))))
+                        .content(objectMapper.writeValueAsString(
+                                new WorkspaceCreateRequestDto(validName, List.of()))))
                 .andExpect(status().isOk());
     }
 

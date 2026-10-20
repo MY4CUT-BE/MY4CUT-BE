@@ -62,7 +62,7 @@ class WorkspaceServiceTest {
     void createWorkspace_Success() {
         Long userId = 1L;
         User user = createUser(userId, "owner");
-        WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("new workspace");
+        WorkspaceCreateRequestDto requestDto = new WorkspaceCreateRequestDto("new workspace", List.of());
         WorkspaceInfoResponseDto responseDto = new WorkspaceInfoResponseDto(
                 1L,
                 "new workspace",

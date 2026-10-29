@@ -58,8 +58,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                           or exists (
                               select 1
                               from workspace_members wm
+                              join workspaces w on w.id = wm.workspace_id
                               where wm.workspace_id = n.workspace_id
                                 and wm.user_id = :userId
+                                and (w.expires_at is null
+                                     or w.expires_at >= CURRENT_TIMESTAMP)
+                                and w.deleted_at is null
                           )
                       )
 
@@ -110,8 +114,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                           or exists (
                               select 1
                               from workspace_members wm
+                              join workspaces w on w.id = wm.workspace_id
                               where wm.workspace_id = n.workspace_id
                                 and wm.user_id = :userId
+                                and (w.expires_at is null
+                                     or w.expires_at >= CURRENT_TIMESTAMP)
+                                and w.deleted_at is null
                           )
                       )
 
@@ -174,8 +182,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                           or exists (
                               select 1
                               from workspace_members wm
+                              join workspaces w on w.id = wm.workspace_id
                               where wm.workspace_id = n.workspace_id
                                 and wm.user_id = :userId
+                                and (w.expires_at is null
+                                     or w.expires_at >= CURRENT_TIMESTAMP)
+                                and w.deleted_at is null
                           )
                       )
 

@@ -189,6 +189,18 @@ public class WorkspaceMemberService {
                         // 생성자가 초대 이력에도 있으면 중복 방지
                         .filter(invitation ->
                                 !invitation.getInvitee().getId().equals(creator.getId()))
+                        .filter(invitation -> {
+                            // 수락한 사용자라도 현재 워크스페이스 멤버가 아니면 제외
+                            if (invitation.getStatus() == InvitationStatus.ACCEPTED) {
+                                return workspaceMemberRepository.existsByWorkspaceIdAndUserId(
+                                        workspace.getId(),
+                                        invitation.getInvitee().getId()
+                                );
+                            }
+
+                            // 대기 중이거나 거절한 초대 이력은 유지
+                            return true;
+                        })
                         .map(invitation -> {
                             User invitee = invitation.getInvitee();
                             User inviter = invitation.getInviter();

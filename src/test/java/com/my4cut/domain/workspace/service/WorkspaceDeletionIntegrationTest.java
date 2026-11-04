@@ -85,7 +85,8 @@ class WorkspaceDeletionIntegrationTest {
                 userRepository,
                 workspaceInvitationRepository,
                 notificationService,
-                mock(TutorialWorkspacePhotoService.class)
+                mock(TutorialWorkspacePhotoService.class),
+                mock(WorkspaceInvitationService.class)
         );
 
         workspaceService.deleteWorkspace(workspace.getId(), inviter.getId());

@@ -20,5 +20,9 @@ public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
     @Query("select workspace from Workspace workspace where workspace.id = :id and workspace.deletedAt is null")
     Optional<Workspace> findByIdAndDeletedAtIsNullForUpdate(@Param("id") Long id);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select workspace from Workspace workspace where workspace.id = :id")
+    Optional<Workspace> findByIdForUpdate(@Param("id") Long id);
+
     List<Workspace> findAllByExpiresAtAfterAndDeletedAtIsNull(LocalDateTime now);
 }

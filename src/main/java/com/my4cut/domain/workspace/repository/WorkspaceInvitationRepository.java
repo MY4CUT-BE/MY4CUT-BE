@@ -24,6 +24,12 @@ public interface WorkspaceInvitationRepository extends JpaRepository<WorkspaceIn
 
     Optional<WorkspaceInvitation> findByIdAndInviteeId(Long id, Long inviteeId);
 
+    @Query("select invitation.workspace.id from WorkspaceInvitation invitation where invitation.id = :id and invitation.invitee.id = :inviteeId")
+    Optional<Long> findWorkspaceIdByIdAndInviteeId(@Param("id") Long id, @Param("inviteeId") Long inviteeId);
+
+    @Query("select invitation.workspace.id from WorkspaceInvitation invitation where invitation.id = :id and invitation.inviter.id = :inviterId")
+    Optional<Long> findWorkspaceIdByIdAndInviterId(@Param("id") Long id, @Param("inviterId") Long inviterId);
+
     Optional<WorkspaceInvitation> findByWorkspaceIdAndInviteeIdAndStatus(Long workspaceId, Long inviteeId, InvitationStatus status);
 
     Optional<WorkspaceInvitation> findByIdAndInviterId(Long id, Long inviterId);

@@ -141,7 +141,7 @@ public class WorkspaceService {
          */
         @Transactional
         public WorkspaceDeleteResponseDto deleteWorkspace(Long workspaceId, Long userId) {
-                Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)
+                Workspace workspace = workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)
                                 .orElseThrow(() -> new WorkspaceException(WorkspaceErrorCode.WORKSPACE_NOT_FOUND));
 
                 checkWorkspaceExpiration(workspace);

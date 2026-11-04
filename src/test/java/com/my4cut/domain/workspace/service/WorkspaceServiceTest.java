@@ -295,7 +295,7 @@ class WorkspaceServiceTest {
         User owner = createUser(userId, "owner");
         Workspace workspace = createWorkspace(workspaceId, "workspace", owner);
 
-        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)).willReturn(Optional.of(workspace));
         given(workspaceMemberService.isWorkspaceMember(workspaceId, userId)).willReturn(true);
 
         WorkspaceDeleteResponseDto result = workspaceService.deleteWorkspace(workspaceId, userId);
@@ -343,7 +343,7 @@ class WorkspaceServiceTest {
         Workspace workspace = createWorkspace(workspaceId, "expired workspace", owner);
         workspace.setExpiresAt(LocalDateTime.now().minusDays(1));
 
-        given(workspaceRepository.findByIdAndDeletedAtIsNull(workspaceId)).willReturn(Optional.of(workspace));
+        given(workspaceRepository.findByIdAndDeletedAtIsNullForUpdate(workspaceId)).willReturn(Optional.of(workspace));
 
         assertThatThrownBy(() -> workspaceService.deleteWorkspace(workspaceId, userId))
                 .isInstanceOf(WorkspaceException.class)

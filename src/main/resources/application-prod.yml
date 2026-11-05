@@ -23,8 +23,8 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 5MB
-      max-request-size: 55MB
+      max-file-size: 20MB
+      max-request-size: 205MB
 
   data:
     redis:

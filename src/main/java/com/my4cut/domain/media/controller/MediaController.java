@@ -40,7 +40,7 @@ public class MediaController {
 
     @Operation(
             summary = "미디어 파일 다건 업로드",
-            description = "multipart/form-data로 미디어 파일 여러 개를 서버로 업로드합니다. 5MB × 10장 기준입니다."
+            description = "multipart/form-data로 미디어 파일 여러 개를 서버로 업로드합니다. 기본 제한은 파일당 20MiB, 요청 전체 205MiB이며 최대 10개 파일을 받습니다."
     )
     @PostMapping(
             value = "/upload/bulk",

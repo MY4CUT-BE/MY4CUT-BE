@@ -35,7 +35,8 @@ public class Album extends BaseEntity {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-    @OneToMany(mappedBy = "album", cascade = CascadeType.ALL)
+    // Album deletion must preserve independently owned media files.
+    @OneToMany(mappedBy = "album", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @Builder.Default
     private List<MediaFile> mediaFiles = new ArrayList<>();
 

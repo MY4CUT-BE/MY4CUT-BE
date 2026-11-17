@@ -105,4 +105,28 @@ public class UserService {
             throw new BusinessException(ErrorCode.BAD_REQUEST);
         }
     }
+
+    // 프로필 사진 삭제
+    @Transactional
+    public void deleteProfileImage(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (user.getStatus() == UserStatus.DELETED) {
+            throw new BusinessException(ErrorCode.USER_DELETED);
+        }
+
+        String currentProfileImageUrl = user.getProfileImageUrl();
+
+        // 이미 프로필 이미지가 없는 경우에도 정상 처리
+        if (currentProfileImageUrl == null || currentProfileImageUrl.isBlank()) {
+            return;
+        }
+
+        // 기존 프로필 이미지 파일 삭제
+        imageStorageService.deleteIfExists(currentProfileImageUrl);
+
+        // DB의 프로필 이미지 경로 초기화
+        user.updateProfileImage(null);
+    }
 }

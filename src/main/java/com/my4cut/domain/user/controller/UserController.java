@@ -88,4 +88,22 @@ public class UserController {
                 userService.updateProfileImage(userId, file)
         );
     }
+
+    // 프로필 사진 삭제
+    @Operation(
+            summary = "프로필 이미지 삭제",
+            description = "현재 로그인한 사용자의 프로필 이미지를 삭제합니다. 이미 프로필 이미지가 없는 경우에도 정상 처리됩니다."
+    )
+    @DeleteMapping("/me/image")
+    public ApiResponse<Void> deleteProfileImage(
+            @AuthenticationPrincipal Long userId
+    ) {
+        userService.deleteProfileImage(userId);
+
+        return ApiResponse.onSuccess(
+                SuccessCode.OK,
+                null
+        );
+    }
+
 }
